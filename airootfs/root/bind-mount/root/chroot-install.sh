@@ -240,20 +240,28 @@ while true; do
 
     if ! PW_OUTPUT=$(is_secure_password "$USER_PASSWORD" 2>&1); then
         echo "User entered insecure password." >> /var/log/install_ditana.log
-        dialog --msgbox "$PW_OUTPUT" 7 80
-        continue
+        
+        # Ask user if they want to use the insecure password anyway
+        if dialog --title 'Insecure Password' --yes-label 'Enter Secure Password' --no-label 'Use Anyway' \
+                  --yesno "$PW_OUTPUT\n\nWould you like to enter a more secure password?" 10 80
+        then
+            echo "User chose to enter a more secure password." >> /var/log/install_ditana.log
+            continue
+        else
+            echo "User chose to use insecure password anyway." >> /var/log/install_ditana.log
+        fi
     fi
 
-    echo "Prompting the user to confirm the password." >>/var/log/install_ditana.log
-    if CONFIRM_PASSWORD=$(dialog --stdout --insecure --passwordbox "Please confirm the passwort" 10 50)
+    echo "Prompting the user to confirm the password." >> /var/log/install_ditana.log
+    if CONFIRM_PASSWORD=$(dialog --stdout --insecure --passwordbox "Please confirm the password" 10 50)
     then
         if [[ "$USER_PASSWORD" == "$CONFIRM_PASSWORD" ]]; then
             chpasswd <<< "${USER_NAME}:${USER_PASSWORD}"
             unset USER_PASSWORD CONFIRM_PASSWORD
-            echo "Set user password." >>/var/log/install_ditana.log
+            echo "Set user password." >> /var/log/install_ditana.log
             break
         else
-            echo "Passwords to not match." >>/var/log/install_ditana.log
+            echo "Passwords do not match." >> /var/log/install_ditana.log
             dialog --msgbox "Passwords do not match. Please try again." 10 50
         fi
     fi
