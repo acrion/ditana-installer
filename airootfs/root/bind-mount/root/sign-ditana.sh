@@ -21,6 +21,11 @@
 
 KEY_S_ZIPPROTH_AT_DITANA_ORG="3F8054C3FF755E5544E68516BC333E9AE877D45A"
 
+if [[ ! -d /etc/pacman.d/gnupg ]]; then
+    pacman-key --init
+    pacman-key --populate archlinux
+fi
+
 if ! pacman-key --keyserver hkps://keys.openpgp.org --recv-key $KEY_S_ZIPPROTH_AT_DITANA_ORG; then
     echo -e "\033[33m--- No Internet or keys.openpgp.org is down => using key from Ditana ISO --- \033[0m"
     if [[ -f ditana-key.asc ]]; then # chrooted environment
@@ -31,3 +36,4 @@ if ! pacman-key --keyserver hkps://keys.openpgp.org --recv-key $KEY_S_ZIPPROTH_A
 fi
 
 pacman-key --lsign-key $KEY_S_ZIPPROTH_AT_DITANA_ORG
+pacman-key --updatedb

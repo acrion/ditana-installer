@@ -47,6 +47,6 @@ index d80b2f9..19695e7 100644
 
 -iso_name="Ditana"
 +iso_name="Ditana_Testing"
- iso_label="Ditana_$DITANA_VERSION"
+ iso_label="Ditana_$DITANA_BUILD_ID"
  iso_publisher="Ditana GNU/Linux <https://ditana.org>"
  iso_application="Ditana GNU/Linux Install/Rescue System"
