@@ -8,3 +8,4 @@ airootfs/root/folders/etc/skel/.config/ditana/dpi/value
 airootfs/root/folders/etc/xdg/ditana/default_locale_description
 airootfs/root/bind-mount/root/installation-steps.sh
 airootfs/root/bind-mount/root/settings.sh
+*.log

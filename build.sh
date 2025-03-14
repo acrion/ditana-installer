@@ -150,7 +150,7 @@ fi
 sudo pkill keyboxd
 
 mkdir -p airootfs/root/.raku
-zef --force-install -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast
+zef --force-install -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Tomty
 
 # Delete temporary files from test installations
 rm -f airootfs/root/bind-mount/root/installation-steps.sh
