@@ -7,6 +7,6 @@ task-run "tasks/run-ansible", %(
   vars => "enable_multilib=n config_path=/tmp/pacman.conf",
 );
 
-task-run "tasks/arch-multilib-repo-is-enabled", %(
+task-run "tasks/arch-multilib-repo-is-commented", %(
   :path</tmp/pacman.conf>,
 );
