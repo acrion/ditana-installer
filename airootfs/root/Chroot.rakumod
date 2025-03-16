@@ -195,6 +195,10 @@ sub generate-chroot-script() is export {
         add-chrooted-step("systemctl enable systemd-resolved");
     }
 
+    if $s.get("install-bluetooth") {
+        add-chrooted-step("systemctl enable bluetooth"); # https://wiki.archlinux.org/title/Bluetooth
+    }
+
     add-chrooted-step(q{echo -e "\033[32m--- Generating locales ---\033[0m"});
     add-chrooted-step(q{locale-gen}); # https://wiki.archlinux.org/title/Installation_guide#Localization
 

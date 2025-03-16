@@ -433,6 +433,10 @@
             "detect": "'/proc/cpuinfo'.IO.lines.first(*.contains('flags')).contains('avx2').so"
         },
         {
+            "name": "has-bluetooth",
+            "detect": "qx{lsusb}.lines.grep(*.contains(/:i bluetooth/)).so || qx{lspci}.lines.grep(*.contains(/:i bluetooth/)).so || 'sys/class/bluetooth'.IO.e"
+        },
+        {
             "name": "nvidia-pci-id",
             "detect": "qx{lspci -nn}.lines.grep(/:i 'vga'.*'nvidia'/).&{ $_ ?? .first.match(/\\w+':' (\\w+) ']'/).[0].Str !! '' }"
         },
@@ -1347,6 +1351,21 @@
                 "pulseaudio"
             ],
             "default-value": true
+        },
+        {
+            "name": "install-bluetooth",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install Bluetooth support",
+            "long-description": "Install Bluetooth Support: Installs the necessary Bluetooth components (protocol stack, management tools, OBEX for file transfer, and mesh services) and enables the Bluetooth service in the system. Bluetooth allows wireless connection to various devices such as keyboards, mice, headsets, smartphones, and other Bluetooth-capable devices. The Bluetooth service will be automatically started at system boot, making Bluetooth devices immediately available. This entry is enabled by default if Bluetooth hardware is detected in the system.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                // see https://wiki.archlinux.org/title/Bluetooth
+                "bluez",
+                "bluez-utils",
+                "bluez-obex",
+                "bluez-mesh"
+            ],
+            "default-value": "`has-bluetooth`"
         },
         {
             "name": "install-nvidia-opensource",
