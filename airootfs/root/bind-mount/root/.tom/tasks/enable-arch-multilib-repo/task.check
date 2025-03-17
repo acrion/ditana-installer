@@ -1,19 +1,22 @@
-note: look up for multilib repo lines
+note: look up for multilib repo(s) lines
 
 begin:
-~regexp: ^^ \s* "[multilib]" \s* $$
-~regexp: ^^ \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* ^^
+~regexp: ^^ \s* \x[23] \s* "[multilib]" \s* $$
+~regexp: ^^ \s* \x[23] \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
 end:
 
 generator: <<RAKU
 !raku
 if matched() {
-    say "note: comment first repo block";
-    say "note: lines: $l1,$l2";
+    say "note: multilib repo(s) found";
+    say "note: uncomment first repo";
     my $l2 = captures-full()<>[0]<index>;
     my $l1 = $l1 - 1;
+    say "note: lines: [$l1,$l2]";
+    replace(config()<path>,$l1,"[multilib]");
+    replace(config()<path>,$l2,"Include = /etc/pacman.d/mirrorlist");
 } else {
-    say "note: no mulitilib repo lines found, hooefully it's ok";
+    say "note: [WARN] - no mulitilib repo lines found to uncomment, hopefully it's ok";
 }
 
 RAKU
