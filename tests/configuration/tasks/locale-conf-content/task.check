@@ -1,0 +1,63 @@
+grep: ^^ "LANG=" "${locale}" ".UTF-8" $$
+
+within: ^^ "LC_COLLATE=" (\S+) $$
+    ~regexp: (\S+)
+end:
+
+within: ^^ "LC_CTYPE=" (\S+) $$
+    ~regexp: (\S+)
+end:
+
+within: ^^ "LC_MESSAGES=" (\S+) $$
+    ~regexp: (\S+)
+end:
+
+within: ^^ "LC_NUMERIC=" (\S+) $$
+    ~regexp: (\S+)
+end:
+
+generator: <<RAKU
+!raku
+my $c_locale_count = 0;
+my $user_locale_count = 0;
+
+if matched(1) {
+    if capture(1)[0] eq 'C.UTF-8' {
+        $c_locale_count++;
+    } elsif capture(1)[0] eq config()<locale> ~ '.UTF-8' {
+        $user_locale_count++;
+    }
+}
+
+if matched(2) {
+    if capture(2)[0] eq 'C.UTF-8' {
+        $c_locale_count++;
+    } elsif capture(2)[0] eq config()<locale> ~ '.UTF-8' {
+        $user_locale_count++;
+    }
+}
+
+if matched(3) {
+    if capture(3)[0] eq 'C.UTF-8' {
+        $c_locale_count++;
+    } elsif capture(3)[0] eq config()<locale> ~ '.UTF-8' {
+        $user_locale_count++;
+    }
+}
+
+if matched(4) {
+    if capture(4)[0] eq 'C.UTF-8' {
+        $c_locale_count++;
+    } elsif capture(4)[0] eq config()<locale> ~ '.UTF-8' {
+        $user_locale_count++;
+    }
+}
+
+if config()<use_c_utf8> eq 'y' {
+    say "assert: $c_locale_count LC_ variables using C.UTF-8";
+    say "assert: ", ($c_locale_count == 4 ? 1 : 0), " all LC_COLLATE, LC_CTYPE, LC_MESSAGES, LC_NUMERIC use C.UTF-8";
+} else {
+    say "assert: $user_locale_count LC_ variables using user locale";
+    say "assert: ", ($user_locale_count == 4 ? 1 : 0), " all LC_COLLATE, LC_CTYPE, LC_MESSAGES, LC_NUMERIC use user locale";
+}
+RAKU

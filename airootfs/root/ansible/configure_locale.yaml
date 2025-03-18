@@ -23,19 +23,19 @@
   tasks:
   - name: Activate a specific locale
     lineinfile:
-      path: /mnt/etc/locale.gen
+      path: "{{ locale_gen_path | default('/mnt/etc/locale.gen') }}"
       regexp: '^\s*#\s*{{ locale }}.UTF-8\s+UTF-8'
       line: '{{ locale }}.UTF-8 UTF-8'
     register: locale_activation
 
-  - name: Fail if the locale does not exist in /mnt/etc/locale.gen
+  - name: Fail if the locale does not exist in locale.gen
     fail:
-      msg: "Error: {{ locale }}.UTF-8 UTF-8 does not exist in /mnt/etc/locale.gen"
+      msg: "Error: {{ locale }}.UTF-8 UTF-8 does not exist in {{ locale_gen_path | default('/mnt/etc/locale.gen') }}"
     when: not locale_activation.changed
 
   - name: Set locale configuration
     copy:
-      dest: /mnt/etc/locale.conf
+      dest: "{{ locale_conf_path | default('/mnt/etc/locale.conf') }}"
       content: |
         # This configuration explicitly sets the LC_COLLATE, LC_CTYPE, LC_NUMERIC, and LC_MESSAGES
         # environment variables to C.UTF-8 if the use_c_utf8 flag is 'y', regardless of the user-defined
@@ -70,13 +70,11 @@
         LC_PAPER={{ locale }}.UTF-8
         LC_TELEPHONE={{ locale }}.UTF-8
         LC_TIME={{ locale }}.UTF-8
-      owner: root
-      group: root
       mode: '0644'
 
   - name: Always activate en_US locale in addition to user locale
     lineinfile:
-      path: /mnt/etc/locale.gen
+      path: "{{ locale_gen_path | default('/mnt/etc/locale.gen') }}"
       regexp: '^\s*#\s*en_US.UTF-8\s+UTF-8'
       line: 'en_US.UTF-8 UTF-8'
     when: locale != 'en_US'

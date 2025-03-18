@@ -1,0 +1,7 @@
+note: locale should be commented
+begin:
+generator: <<RAKU
+!raku
+print q:c«regexp: ^^ \x[23] {config()<locale>} \. UTF\-8 \s+ UTF\-8 \s* $$»
+RAKU
+end:

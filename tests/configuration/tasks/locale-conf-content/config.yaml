@@ -1,0 +1,3 @@
+path: /tmp/locale.conf
+locale: en_US
+use_c_utf8: y
