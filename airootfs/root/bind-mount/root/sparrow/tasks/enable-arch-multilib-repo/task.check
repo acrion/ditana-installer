@@ -31,9 +31,7 @@ if matched() {
         CODE
     } 
 } else {
-    if config()<enable_multilib> eq "y" {
-        say "assert: 0 file has valid structure";
-    }
+    say "assert: 0 file has valid structure";
     say "note: Missing multilib configuration in pacman.conf";
 }
 
