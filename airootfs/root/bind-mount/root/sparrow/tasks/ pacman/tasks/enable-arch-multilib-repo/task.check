@@ -1,14 +1,13 @@
 note: look up for commented multilib repo(s) lines
 
 begin:
-~regexp: ^^ \d+ \s* \x[23] \s* "[multilib]" \s* $$
-~regexp: ^^ \d+ \s* \x[23] \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
+    ~regexp: ^^ \d+ \s* \x[23] \s* "[multilib]" \s* $$
+    ~regexp: ^^ \d+ \s* \x[23] \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
 end:
 
 generator: <<RAKU
 !raku
 if matched() {
-    say "assert: 1 file has valid structure";
     #
     # NOTE! only update when enable_multilib is "y"
     # This might change in a future
@@ -24,16 +23,12 @@ if matched() {
         say q:to /CODE/;
         code: <<BASH
         !bash
-        echo "changes"
-        echo "========================================================"
-        cat -n $(config path)
+            echo "changes"
+            echo "========================================================"
+            cat -n $(config path)
         BASH
         CODE
     } 
-} else {
-    say "assert: 0 file has valid structure";
-    say "note: Missing multilib configuration in pacman.conf";
 }
-
 RAKU
 

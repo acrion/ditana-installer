@@ -1,0 +1,3 @@
+path: pacman.conf
+enable_multilib: y
+action: enable-arch-multilib-repo # default action

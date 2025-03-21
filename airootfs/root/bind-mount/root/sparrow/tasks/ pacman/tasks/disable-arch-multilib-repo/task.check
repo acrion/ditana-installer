@@ -1,8 +1,8 @@
 note: look up for multilib repo(s) lines
 
 begin:
-~regexp: ^^ \s* "[multilib]" \s* $$
-~regexp: ^^ \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
+    ~regexp: ^^ \s* "[multilib]" \s* $$
+    ~regexp: ^^ \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
 end:
 
 generator: <<RAKU
@@ -15,15 +15,11 @@ if matched() {
     say "note: lines: [$l1,$l2]";
     replace(config()<path>,$l1,"\x[23] [multilib]");
     replace(config()<path>,$l2,"\x[23] Include = /etc/pacman.d/mirrorlist");
-} else {
-    say "note: [WARN] - no mulitilib repo(s) lines found to comment, hopefully it's ok";
+    code: <<BASH
+    !bash
+        echo "changes"
+        echo "========================================================"
+        cat -n $(config path)
+    BASH
 }
-
 RAKU
-
-code: <<BASH
-!bash
-echo "changes"
-echo "========================================================"
-cat $(config path)
-BASH
