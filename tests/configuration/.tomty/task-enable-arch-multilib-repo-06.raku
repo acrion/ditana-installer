@@ -9,3 +9,6 @@ task-run "tasks/run-task", %(
   :error_message<Missing multilib configuration in pacman.conf>,
 );
 
+task-run "tasks/arch-multilib-repo-is-enabled", %(
+  :path</tmp/pacman.conf>,
+);
