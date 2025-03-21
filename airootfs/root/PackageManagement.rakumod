@@ -41,10 +41,11 @@ sub add-repos-and-sync() is export {
 
     if $s.get('enable-multilib') {
         Logging.log("Enabling Arch multilib repository");
-        run-and-log 'ansible-playbook', 
-            '-i', 'localhost,', 
-            "%*ENV<HOME>/bind-mount/root/enable-arch-multilib-repo.yaml",
-            '-e', "enable_multilib={$s.get('enable-multilib')}";
+        run-and-log 's6', 
+            '--task-run', 
+            "%*ENV<HOME>/bind-mount/root/sparrow/tasks/pacman" ~
+            '@action=enable-arch-multilib-repo,' ~
+            "enable_multilib={$s.get('enable-multilib')}";
     }
 
     if $s.get('enable-chaotic-aur') {
