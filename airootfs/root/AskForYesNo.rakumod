@@ -23,7 +23,8 @@ use Settings;
 use Logging;
 
 multi ask-for-yes-no(:$title = '', :$instruction, :$default = True, :$yes-label="Yes", :$no-label="No") is export {
-    my %reformatted-text = calculate-wrapped-lines($instruction, 98-4); # 98 width minus border
+    my $columns = 98;
+    my %reformatted-text = calculate-wrapped-lines($instruction, $columns-4); # 98 width minus border
     
     Logging.log($instruction);
     
@@ -46,7 +47,7 @@ multi ask-for-yes-no(:$title = '', :$instruction, :$default = True, :$yes-label=
         "--yesno",
         $text,
         $lines,
-        98
+        $columns
     );
 
     return %dialog-result<status>;

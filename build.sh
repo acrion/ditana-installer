@@ -24,10 +24,16 @@ set -u
 
 sudo -k
 
-if ! pacman -Qi python-gnupg &>/dev/null; then
-    echo "The 'python-gnupg' package is not installed. Installing it now..."
-    sudo pacman -S python-gnupg
-fi
+ensure_package_installed() {
+    if ! pacman -Qi "$1" &>/dev/null; then
+        echo "The '$1' package is not installed. Installing it now..."
+        sudo pacman -S "$1"
+    fi
+}
+
+ensure_package_installed python-gnupg
+ensure_package_installed gnupg
+ensure_package_installed pkgfile
 
 function list_gpg_keys() {
     # Terminate any running keyboxd process to prevent conflicts with the following user-level GPG operations.
@@ -75,7 +81,6 @@ list_special_packages() {
 }
 
 raku -e "use v6.d; use lib 'airootfs/root'; use NvidiaParser; download-and-test-nvidia-page"
-
 mv /tmp/nvidia_legacy_gpu_page.html airootfs/root/cached_legacy_gpu_page.html
 
 # Export the GPG key to be used as a fallback during installation in case keyserver.ubuntu.com is down
