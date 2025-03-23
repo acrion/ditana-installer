@@ -7,6 +7,6 @@ task-run "tasks/run-task", %(
   vars => "enable_multilib=n,path=/tmp/pacman.conf",
 );
 
-task-run "tasks/arch-multilib-repo-is-enabled", %(
+task-run "tasks/arch-multilib-repo-is-disabled", %(
   :path</tmp/pacman.conf>,
 );
