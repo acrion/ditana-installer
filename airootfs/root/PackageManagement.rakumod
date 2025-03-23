@@ -43,9 +43,7 @@ sub add-repos-and-sync() is export {
         Logging.log("Enabling Arch multilib repository");
         run-and-log 's6', 
             '--task-run', 
-            "%*ENV<HOME>/bind-mount/root/sparrow/tasks/pacman" ~
-            '@action=enable-arch-multilib-repo,' ~
-            "enable_multilib={$s.get('enable-multilib')}";
+            "%*ENV<HOME>/bind-mount/root/sparrow/tasks/pacman\@enable_multilib={$s.get('enable-multilib')}";
     }
 
     if $s.get('enable-chaotic-aur') {
