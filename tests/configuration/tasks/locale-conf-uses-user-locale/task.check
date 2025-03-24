@@ -4,6 +4,10 @@ generator: <<RAKU
 !raku
 
 for qw(LC_COLlATE LC_TYPE LC_MESSAGES LC_NUMERIC LANG) -> $i {
+   # in Raku you can use double quotes " instead of \ to guard special symbols
+   # so instead of \.
+   # you can write "."
+   # etc 
    say "regexp: ^^ \"$i={config()<locale>}\" \".\" \"UTF-8\" \\s* \$\$";
 }
 RAKU
