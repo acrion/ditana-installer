@@ -1,20 +1,16 @@
 # grep: ^^ "LANG=" "${locale}" ".UTF-8" $$
 
-within: ^^ "LC_COLLATE=" (\S+) $$
-    ~regexp: (\S+)
-end:
+# instead of within: expressions
+# we could use just regexps: here
+# as we already have all the captured data in place if regexp is satisfied
 
-within: ^^ "LC_CTYPE=" (\S+) $$
-    ~regexp: (\S+)
-end:
+~regexp: ^^ "LC_COLLATE=" (\S+) $$
 
-within: ^^ "LC_MESSAGES=" (\S+) $$
-    ~regexp: (\S+)
-end:
+~regexp: ^^ "LC_CTYPE=" (\S+) $$
 
-within: ^^ "LC_NUMERIC=" (\S+) $$
-    ~regexp: (\S+)
-end:
+~regexp: ^^ "LC_MESSAGES=" (\S+) $$
+
+~regexp: ^^ "LC_NUMERIC=" (\S+) $$
 
 generator: <<RAKU
 !raku
