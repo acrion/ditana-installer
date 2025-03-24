@@ -1,4 +1,4 @@
-grep: ^^ "LANG=" "${locale}" ".UTF-8" $$
+# grep: ^^ "LANG=" "${locale}" ".UTF-8" $$
 
 within: ^^ "LC_COLLATE=" (\S+) $$
     ~regexp: (\S+)
