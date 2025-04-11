@@ -1537,6 +1537,18 @@
             "default-value": true
         },
         {
+            "name": "install-protonvpn",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install ProtonVPN",
+            "long-description": "Install ProtonVPN, a secure VPN service with strong privacy features and servers in over 110 countries. It offers NetShield Ad-blocker to filter ads, trackers, and malware before they reach your device. Features include high-speed connections via their 10 Gbps network with VPN Accelerator technology, strict no-logs policy backed by Swiss privacy laws, and Stealth protocol for bypassing censorship. An account from https://protonvpn.com is required for full functionality.",
+            "license-category": "CLOSED",
+            "arch-packages": [
+                "proton-vpn-gtk-app"
+            ],
+            "available": "`enable-network AND install-desktop-environment`",
+            "default-value": false
+        },
+        {
             "name": "install-expressvpn",
             "dialog-name": "Network and Security Tools",
             "short-description": "Install ExpressVPN",
@@ -1681,7 +1693,7 @@
             "default-value": true
         },
         {
-            // TODO move ranger configuration from /media/stefan/data/Documents/git/my-projects/acrion/ditana/packages/002-ditana-config-xfce/pkg/ditana-config-xfce/usr/share/ditana/xfce-first-login.sh
+            // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
             // to raku, depending on `install-desktop-environment`
             "name": "install-ranger",
             "dialog-name": "Terminal Tools and Utilities",
