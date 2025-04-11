@@ -1,63 +1,145 @@
-grep: ^^ "LANG=" "${locale}" ".UTF-8" $$
+# grep: ^^ "LANG=" "${locale}" ".UTF-8" $$
 
-within: ^^ "LC_COLLATE=" (\S+) $$
-    ~regexp: (\S+)
-end:
+# instead of within: expressions
+# we could use just regexps: here
+# as we already have all the captured data in place if regexp is satisfied
 
-within: ^^ "LC_CTYPE=" (\S+) $$
-    ~regexp: (\S+)
-end:
+~regexp: ^^ "LC_COLLATE=" (\S+) $$
 
-within: ^^ "LC_MESSAGES=" (\S+) $$
-    ~regexp: (\S+)
-end:
 
-within: ^^ "LC_NUMERIC=" (\S+) $$
-    ~regexp: (\S+)
-end:
+# generators and code inlines don't share variables as normal Raku programm does, but we can use get_state(), update_state(state)
+# to share, pass state between different generators, see code below
 
 generator: <<RAKU
 !raku
-my $c_locale_count = 0;
-my $user_locale_count = 0;
 
-if matched(1) {
-    if capture(1)[0] eq 'C.UTF-8' {
-        $c_locale_count++;
-    } elsif capture(1)[0] eq config()<locale> ~ '.UTF-8' {
-        $user_locale_count++;
-    }
-}
+my $s = %(
+  :0c_locale_count,
+  :0user_locale_count,
+);
 
-if matched(2) {
-    if capture(2)[0] eq 'C.UTF-8' {
-        $c_locale_count++;
-    } elsif capture(2)[0] eq config()<locale> ~ '.UTF-8' {
-        $user_locale_count++;
-    }
-}
+# state, saved into
+# file system so that other
+# generators/code inline
+# could pick it up via
+# get_state() function
 
-if matched(3) {
-    if capture(3)[0] eq 'C.UTF-8' {
-        $c_locale_count++;
-    } elsif capture(3)[0] eq config()<locale> ~ '.UTF-8' {
-        $user_locale_count++;
-    }
-}
+# save initial state
+# with zero counters 
 
-if matched(4) {
-    if capture(4)[0] eq 'C.UTF-8' {
-        $c_locale_count++;
-    } elsif capture(4)[0] eq config()<locale> ~ '.UTF-8' {
-        $user_locale_count++;
+update_state($s);
+
+if matched() {
+    
+    if capture()[0] eq 'C.UTF-8' {
+        $s<c_locale_count>++;
+    } elsif capture()[0] eq config()<locale> ~ '.UTF-8' {
+        $s<user_locale_count>++;
     }
+    update_state($s);
 }
+RAKU
+
+~regexp: ^^ "LC_CTYPE=" (\S+) $$
+
+generator: <<RAKU
+!raku
+
+# pick up state from 
+# previous generator
+
+my $s = get_state();
+
+# the rest is the same as 
+# with previous generator
+# just update counters
+
+if matched() {
+    
+    if capture()[0] eq 'C.UTF-8' {
+        $s<c_locale_count>++;
+    } elsif capture()[0] eq config()<locale> ~ '.UTF-8' {
+        $s<user_locale_count>++;
+    }
+    update_state($s);
+}
+RAKU
+
+
+~regexp: ^^ "LC_MESSAGES=" (\S+) $$
+
+generator: <<RAKU
+!raku
+
+# pick up state from 
+# previous generator
+
+my $s = get_state();
+
+# the rest is the same as 
+# with previous generator
+# just update counters
+
+if matched() {
+    
+    if capture()[0] eq 'C.UTF-8' {
+        $s<c_locale_count>++;
+    } elsif capture()[0] eq config()<locale> ~ '.UTF-8' {
+        $s<user_locale_count>++;
+    }
+    update_state($s);
+}
+RAKU
+
+~regexp: ^^ "LC_NUMERIC=" (\S+) $$
+
+generator: <<RAKU
+!raku
+
+# pick up state from 
+# previous generator
+
+my $s = get_state();
+
+# the rest is the same as 
+# with previous generator
+# just update counters
+
+if matched() {
+    
+    if capture()[0] eq 'C.UTF-8' {
+        $s<c_locale_count>++;
+    } elsif capture()[0] eq config()<locale> ~ '.UTF-8' {
+        $s<user_locale_count>++;
+    }
+    update_state($s);
+}
+RAKU
+
+
+# now generate assert: 
+# predicates based on counters
+# statistic
+
+generator: <<RAKU
+!raku
+
+# pick up state from 
+# previous generators
+
+my $s = get_state();
+
+# pay attention that 
+# Raku uses ?? ... !! for ternary 
+# operator , it differs from what
+# you are probaly used to in Perl
+# ? .. : 
 
 if config()<use_c_utf8> eq 'y' {
-    say "assert: $c_locale_count LC_ variables using C.UTF-8";
-    say "assert: ", ($c_locale_count == 4 ? 1 : 0), " all LC_COLLATE, LC_CTYPE, LC_MESSAGES, LC_NUMERIC use C.UTF-8";
+    say "note: $c_locale_count LC_ variables found using C.UTF-8";
+    say "assert: ", ($c_locale_count == 4 ?? 1 !! 0), " all LC_COLLATE, LC_CTYPE, LC_MESSAGES, LC_NUMERIC use C.UTF-8";
 } else {
-    say "assert: $user_locale_count LC_ variables using user locale";
-    say "assert: ", ($user_locale_count == 4 ? 1 : 0), " all LC_COLLATE, LC_CTYPE, LC_MESSAGES, LC_NUMERIC use user locale";
+    say "note: $user_locale_count LC_ variables using user locale";
+    say "assert: ", ($user_locale_count == 4 ?? 1 !!  0), " all LC_COLLATE, LC_CTYPE, LC_MESSAGES, LC_NUMERIC use user locale";
 }
 RAKU

@@ -2,13 +2,13 @@ note: locale.conf should use user locale for all categories
 begin:
 generator: <<RAKU
 !raku
-print q:c«
-regexp: ^^ LC_COLLATE\= {config()<locale>} \. UTF\-8 \s* $$
-regexp: ^^ LC_COLLATE\= {config()<locale>} \. UTF\-8 \s* $$
-regexp: ^^ LC_CTYPE\= {config()<locale>} \. UTF\-8 \s* $$
-regexp: ^^ LC_MESSAGES\= {config()<locale>} \. UTF\-8 \s* $$
-regexp: ^^ LC_NUMERIC\= {config()<locale>} \. UTF\-8 \s* $$
-regexp: ^^ LANG\= {config()<locale>} \. UTF\-8 \s* $$
-»
+
+for qw(LC_COLlATE LC_TYPE LC_MESSAGES LC_NUMERIC LANG) -> $i {
+   # in Raku you can use double quotes " instead of \ to guard special symbols
+   # so instead of \.
+   # you can write "."
+   # etc 
+   say "regexp: ^^ \"$i={config()<locale>}\" \".\" \"UTF-8\" \\s* \$\$";
+}
 RAKU
 end:
