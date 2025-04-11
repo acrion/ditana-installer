@@ -1,5 +1,6 @@
 #!raku
 
+copy "examples/locale.conf", "/tmp/locale.conf";
 copy "examples/locale.gen", "/tmp/locale.gen";
 
 task-run "tasks/run-ansible", %(

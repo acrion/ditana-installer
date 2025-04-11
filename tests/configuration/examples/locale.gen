@@ -122,7 +122,7 @@
 #de_BE.UTF-8 UTF-8  
 #de_BE ISO-8859-1  
 #de_BE@euro ISO-8859-15  
-#de_CH.UTF-8 UTF-8
+#de_CH.UTF-8 UTF-8  
 #de_CH ISO-8859-1  
 #de_DE.UTF-8 UTF-8  
 #de_DE ISO-8859-1  
@@ -168,7 +168,7 @@
 #en_SC.UTF-8 UTF-8  
 #en_SG.UTF-8 UTF-8  
 #en_SG ISO-8859-1  
-#en_US.UTF-8 UTF-8
+#en_US.UTF-8 UTF-8  
 #en_US ISO-8859-1  
 #en_ZA.UTF-8 UTF-8  
 #en_ZA ISO-8859-1  
@@ -325,12 +325,14 @@
 #lo_LA UTF-8  
 #lt_LT.UTF-8 UTF-8  
 #lt_LT ISO-8859-13  
+#ltg_LV.UTF-8 UTF-8  
 #lv_LV.UTF-8 UTF-8  
 #lv_LV ISO-8859-13  
 #lzh_TW UTF-8  
 #mag_IN UTF-8  
 #mai_IN UTF-8  
 #mai_NP UTF-8  
+#mdf_RU UTF-8  
 #mfe_MU UTF-8  
 #mg_MG.UTF-8 UTF-8  
 #mg_MG ISO-8859-15  
@@ -406,6 +408,7 @@
 #sah_RU UTF-8  
 #sat_IN UTF-8  
 #sc_IT UTF-8  
+#scn_IT UTF-8  
 #sd_IN UTF-8  
 #sd_IN@devanagari UTF-8  
 #se_NO UTF-8  
