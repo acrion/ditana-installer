@@ -1,15 +1,13 @@
 note: locale.conf should use C.UTF-8 for specific categories
 
-begin:
-
-regexp: ^^ LC_COLLATE\= C\.UTF\-8 \s* $$
-regexp: ^^ LC_CTYPE\= C\.UTF\-8 \s* $$
-regexp: ^^ LC_MESSAGES\= C\.UTF\-8 \s* $$
-regexp: ^^ LC_NUMERIC\= C\.UTF\-8 \s* $$
-
 generator: <<RAKU
 !raku
-say q:c«regexp: ^^ LANG\= {config()<locale>} \. UTF\-8 \s* $$»
-RAKU
+my $locale = config()<locale>;
 
-end:
+# Generate all patterns via generator (not as direct regexp: statements)
+say "regexp: ^^ LC_COLLATE\\= C\\.UTF\\-8 \\s* \$\$";
+say "regexp: ^^ LC_CTYPE\\= C\\.UTF\\-8 \\s* \$\$";
+say "regexp: ^^ LC_MESSAGES\\= C\\.UTF\\-8 \\s* \$\$";
+say "regexp: ^^ LC_NUMERIC\\= C\\.UTF\\-8 \\s* \$\$";
+say "regexp: ^^ LANG\\= $locale\\.UTF\\-8 \\s* \$\$";
+RAKU

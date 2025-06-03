@@ -21,17 +21,23 @@
 - hosts: localhost
   connection: local
   tasks:
+  - name: Check if locale exists in locale.gen
+    shell: grep -E '^\s*#?\s*{{ locale }}.UTF-8\s+UTF-8' {{ locale_gen_path | default('/mnt/etc/locale.gen') }}
+    register: locale_check
+    failed_when: false
+    changed_when: false
+
+  - name: Fail if the locale does not exist in locale.gen
+    fail:
+      msg: "Error: {{ locale }}.UTF-8 UTF-8 does not exist in {{ locale_gen_path | default('/mnt/etc/locale.gen') }}"
+    when: locale_check.rc != 0
+
   - name: Activate a specific locale
     lineinfile:
       path: "{{ locale_gen_path | default('/mnt/etc/locale.gen') }}"
       regexp: '^\s*#\s*{{ locale }}.UTF-8\s+UTF-8'
       line: '{{ locale }}.UTF-8 UTF-8'
-    register: locale_activation
-
-  - name: Fail if the locale does not exist in locale.gen
-    fail:
-      msg: "Error: {{ locale }}.UTF-8 UTF-8 does not exist in {{ locale_gen_path | default('/mnt/etc/locale.gen') }}"
-    when: not locale_activation.changed
+    when: locale_check.rc == 0
 
   - name: Set locale configuration
     copy:
@@ -71,10 +77,11 @@
         LC_TELEPHONE={{ locale }}.UTF-8
         LC_TIME={{ locale }}.UTF-8
       mode: '0644'
+    when: locale_check.rc == 0
 
   - name: Always activate en_US locale in addition to user locale
     lineinfile:
       path: "{{ locale_gen_path | default('/mnt/etc/locale.gen') }}"
       regexp: '^\s*#\s*en_US.UTF-8\s+UTF-8'
       line: 'en_US.UTF-8 UTF-8'
-    when: locale != 'en_US'
+    when: locale != 'en_US' and locale_check.rc == 0

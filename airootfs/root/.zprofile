@@ -24,4 +24,5 @@ chmod +x bind-mount/root/chroot-install.sh
 chmod +x bind-mount/root/sign-ditana.sh
 chmod +x folders/usr/share/ditana/create-debug-user.sh
 chmod +x folders/usr/share/ditana/initialize-system-as-root.sh
+chmod +x .raku/bin/s6
 bash ./run-ditana-installer.sh

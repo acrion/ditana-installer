@@ -3,6 +3,7 @@
 ## Preparation
 
 ```
+zef install Sparrow6
 zef install Tomty
 export SP6_REPO=https://sparrowhub.io/repo
 ```
@@ -23,6 +24,13 @@ Run single test
 
 ```
 tomty ansible-enable-arch-multilib-repo-01
+```
+
+## Updating
+
+```
+zef upgrade Sparrow6
+zef upgrade Tomty
 ```
 
 # See also
