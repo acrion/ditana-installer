@@ -40,3 +40,10 @@
       regexp: '^\s*#?\s*\[multilib\]\s*\n\s*#?\s*Include\s*=\s*/etc/pacman.d/mirrorlist'
       replace: '\n[multilib]\nInclude = /etc/pacman.d/mirrorlist'
     when: enable_multilib == "y"
+
+  - name: Disable Arch multilib repo if enable_multilib is n
+    replace:
+      path: "{{ config_path | default('/etc/pacman.conf') }}"
+      regexp: '^\s*#?\s*\[multilib\]\s*\n\s*#?\s*Include\s*=\s*/etc/pacman.d/mirrorlist'
+      replace: '\n#[multilib]\n#Include = /etc/pacman.d/mirrorlist'
+    when: enable_multilib == "n"
