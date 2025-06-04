@@ -1,5 +1,0 @@
-note: timeout should be set
-generator: <<RAKU
-!raku
-say q[regexp: ^^ \s* "GRUB_TIMEOUT=" ], config()<timeout>, q[ \s* $$];
-RAKU

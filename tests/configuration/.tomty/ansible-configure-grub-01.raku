@@ -8,7 +8,9 @@ task-run "tasks/run-ansible", %(
 
 );
 
-task-run "tasks/grub-timeout", %(
+task-run "tasks/grub-config-check", %(
   :path</tmp/grub>,
   :20timeout,
+  :kernel_options<abc>,
 );
+

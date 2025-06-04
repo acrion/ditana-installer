@@ -1,0 +1,15 @@
+note: timeout should be set
+
+generator: <<RAKU
+!raku
+say q[regexp: ^^ \s* "GRUB_TIMEOUT=" ], config()<timeout>, q[ \s* $$];
+
+if config()<kernel_options> {
+    say "note: kernel_options should be set";
+    say 
+    q|regexp: ^^ \s* "GRUB_CMDLINE_LINUX_DEFAULT="\"|, 
+    " ",
+    '"', config()<kernel_options>, '" \"', 
+    q| \s* $$|;
+}
+RAKU
