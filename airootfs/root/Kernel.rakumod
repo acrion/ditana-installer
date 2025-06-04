@@ -33,6 +33,9 @@ sub create-kernel-configuration() is export {
     }
 
     my $conf-content = "";
+
+    $conf-content ~= "net.ipv6.conf.all.accept_ra=1\n"
+    $conf-content ~= "net.ipv6.conf.default.accept_ra=1\n"
     
     if $s.get("kernel-option-sysrq") { $conf-content ~= "kernel.sysrq=1\n" }
     if $s.get("kernel-option-vfsca") { $conf-content ~= "vm.vfs_cache_pressure=50\n" }
