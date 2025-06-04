@@ -15,6 +15,12 @@ if config()<kernel_options> {
 
 if config()<enable_crypto_disk> {
     say "note: crypto disk should be enabled";
-    say q|regexp: ^^ \s "GRUB_ENABLE_CRYPTODISK=y" \s* $$|;
+    say q|regexp: ^^ \s* "GRUB_ENABLE_CRYPTODISK=y" \s* $$|;
 }
+
+if config()<enable_os_prober> {
+    say "note: os prober should be enabled";
+    say q|regexp: ^^ \s* "GRUB_DISABLE_OS_PROBER=false" \s* $$|;
+}
+
 RAKU
