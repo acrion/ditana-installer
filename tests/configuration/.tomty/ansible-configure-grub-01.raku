@@ -12,5 +12,6 @@ task-run "tasks/grub-config-check", %(
   :path</tmp/grub>,
   :20timeout,
   :kernel_options<abc>,
+  :enable_crypto_disk,
 );
 

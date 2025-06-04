@@ -12,4 +12,9 @@ if config()<kernel_options> {
     '"', config()<kernel_options>, '" \"', 
     q| \s* $$|;
 }
+
+if config()<enable_crypto_disk> {
+    say "note: crypto disk should be enabled";
+    say q|regexp: ^^ \s "GRUB_ENABLE_CRYPTODISK=y" \s* $$|;
+}
 RAKU
