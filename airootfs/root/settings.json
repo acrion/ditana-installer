@@ -1677,7 +1677,7 @@
             "long-description": "Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "bat", "bc", "bind", "expect", "git-lfs", "jq", "graphviz", "grep", "htop", "img2pdf", "less", "lsof", "lua", "man-db", "mediainfo", "ncdu", "neovim", "perl-image-exiftool", "rsync", "shellcheck", "sed", "turbostat", "ugrep"
+                "bat", "bc", "bind", "expect", "git-lfs", "jq", "graphviz", "grep", "htop", "img2pdf", "less", "lsof", "lua", "man-db", "mediainfo", "ncdu", "neovim", "perl-image-exiftool", "rsync", "shellcheck", "sed", "systemctl-tui", "turbostat", "ugrep"
             ],
             "default-value": true
         },
