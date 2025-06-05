@@ -1,0 +1,2 @@
+note: GRUB_DISTRIBUTOR should be set to Ditana
+regexp: ^^ \s* "GRUB_DISTRIBUTOR=\"Ditana\"" \s* $$

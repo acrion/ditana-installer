@@ -1,0 +1,6 @@
+note: Final GRUB configuration after idempotent run
+regexp: ^^ \s* "GRUB_TIMEOUT=20" \s* $$
+regexp: ^^ \s* "GRUB_DISTRIBUTOR=\"Ditana\"" \s* $$
+regexp: ^^ \s* "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"" \s* $$
+regexp: ^^ \s* "GRUB_ENABLE_CRYPTODISK=y" \s* $$
+regexp: ^^ \s* "GRUB_DISABLE_OS_PROBER=false" \s* $$

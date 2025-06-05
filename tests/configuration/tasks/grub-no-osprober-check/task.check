@@ -1,0 +1,8 @@
+note: GRUB_DISABLE_OS_PROBER should remain commented when OS prober is not enabled
+
+# Check that OS prober line is commented
+regexp: ^^ \s* \x[23] GRUB_DISABLE_OS_PROBER "=" .*? $$
+
+# Also check that GRUB_ENABLE_CRYPTODISK is enabled (since encrypt_root_partition=y)
+note: GRUB_ENABLE_CRYPTODISK should be enabled
+regexp: ^^ \s* "GRUB_ENABLE_CRYPTODISK=y" \s* $$

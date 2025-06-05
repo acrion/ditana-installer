@@ -1,0 +1,20 @@
+# Check that the second run results in no changes
+note: checking idempotency - should have changed=0
+regexp: ^^ "localhost" .* "changed=0" .* $$
+
+# Also check exit code
+within: ^^ exit_code ":" " " (\S+) $$
+    ~regexp: (\d+)
+end:
+
+generator: <<RAKU
+!raku
+if matched() {
+    my $code = capture()[0].Int;
+    if $code == 0 {
+        say "assert: 1 idempotent run successful";
+    } else {
+        say "assert: 0 idempotent run successful";
+    }
+}
+RAKU

@@ -1,0 +1,8 @@
+note: GRUB_ENABLE_CRYPTODISK should remain commented when encryption is disabled
+
+# Check that GRUB_ENABLE_CRYPTODISK line is still commented
+regexp: ^^ \s* \x[23] GRUB_ENABLE_CRYPTODISK "=" .*? $$
+
+# Verify kernel options are set correctly
+note: kernel options should be set to quiet splash
+regexp: ^^ \s* "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"" \s* $$
