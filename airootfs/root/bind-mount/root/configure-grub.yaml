@@ -23,32 +23,32 @@
   tasks:
     - name: Set GRUB_TIMEOUT to 20
       lineinfile:
-        path: /etc/default/grub
+        path: "{{ grub_path | default('/etc/default/grub') }}"
         regexp: '^GRUB_TIMEOUT=[0-9]*'
         line: 'GRUB_TIMEOUT=20'
 
     - name: Set GRUB_CMDLINE_LINUX_DEFAULT with kernel options
       lineinfile:
-        path: /etc/default/grub
+        path: "{{ grub_path | default('/etc/default/grub') }}"
         regexp: '^GRUB_CMDLINE_LINUX_DEFAULT=".*"'
         line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ kernel_options }}"'
 
     - name: Change GRUB_DISTRIBUTOR to Ditana
       lineinfile:
-        path: /etc/default/grub
+        path: "{{ grub_path | default('/etc/default/grub') }}"
         regexp: '^GRUB_DISTRIBUTOR="Arch"'
         line: 'GRUB_DISTRIBUTOR="Ditana"'
 
     - name: Enable GRUB cryptodisk
       lineinfile:
-        path: /etc/default/grub
+        path: "{{ grub_path | default('/etc/default/grub') }}"
         regexp: '^#GRUB_ENABLE_CRYPTODISK='
         line: 'GRUB_ENABLE_CRYPTODISK=y'
       when: encrypt_root_partition == "y"
 
     - name: Enable OS prober
       lineinfile:
-        path: /etc/default/grub
+        path: "{{ grub_path | default('/etc/default/grub') }}"
         regexp: '^#?GRUB_DISABLE_OS_PROBER='
         line: 'GRUB_DISABLE_OS_PROBER=false'
       when: enable_os_prober == "y"
