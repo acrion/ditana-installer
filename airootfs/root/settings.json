@@ -617,6 +617,7 @@
                 "pikaur",             // Ditana’s chosen AUR helper for enhanced security
                 "python-defusedxml",  // Enables pikaur to safeguard against XML-related vulnerabilities.
                 "python-pysocks",     // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
+                "rakudo-bin",         // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
                 "terminus-font",      // The terminal font that will be configured.
                 "util-linux"          // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
             ],
@@ -1677,7 +1678,7 @@
             "long-description": "Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "bat", "bc", "bind", "expect", "git-lfs", "jq", "graphviz", "grep", "htop", "img2pdf", "less", "lsof", "lua", "man-db", "mediainfo", "ncdu", "neovim", "perl-image-exiftool", "rsync", "shellcheck", "sed", "turbostat", "ugrep"
+                "bat", "bc", "bind", "expect", "git-lfs", "jq", "graphviz", "grep", "htop", "img2pdf", "less", "lsof", "lua", "man-db", "mediainfo", "ncdu", "neovim", "perl-image-exiftool", "rsync", "shellcheck", "sed", "systemctl-tui", "turbostat", "ugrep"
             ],
             "default-value": true
         },

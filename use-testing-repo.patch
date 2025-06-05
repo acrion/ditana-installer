@@ -5,6 +5,7 @@ index 6cda400..ab1bd18 100755
 @@ -21,7 +21,7 @@
  
  cat <<EOF >>/etc/pacman.conf
+ 
  [ditana]
 -Include = /etc/pacman.d/ditana-mirrorlist
 +Include = /etc/pacman.d/ditana-testing-mirrorlist

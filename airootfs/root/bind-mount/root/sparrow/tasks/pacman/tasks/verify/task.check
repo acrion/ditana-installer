@@ -1,0 +1,37 @@
+note: verify pacman.conf file
+
+begin:
+    ~regexp: ^^ \s* "[multilib]" \s* $$
+    ~regexp: ^^ \s*  "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
+end:
+
+generator: <<RAKU
+!raku
+update_state(%( valid => False ));
+if matched() {
+    say "assert: 1 file has valid structure (uncommented multilib block)";
+    update_state(%( valid => True ));
+} 
+RAKU
+
+begin:
+    ~regexp: ^^ \s* \x[23] \s* "[multilib]" \s* $$
+    ~regexp: ^^ \s* \x[23] \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
+end:
+
+generator: <<RAKU
+!raku
+if matched() {
+    say "assert: 1 file has valid structure (commented multilib block)";
+    update_state(%( valid => True ));
+}
+RAKU
+
+generator: <<RAKU
+!raku
+my $s = get_state();
+if $s<valid> == False {
+    say "note: Missing multilib configuration in pacman.conf";
+    say "assert: 0 file has valid structure";
+}
+RAKU

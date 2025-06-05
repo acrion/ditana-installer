@@ -1,0 +1,27 @@
+within: ^^ "exit_code: " (\S+) $$
+    ~regexp: (\d+)
+end:
+
+generator: <<RAKU
+!raku
+if matched() {
+    my $code = capture()[0].Int;
+    say "assert: 1 valid exit code $code found";
+    if config()<should_fail> {
+        if $code != 0 {
+            say "assert: 1 exit code != 0";
+            say "regexp: \"{config()<error_message>}\"";
+        } else {
+            say "assert: 0 exit code != 0";
+        }
+    } else {
+        if $code == 0 {
+            say "assert: 1 exit code == 0";
+        } else {
+            say "assert: 0 exit code == 0";
+        }
+    }
+} else {
+    say "assert: 0 valid exit code found";
+}
+RAKU
