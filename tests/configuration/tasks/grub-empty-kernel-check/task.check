@@ -1,0 +1,4 @@
+note: GRUB_CMDLINE_LINUX_DEFAULT should be empty
+
+# Check for empty kernel command line
+regexp: ^^ \s* "GRUB_CMDLINE_LINUX_DEFAULT=\"\"" \s* $$

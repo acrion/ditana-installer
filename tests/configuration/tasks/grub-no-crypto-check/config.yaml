@@ -1,0 +1,2 @@
+path: /tmp/grub-no-crypto
+kernel_options: quiet splash
