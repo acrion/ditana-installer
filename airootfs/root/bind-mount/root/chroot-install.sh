@@ -22,6 +22,7 @@
 shopt -s dotglob
 cd "$HOME"
 source settings.sh
+export PATH="$HOME/.raku/bin:$PATH"
 
 {
     set -e
@@ -52,8 +53,8 @@ source settings.sh
 
     mount -a
 
-    echo -e "\033[32m--- Enabling Arch multilib repository --- \033[0m"
-    ansible-playbook -i localhost, enable-arch-multilib-repo.yaml -e "enable_multilib=$ENABLE_MULTILIB"
+    echo -e "\033[32m--- Configuring Arch multilib repository --- \033[0m"
+    s6 --task-run sparrow/tasks/pacman@enable_multilib=$ENABLE_MULTILIB
     ./enable-chaotic-aur.sh "$ENABLE_CHAOTIC_AUR"
     echo -e "\033[32m--- Enabling the Ditana repository --- \033[0m"
     ./enable-ditana.sh

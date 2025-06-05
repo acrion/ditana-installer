@@ -20,6 +20,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 cat <<EOF >>/etc/pacman.conf
+
 [ditana]
 Include = /etc/pacman.d/ditana-mirrorlist
 EOF

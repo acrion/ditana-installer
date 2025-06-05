@@ -617,6 +617,7 @@
                 "pikaur",             // Ditana’s chosen AUR helper for enhanced security
                 "python-defusedxml",  // Enables pikaur to safeguard against XML-related vulnerabilities.
                 "python-pysocks",     // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
+                "rakudo-bin",         // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
                 "terminus-font",      // The terminal font that will be configured.
                 "util-linux"          // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
             ],

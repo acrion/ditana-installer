@@ -46,7 +46,7 @@ function list_gpg_keys() {
 import gnupg
 
 gpg = gnupg.GPG()
-keys = gpg.list_keys()
+keys = gpg.list_keys(True)
 for key in keys:
     key_id = key['keyid']
     full_uid = key['uids'][0]
@@ -58,14 +58,23 @@ list_special_packages() {
     local firmware_pkgs=()
     local module_pkgs=()
     
-    sudo pkgfile --update &>/dev/null
+    sudo pacman -Fy >/dev/null
+    sudo pkgfile --update >/dev/null
     
     while read -r package; do
-        if pkg_files=$(pkgfile -l "$package" 2>/dev/null); then
+        if pkg_files=$(timeout 3s pkgfile -l "$package" 2>/dev/null); then
             if echo "$pkg_files" | grep -q "/usr/lib/firmware"; then
                 firmware_pkgs+=("$package")
             fi
             if echo "$pkg_files" | grep -q "/usr/lib/modules"; then
+                module_pkgs+=("$package")
+            fi
+        elif pkg_files=$(pacman -Fl "$package" 2>/dev/null); then
+            # pacman -Fl output doesn't have leading slashes
+            if echo "$pkg_files" | grep -q "usr/lib/firmware"; then
+                firmware_pkgs+=("$package")
+            fi
+            if echo "$pkg_files" | grep -q "usr/lib/modules"; then
                 module_pkgs+=("$package")
             fi
         fi
@@ -155,7 +164,7 @@ fi
 sudo pkill keyboxd
 
 mkdir -p airootfs/root/.raku
-zef --force-install -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Tomty
+zef --force-install --contained -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
 
 # Delete temporary files from test installations
 rm -f airootfs/root/bind-mount/root/installation-steps.sh

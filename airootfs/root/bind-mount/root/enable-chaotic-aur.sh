@@ -76,6 +76,7 @@ if [[ "$1" == "y" ]]; then
         exit 1
     fi
 
+    echo "" >> /etc/pacman.conf
     echo "[chaotic-aur]" >> /etc/pacman.conf
     echo "Include = /etc/pacman.d/chaotic-mirrorlist" >> /etc/pacman.conf
 fi

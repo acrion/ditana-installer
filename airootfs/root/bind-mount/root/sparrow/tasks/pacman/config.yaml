@@ -1,0 +1,2 @@
+path: /etc/pacman.conf
+enable_multilib: y

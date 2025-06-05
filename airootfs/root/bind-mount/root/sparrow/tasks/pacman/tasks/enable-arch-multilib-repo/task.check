@@ -1,0 +1,34 @@
+note: look up for commented multilib repo(s) lines
+
+begin:
+    ~regexp: ^^ \d+ \s* \x[23] \s* "[multilib]" \s* $$
+    ~regexp: ^^ \d+ \s* \x[23] \s* "Include" \s* "=" \s* "/etc/pacman.d/mirrorlist" \s* $$
+end:
+
+generator: <<RAKU
+!raku
+if matched() {
+    #
+    # NOTE! only update when enable_multilib is "y"
+    # This might change in a future
+    #
+    if config()<enable_multilib> eq "y" {
+        say "note: multilib repo(s) commented lines found";
+        say "note: uncomment first repo";
+        my $l2 = captures-full()<>[0]<index>;
+        my $l1 = $l2 - 1;
+        say "note: lines: [{$l1+1},{$l2+1}]";
+        replace(config()<path>,$l1,"[multilib]");
+        replace(config()<path>,$l2,"Include = /etc/pacman.d/mirrorlist");
+        say q:to /CODE/;
+        code: <<BASH
+        !bash
+            echo "changes"
+            echo "========================================================"
+            cat -n $(config path)
+        BASH
+        CODE
+    } 
+}
+RAKU
+

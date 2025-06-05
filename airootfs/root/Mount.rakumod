@@ -25,9 +25,15 @@ use Settings;
 my @active-mounts;
 
 sub create-bind-mount(Str $source, Str $target) is export {
-    my $target-dir = $target.IO.dirname;
-    mkdir $target-dir unless $target-dir.IO.d;
-    $target.IO.spurt;
+    
+    if $source.IO.d {
+        mkdir $target unless $target.IO.d;
+    } else {
+        my $target-dir = $target.IO.dirname;
+        mkdir $target-dir unless $target-dir.IO.d;
+        $target.IO.spurt;
+    }
+    
     run-and-echo("mount", "--bind", $source, $target);
     @active-mounts.push: $target;
     Logging.echo("Created bind mount from '$source' to '$target'");
@@ -101,6 +107,16 @@ sub configure-bind-mounts() is export {
     # https://github.com/acrion/ditana-filesystem?tab=readme-ov-file#dns-configuration
     create-bind-mount("/etc/resolv.conf", "/mnt/etc/resolv.conf");
 
-    # Bind-mount everything in diretory `bind-mount`.
+    # Bind-mount the Raku module ecosystem to make Sparrow6 available in the chroot environment.
+    # Sparrow6 is required for declarative configuration management, particularly for safely
+    # modifying system configuration files such as GRUB and mkinitcpio.
+    # The modules were pre-installed into /root/.raku during ISO creation via build.sh.
+    # This approach avoids system-wide installation via zef, which would conflict with the
+    # package manager’s file tracking and could lead to inconsistencies during system updates.
+    # This follows the same principle as pip on Arch Linux, which refuses system-wide installations
+    # and instead recommends using distribution packages (e.g., 'pacman -S python-xyz').
+    create-bind-mount("/root/.raku", "/mnt/root/.raku");
+
+    # Bind-mount everything in directory `bind-mount`.
     create-recursive-bind-mounts("%*ENV<HOME>/bind-mount".IO);
 }

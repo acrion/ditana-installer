@@ -39,13 +39,10 @@ sub add-repos-and-sync() is export {
     
     run-and-log 'pacman-key', '--init'; # initialize pacman keyring
 
-    if $s.get('enable-multilib') {
-        Logging.log("Enabling Arch multilib repository");
-        run-and-log 'ansible-playbook', 
-            '-i', 'localhost,', 
-            "%*ENV<HOME>/bind-mount/root/enable-arch-multilib-repo.yaml",
-            '-e', "enable_multilib={$s.get('enable-multilib')}";
-    }
+    Logging.log("Configuring Arch multilib repository");
+    run-and-log 's6', 
+        '--task-run', 
+        "%*ENV<HOME>/bind-mount/root/sparrow/tasks/pacman\@enable_multilib={$s.get('enable-multilib') ?? 'y' !! 'n' }";
 
     if $s.get('enable-chaotic-aur') {
         run-and-log "%*ENV<HOME>/bind-mount/root/enable-chaotic-aur.sh", 'y';
