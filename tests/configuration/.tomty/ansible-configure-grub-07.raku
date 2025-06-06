@@ -14,7 +14,7 @@ task-run "tasks/run-ansible", %(
 task-run "tasks/run-ansible", %(
   :playbook<../../airootfs/root/bind-mount/root/configure-grub.yaml>,
   vars => "grub_path=/tmp/grub-idempotent kernel_options='quiet splash' encrypt_root_partition=y enable_os_prober=y",
-  :with-idempotance,
+  :with-idempotency,
 );
 
 task-run "tasks/grub-idempotent-check", %(

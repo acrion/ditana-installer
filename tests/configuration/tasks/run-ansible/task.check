@@ -28,7 +28,7 @@ RAKU
 
 generator: <<RAKU
 !raku
-if config()<with-idempotancy> {
+if config()<with-idempotency> {
 say q:to /CHECK/;
 note: checking idempotency - should have changed=0
 regexp: ^^ "localhost" .* "changed=0" .* $$
