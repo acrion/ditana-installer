@@ -1,3 +1,7 @@
+note: grub distributor should be set correctly
+
+regexp: ^^ \s* "GRUB_DISTRIBUTOR=\"Ditana\"" \s* $$
+
 note: timeout should be set
 
 generator: <<RAKU
