@@ -25,3 +25,13 @@ if matched() {
     say "assert: 0 valid exit code found";
 }
 RAKU
+
+generator: <<RAKU
+!raku
+if config()<with-idempotancy> {
+say q:to /CHECK/;
+note: checking idempotency - should have changed=0
+regexp: ^^ "localhost" .* "changed=0" .* $$
+CHECK
+}
+RAKU
