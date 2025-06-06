@@ -9,6 +9,11 @@ task-run "tasks/run-ansible", %(
   vars => "grub_path=/tmp/grub-comprehensive kernel_options='quiet splash loglevel=3 rd.systemd.show_status=false' encrypt_root_partition=y enable_os_prober=y",
 );
 
-task-run "tasks/grub-comprehensive-check", %(
+task-run "tasks/grub-config-check", %(
   :path</tmp/grub-comprehensive>,
+  :20timeout,
+  kernel_options => "quiet splash loglevel=3 rd.systemd.show_status=false"
+  :enable_crypto_disk,
+  :enable_os_prober,
 );
+

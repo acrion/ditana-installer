@@ -9,6 +9,6 @@ task-run "tasks/run-ansible", %(
   vars => "grub_path=/tmp/grub-empty-kernel kernel_options= encrypt_root_partition=n enable_os_prober=n",
 );
 
-task-run "tasks/grub-empty-kernel-check", %(
+task-run "tasks/grub-empty-kernel-check", (
   :path</tmp/grub-empty-kernel>,
 );

@@ -9,6 +9,8 @@ task-run "tasks/run-ansible", %(
   vars => "grub_path=/tmp/grub-distributor kernel_options=quiet encrypt_root_partition=n enable_os_prober=n",
 );
 
-task-run "tasks/grub-distributor-check", %(
+task-run "tasks/grub-config-check", %(
   :path</tmp/grub-distributor>,
+  :20timeout,
+  :kernel_options<quiet>,
 );

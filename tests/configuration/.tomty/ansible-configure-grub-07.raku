@@ -17,6 +17,11 @@ task-run "tasks/run-ansible", %(
   :with-idempotency,
 );
 
-task-run "tasks/grub-idempotent-check", %(
+task-run "tasks/grub-config-check", %(
   :path</tmp/grub-idempotent>,
+  :20timeout,
+  kernel_options => "quiet splash"
+  :enable_crypto_disk,
+  :enable_os_prober,
 );
+

@@ -35,3 +35,5 @@ regexp: ^^ "localhost" .* "changed=0" .* $$
 CHECK
 }
 RAKU
+
+regexp: ^^ \s* "GRUB_DISTRIBUTOR=\"Ditana\"" \s* $$
