@@ -12,7 +12,7 @@ task-run "tasks/run-ansible", %(
 task-run "tasks/grub-config-check", %(
   :path</tmp/grub-comprehensive>,
   :20timeout,
-  kernel_options => "quiet splash loglevel=3 rd.systemd.show_status=false"
+  kernel_options => "quiet splash loglevel=3 rd.systemd.show_status=false",
   :enable_crypto_disk,
   :enable_os_prober,
 );
