@@ -1471,7 +1471,7 @@
             ],
             "required-by-chroot": true,
             "available": "`enable-multilib`",
-            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
+            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion OR install-pinta`"
         },
 
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"
