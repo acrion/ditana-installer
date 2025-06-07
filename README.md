@@ -35,8 +35,8 @@ This repository (`ditana-installer`) contains the Ditana installer and is based 
 - Key installer scripts:
   - `airootfs/root/main.raku`: Main entry point for the installer.
   - `airootfs/root/folders/root/chroot-install.sh`: Chroot installation script.
-- Ansible playbooks are used for robust and reliable configuration:
-  - `airootfs/root/bind-mount/root/enable-arch-multilib-repo.yaml`
+- [Sparrow6](https://github.com/melezhik/Sparrow6) is used for robust and reliable configuration:
+  - https://github.com/acrion/ditana-installer/airootfs/root/bind-mount/root/sparrow/tasks/pacman
   - `airootfs/root/bind-mount/root/configure-grub.yaml`
   - `airootfs/root/bind-mount/root/configure-mkinitcpio.yaml`
   - `airootfs/root/ansible/configure_locale.yaml`
