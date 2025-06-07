@@ -1,0 +1,31 @@
+note: collect modules info
+~regexp: ^^ \s* "MODULES=(" (.*) ")" \s* $$
+code: <<RAKU
+!raku
+RAKU
+
+note: check for mandotary module parameters
+
+generator: <<CODE
+!raku
+my @mandotary-parameters = [
+    "kms",
+    "[udev || systemd]",
+    "filesystems",
+    "udev",
+    "systemd",
+    "keyboard",
+    "keymap",
+    "consolefont",
+    "encrypt",
+    "sd-vconsole",
+    "sd-encrypt",    
+];
+
+for @mandotary-parameters -> $i {
+    say q[note: check mandotary parameter %p%].subst("%p%",$i);
+    say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
+    say q[regexp: <?wb> "%p%" <?wb> ].subst("%p%",$i);
+    say "end:";
+}
+CODE
