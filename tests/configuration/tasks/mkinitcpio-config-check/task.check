@@ -4,7 +4,34 @@ code: <<RAKU
 !raku
 RAKU
 
-note: check for mandotary module parameters
+generator: <<CODE
+!raku
+my @mods;
+if !matched() {
+   say "assert: 0 MODULES= section found";
+} else {
+   my @mods = capture()[0].split(/s+/);
+}
+update_state(%( mods => @mods ))
+CODE
+
+note: collect hooks info
+~regexp: ^^ \s* "HOOKS=(" (.*) ")" \s* $$
+
+generator: <<CODE
+!raku
+my @hooks;
+if !matched() {
+   say "assert: 0 HOOKS= section found";
+} else {
+   my @hooks = capture()[0].split(/s+/);
+}
+my $s = get_state(); $s<hooks> = @hooks;
+update_state($s)
+CODE
+
+
+note: check for mandotary hooks parameters
 
 generator: <<CODE
 !raku
@@ -12,20 +39,14 @@ my @mandotary-parameters = [
     "kms",
     "[udev || systemd]",
     "filesystems",
-    "udev",
-    "systemd",
-    "keyboard",
-    "keymap",
-    "consolefont",
-    "encrypt",
-    "sd-vconsole",
-    "sd-encrypt",    
-];
+ ];
 
-say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
+say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
 for @mandotary-parameters -> $i {
-    say q[note: check mandotary parameter %p%].subst("%p%",$i);
-    say q[regexp: <?wb> "%p%" <?wb> ].subst("%p%",$i);
+    say q[note: check mandotary hooks parameter %p%].subst("%p%",$i);
+    say q[regexp: <?wb> %p% <?wb> ].subst("%p%",$i);
 }
 say "end:";
 CODE
+
+

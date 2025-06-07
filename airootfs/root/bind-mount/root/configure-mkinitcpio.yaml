@@ -29,86 +29,86 @@
 
 # Fail if expected hooks are not in the /etc/mkinitcpio.conf
     - name: Check if "udev" or "systemd" is in mkinitcpio HOOKS
-      command: grep -E "^HOOKS=.*\b(udev|systemd)\b" /etc/mkinitcpio.conf
+      command: grep -E "^HOOKS=.*\b(udev|systemd)\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: udev_systemd_check
       failed_when: udev_systemd_check.rc != 0
       changed_when: false
 
     - name: Check if "kms" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bkms\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bkms\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: kms_check
       failed_when: kms_check.rc != 0
       changed_when: false
 
     - name: Check if "filesystems" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bfilesystems\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bfilesystems\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: filesystems_check
       failed_when: filesystems_check.rc != 0
       changed_when: false
 
 # Set registers to see if hooks are already there, or not.
     - name: Check if "udev" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\budev\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\budev\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: udev_check
       failed_when: udev_check.rc > 1
       changed_when: false
 
     - name: Check if "systemd" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bsystemd\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bsystemd\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: systemd_check
       failed_when: systemd_check.rc > 1
       changed_when: false
 
     - name: Check if "keyboard" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bkeyboard\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bkeyboard\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: keyboard_check
       failed_when: keyboard_check.rc > 1
       changed_when: false
 
     - name: Check if "keymap" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bkeymap\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bkeymap\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: keymap_check
       failed_when: keymap_check.rc > 1
       changed_when: false
 
     - name: Check if "consolefont" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bconsolefont\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bconsolefont\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: consolefont_check
       failed_when: consolefont_check.rc > 1
       changed_when: false
 
     - name: Check if "encrypt" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bencrypt\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bencrypt\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: encrypt_check
       failed_when: encrypt_check.rc > 1
       changed_when: false
 
     - name: Check if "sd-vconsole" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bsd-vconsole\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bsd-vconsole\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: sd_vconsole_check
       failed_when: sd_vconsole_check.rc > 1
       changed_when: false
 
     - name: Check if "sd-encrypt" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bsd-encrypt\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bsd-encrypt\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: sd_encrypt_check
       failed_when: sd_encrypt_check.rc > 1
       changed_when: false
 
     - name: Check if "zfs" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bzfs\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bzfs\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: zfs_hook_check
       failed_when: false
       changed_when: false
 
     - name: Check if "zfs" is in mkinitcpio MODULES
-      command: grep "^MODULES=.*\bzfs\b" /etc/mkinitcpio.conf
+      command: grep "^MODULES=.*\bzfs\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: zfs_module_check
       failed_when: false
       changed_when: false
 
     - name: Check if "fsck" is in mkinitcpio HOOKS
-      command: grep "^HOOKS=.*\bfsck\b" /etc/mkinitcpio.conf
+      command: grep "^HOOKS=.*\bfsck\b" {{ path | default('/etc/mkinitcpio.conf') }}
       register: fsck_check
       failed_when: false
       changed_when: false
@@ -117,7 +117,7 @@
 
     - name: Insert "zfs" into HOOKS before "filesystems" if filesystem is zfs
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '^(HOOKS=.*\b)filesystems(\b.*)$'
         replace: '\1zfs filesystems\2'
       when:
@@ -126,7 +126,7 @@
 
     - name: Add "zfs" to MODULES if filesystem is zfs
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '^(MODULES=\()(.*?)(\))$'
         replace: '\1\2 zfs\3'
       when:
@@ -135,7 +135,7 @@
 
     - name: Remove "fsck" from HOOKS if filesystem is zfs
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bfsck\b'
         replace: ''
       when:
@@ -166,7 +166,7 @@
 # These hooks need to be added independent from the init system
     - name: For LUKS encryption on all init systems, add keyboard hook after kms hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bkms\b'
         replace: 'kms keyboard'
       when:
@@ -176,7 +176,7 @@
     
     - name: For NVIDIA drivers, except Nouveau, remove the kms hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bkms\b'
         replace: ''
       when:
@@ -186,7 +186,7 @@
 # Modify hooks in case of BusyBox init system
     - name: For a BusyBox init system, replace systemd with udev hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bsystemd\b'
         replace: 'udev'
       when:
@@ -195,7 +195,7 @@
 
     - name: For LUKS or ZFS encryption on BusyBox init system, add keymap hook after keyboard hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bkeyboard\b'
         replace: 'keyboard keymap'
       when:
@@ -205,7 +205,7 @@
 
     - name: For LUKS encryption on BusyBox init system, add consolefont hook after keymap hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bkeymap\b'
         replace: 'keymap consolefont'
       when:
@@ -216,7 +216,7 @@
 
     - name: For LUKS encryption on BusyBox init systems, add encrypt hook before filesystems hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bfilesystems\b'
         replace: 'encrypt filesystems'
       when:
@@ -228,7 +228,7 @@
 # Modify hooks in case of systemd init system
     - name: For a systemd init system, replace udev hook with systemd
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\budev\b'
         replace: 'systemd'
       when:
@@ -238,7 +238,7 @@
 
     - name: For a systemd init system, remove the keymap hook unless it is encrypted ZFS
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bkeymap\b'
         replace: ''
       when:
@@ -248,7 +248,7 @@
 
     - name: For a systemd init system, remove consolefont hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bconsolefont\b'
         replace: ''
       when:
@@ -257,7 +257,7 @@
 
     - name: For LUKS encryption on systemd init system, add sd-vconsole hook after keyboard hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bkeyboard\b'
         replace: 'keyboard sd-vconsole'
       when:
@@ -268,7 +268,7 @@
 
     - name: For LUKS encryption on systemd init system, add sd-encrypt hook before filesystems hook
       replace:
-        path: /etc/mkinitcpio.conf
+        path: "{{ path | default('/etc/mkinitcpio.conf') }}"
         regexp: '\bfilesystems\b'
         replace: 'sd-encrypt filesystems'
       when:
