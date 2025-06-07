@@ -22,10 +22,10 @@ my @mandotary-parameters = [
     "sd-encrypt",    
 ];
 
+say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
 for @mandotary-parameters -> $i {
     say q[note: check mandotary parameter %p%].subst("%p%",$i);
-    say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
     say q[regexp: <?wb> "%p%" <?wb> ].subst("%p%",$i);
-    say "end:";
 }
+say "end:";
 CODE
