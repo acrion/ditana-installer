@@ -1,7 +1,7 @@
 note: looking for commented en_US.UTF-8 line
 
 begin:
-  regexp: ^(\d+)\s+#\s*en_US.UTF-8\s+UTF-8\s*$
+  ~regexp: ^(\d+)\s+
 end:
 
 generator: <<RAKU
