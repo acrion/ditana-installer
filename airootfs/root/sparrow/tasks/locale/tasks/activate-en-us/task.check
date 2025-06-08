@@ -1,4 +1,4 @@
-note: activate-locale: looking for commented locale line
+note: activate-locale: looking for commented en_US.UTF-8 line
 
 generator: <<RAKU
 !raku
