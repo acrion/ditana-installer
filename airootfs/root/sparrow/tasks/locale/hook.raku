@@ -1,6 +1,6 @@
 #!raku
 
-say "note: configuring locale $(config()<locale>) (use_c_utf8: $(config()<use_c_utf8>))";
+set_stdout("configuring locale $(config()<locale>) (use_c_utf8: $(config()<use_c_utf8>))");
 
 run_task "check-locale";
 run_task "activate-locale";

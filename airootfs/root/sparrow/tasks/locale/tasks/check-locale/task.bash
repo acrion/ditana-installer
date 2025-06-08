@@ -1,0 +1,1 @@
+cat $(config locale_gen_path)
