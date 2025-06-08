@@ -1,23 +1,23 @@
 note: looking for commented locale line
 
 begin:
-  regexp: ^(\d+)\s+#\s*$(config locale).UTF-8\s+UTF-8\s*$
+  regexp: ^(\d+)\s+#\s*{config()<locale>}.UTF-8\s+UTF-8\s*$
 end:
 
 generator: <<RAKU
 !raku
 if matched() {
-    say "note: found commented $(config locale).UTF-8 line";
+    say "note: found commented {config()<locale>}.UTF-8 line";
     my $line_num = captures()<>[0] - 1;
     
-    my @lines = $(config locale_gen_path).IO.lines;
-    @lines[$line_num] = "$(config locale).UTF-8 UTF-8";
-    $(config locale_gen_path).IO.spurt(@lines.join("\n") ~ "\n");
-    #replace( $(config locale_gen_path), captures-full()[0]<index>, $new_line );
+    my @lines = config()<locale_gen_path>.IO.lines;
+    @lines[$line_num] = "{config()<locale>}.UTF-8 UTF-8";
+    config()<locale_gen_path>.IO.spurt(@lines.join("\n") ~ "\n");
+    #replace( config()<locale_gen_path>, captures-full()[0]<index>, $new_line );
     
-    say "note: activated locale $(config locale).UTF-8";
+    say "note: activated locale {config()<locale>}.UTF-8";
 } else {
-    say "note: locale $(config locale).UTF-8 is already active";
+    say "note: locale {config()<locale>}.UTF-8 is already active";
 }
 
 RAKU

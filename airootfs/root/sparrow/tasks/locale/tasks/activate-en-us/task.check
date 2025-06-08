@@ -10,10 +10,10 @@ if matched() {
     say "note: found commented en_US.UTF-8 line";
     my $line_num = captures()<>[0] - 1;
     
-    my @lines = $(config locale_gen_path).IO.lines;
+    my @lines = config()<locale_gen_path>.IO.lines;
     @lines[$line_num] = "en_US.UTF-8 UTF-8";
-    $(config locale_gen_path).IO.spurt(@lines.join("\n") ~ "\n");
-    #replace( $(config locale_gen_path), captures-full()[0]<index>, $new_line );
+    config()<locale_gen_path>.IO.spurt(@lines.join("\n") ~ "\n");
+    #replace( config()<locale_gen_path>, captures-full()[0]<index>, $new_line );
     
     say "note: activated en_US.UTF-8";
 } else {
