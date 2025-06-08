@@ -1,0 +1,22 @@
+note: looking for commented en_US.UTF-8 line
+
+begin:
+  regexp: ^(\d+)\s+#\s*en_US.UTF-8\s+UTF-8\s*$
+end:
+
+generator: <<RAKU
+
+if matched() {
+    say "note: found commented en_US.UTF-8 line";
+    my $line_num = captures()<>[0] - 1;
+    
+    my @lines = $(config locale_gen_path).IO.lines;
+    @lines[$line_num] = "en_US.UTF-8 UTF-8";
+    $(config locale_gen_path).IO.spurt(@lines.join("\n") ~ "\n");
+    
+    say "note: activated en_US.UTF-8";
+} else {
+    say "note: en_US.UTF-8 is already active";
+}
+
+RAKU

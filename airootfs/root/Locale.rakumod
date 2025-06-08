@@ -196,15 +196,9 @@ sub apply-locale() is export {
     my $locale = Settings.instance.get("locale");
     my $use-c-utf8 = Settings.instance.get("standardized-locale") ?? "y" !! "n";
 
-    my $proc = run "ansible-playbook",
-        "-i", "localhost,",
-        "ansible/configure_locale.yaml",
-        "-e", "locale=$locale",
-        "-e", "use_c_utf8=$use-c-utf8",
-        :out, :err;
-    
-    my $log = $proc.out.slurp(:close);
-    Logging.echo($log);
+    run-and-log 's6', 
+        '--task-run', 
+        "%*ENV<HOME>/sparrow/tasks/locale\@locale=$locale,use_c_utf8=$use-c-utf8";
 
     "%*ENV<HOME>/mnt/etc/xdg/ditana".IO.mkdir;
     "%*ENV<HOME>/mnt/etc/xdg/ditana/default_locale_description".IO.spurt(Settings.instance.get('main-locale-description'));
