@@ -1,0 +1,6 @@
+generator: <<RAKU
+!raku
+say "note: check locale";
+say q[regexp: ^^ \s*   \x[23]  \s*  %locale% '.UTF-8' \s+ 'UTF-8' \s* $$].
+subst("%locale%", config()<locale>);
+RAKU

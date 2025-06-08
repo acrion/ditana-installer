@@ -1,23 +1,23 @@
-note: looking for commented en_US.UTF-8 line
+note: activate-locale: looking for commented locale line
 
-begin:
-  regexp: ^(\d+)\s+#\s*en_US.UTF-8\s+UTF-8\s*$
-end:
+generator: <<RAKU
+!raku
+say q[~regexp: ^^ \s+ \d+ \s+ \x[23] "en_US.UTF-8" \s+ "UTF-8" \s* $$]
+RAKU
 
 generator: <<RAKU
 !raku
 if matched() {
     say "note: found commented en_US.UTF-8 line";
-    my $line_num = captures()<>[0] - 1;
-    
-    my @lines = config()<locale_gen_path>.IO.lines;
-    @lines[$line_num] = "en_US.UTF-8 UTF-8";
-    config()<locale_gen_path>.IO.spurt(@lines.join("\n") ~ "\n");
-    #replace( config()<locale_gen_path>, captures-full()[0]<index>, $new_line );
-    
-    say "note: activated en_US.UTF-8";
+    replace( 
+      config()<locale_gen_path>, 
+      captures-full()[0]<index>, 
+      "en_US.UTF-8 UTF-8" 
+    );  
+    say "note: activated locale en_US.UTF-8";
+    say "note: file {config()<locale_gen_path>} updated";
 } else {
-    say "note: en_US.UTF-8 is already active";
+    say "note: locale en_US.UTF-8 is already active";
 }
 
 RAKU
