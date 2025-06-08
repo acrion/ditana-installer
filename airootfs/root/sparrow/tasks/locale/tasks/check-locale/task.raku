@@ -10,4 +10,7 @@ unless $content ~~ $pattern {
   die "Error: {$locale}.UTF-8 UTF-8 does not exist in {$path}";
 }
 
-say "note: locale {$locale} found in {$path}";
+# generator: << RAKU
+# !raku
+# say q[^^ \s*   \x[23]  \s*  %locale% '.UTF-8' \s+ 'UTF-8' \s* $$].subst(“%locale%”, config()<locale>);
+# RAKU
