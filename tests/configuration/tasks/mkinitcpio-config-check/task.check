@@ -6,13 +6,15 @@ RAKU
 
 generator: <<CODE
 !raku
-my @mods;
+my %mods;
 if !matched() {
-   say "assert: 0 MODULES= section found";
+   say "note: 0 MODULES= section found";
 } else {
-   my @mods = capture()[0].split(/s+/);
+   for capture()[0].split(/s+/) ->$i {
+      %mods{$i} = True;
+   };
 }
-update_state(%( mods => @mods ))
+update_state(%( mods => %mods ))
 CODE
 
 note: collect hooks info
@@ -20,13 +22,15 @@ note: collect hooks info
 
 generator: <<CODE
 !raku
-my @hooks;
+my %hooks;
 if !matched() {
-   say "assert: 0 HOOKS= section found";
+   say "note: 0 HOOKS= section found";
 } else {
-   my @hooks = capture()[0].split(/s+/);
+   for capture()[0].split(/s+/) -> $i {
+      %hooks{$i} = True;
+   };
 }
-my $s = get_state(); $s<hooks> = @hooks;
+my $s = get_state(); $s<hooks> = %hooks;
 update_state($s)
 CODE
 
@@ -49,4 +53,23 @@ for @mandotary-parameters -> $i {
 say "end:";
 CODE
 
+
+generator: <<CODE
+!raku
+
+if config()<with-zfs> {
+   say q[note: zfs related checks];
+   say q[note: ==================];
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   say q[note: Insert "zfs" into HOOKS before "filesystems" if filesystem is zfs];
+   say q[regexp: <?wb> zfs \s filesystems <?wb> ];
+   say "end:";
+   say q[note: Add "zfs" to MODULES if filesystem is zfs];
+   say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
+   say q[regexp: <?wb> zfs  <?wb> ];
+   say "end:";
+   say q[note: ==================];
+}
+
+CODE
 
