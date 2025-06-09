@@ -1,0 +1,24 @@
+note: activate-locale: looking for commented locale line
+
+generator: <<RAKU
+!raku
+say q[~regexp: ^^ \s+ \d+ \s+ \x[23] "%locale%" ".UTF-8" \s+ "UTF-8" \s* $$].
+subst("%locale%",task_var("locale"))
+RAKU
+
+generator: <<RAKU
+!raku
+if matched() {
+    say "note: found commented {task_var("locale")}.UTF-8 line";
+    replace( 
+      config()<locale_gen_path>, 
+      captures-full()[0]<index>, 
+      "{task_var("locale")}.UTF-8 UTF-8" 
+    );  
+    say "note: activated locale {task_var("locale")}.UTF-8";
+    say "note: file {config()<locale_gen_path>} updated";
+} else {
+    say "note: locale {task_var("locale")}.UTF-8 is already active";
+}
+
+RAKU

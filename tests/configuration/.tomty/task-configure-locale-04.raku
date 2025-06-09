@@ -3,9 +3,9 @@
 copy "examples/locale.conf", "/tmp/locale.conf";
 copy "examples/locale.gen", "/tmp/locale.gen";
 
-task-run "tasks/run-ansible", %(
-  :playbook<../../airootfs/root/ansible/configure_locale.yaml>,
-  vars => "locale=en_US use_c_utf8=y locale_gen_path=/tmp/locale.gen locale_conf_path=/tmp/locale.conf",
+task-run "tasks/run-task", %(
+  :task<../../airootfs/root/sparrow/tasks/locale>,
+  vars => "locale=en_US,use_c_utf8=y,locale_gen_path=/tmp/locale.gen,locale_conf_path=/tmp/locale.conf",
 );
 
 task-run "tasks/locale-is-activated", %(
