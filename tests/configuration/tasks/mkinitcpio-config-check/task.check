@@ -63,6 +63,8 @@ if config()<with-zfs> {
    say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
    say q[note: Insert "zfs" into HOOKS before "filesystems" if filesystem is zfs];
    say q[regexp: <?wb> zfs \s filesystems <?wb> ];
+   say q[note: Remove "fsck" from HOOKS if filesystem is zfs];
+   say q[!regexp: <?wb> fsck <?wb> ];
    say "end:";
    say q[note: Add "zfs" to MODULES if filesystem is zfs];
    say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
