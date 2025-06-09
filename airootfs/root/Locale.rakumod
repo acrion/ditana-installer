@@ -21,6 +21,7 @@ use v6.d;
 use Dialogs;
 use Settings;
 use Logging;
+use RunAndLog;
 
 
 sub get-main-locale-description(Str $code --> Str) {
