@@ -3,22 +3,22 @@ note: activate-locale: looking for commented locale line
 generator: <<RAKU
 !raku
 say q[~regexp: ^^ \s+ \d+ \s+ \x[23] "%locale%" ".UTF-8" \s+ "UTF-8" \s* $$].
-subst("%locale%",config()<locale>)
+subst("%locale%",task_var("locale"))
 RAKU
 
 generator: <<RAKU
 !raku
 if matched() {
-    say "note: found commented {config()<locale>}.UTF-8 line";
+    say "note: found commented {task_var("locale")}.UTF-8 line";
     replace( 
       config()<locale_gen_path>, 
       captures-full()[0]<index>, 
-      "{config()<locale>}.UTF-8 UTF-8" 
+      "{task_var("locale")}.UTF-8 UTF-8" 
     );  
-    say "note: activated locale {config()<locale>}.UTF-8";
+    say "note: activated locale {task_var("locale")}.UTF-8";
     say "note: file {config()<locale_gen_path>} updated";
 } else {
-    say "note: locale {config()<locale>}.UTF-8 is already active";
+    say "note: locale {task_var("locale")}.UTF-8 is already active";
 }
 
 RAKU

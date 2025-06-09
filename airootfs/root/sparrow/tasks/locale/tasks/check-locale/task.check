@@ -1,6 +1,16 @@
 generator: <<RAKU
 !raku
 say "note: check locale";
-say q[regexp: ^^ \s*   \x[23]  \s*  %locale% '.UTF-8' \s+ 'UTF-8' \s* $$].
+say q[~regexp: ^^ \s*   \x[23]  \s*  %locale% '.UTF-8' \s+ 'UTF-8' \s* $$].
 subst("%locale%", config()<locale>);
+RAKU
+
+generator: <<RAKU
+!raku
+if matched() {
+    say "assert: 1 valid locale";
+} else {
+    say "note: Error: {config()<locale>}.UTF-8 UTF-8 does not exist in {config()<locale_gen_path>}";
+    say "assert: 0 valid locale";
+}
 RAKU
