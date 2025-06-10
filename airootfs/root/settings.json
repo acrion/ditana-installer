@@ -1471,7 +1471,7 @@
             ],
             "required-by-chroot": true,
             "available": "`enable-multilib`",
-            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion OR install-pinta`"
+            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
         },
 
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"
@@ -1659,6 +1659,18 @@
             ],
             "required-by-chroot": true,
             "default-value": true
+        },
+        {
+            "name": "install-kmscon",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install kmscon userspace console emulator",
+            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
+            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
+            "arch-packages": [
+                "kmscon"
+            ],
+            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
+            "default-value": "`install-desktop-environment`"
         },
         {
             "name": "install-cron",
