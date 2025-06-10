@@ -229,6 +229,8 @@ sub format-and-mount-root-partition(Str $partition) {
         run-and-echo('mkdir', '-p', '/mnt/etc/zfs');
         '/etc/zfs/zpool.cache'.IO.copy('/mnt/etc/zfs/zpool.cache');
         
+        run-and-echo('zpool', 'sync');
+        
         Logging.echo("ZFS Dataset status after mounting (outside arch-chroot)");
         run-and-echo('zfs', 'get', 'mounted,mountpoint,canmount', 
             'ditana-root/ROOT/default', 'ditana-root/HOME/default');
@@ -471,7 +473,10 @@ sub partition-drive() is export {
     $partition-index++;
     if $s.get('uefi') {
         run-and-echo('sgdisk', '-c', "{$partition-index}:ditana-root", "/dev/$install-disk");
-    }    
+    }
+
+    run-and-echo('sync');
+
     format-and-mount-root-partition($s.get('root-partition'));
     
     Logging.log("Finished partitioning.");
