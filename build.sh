@@ -34,6 +34,7 @@ ensure_package_installed() {
 ensure_package_installed python-gnupg
 ensure_package_installed gnupg
 ensure_package_installed pkgfile
+ensure_package_installed zfs-dkms
 
 function list_gpg_keys() {
     # Terminate any running keyboxd process to prevent conflicts with the following user-level GPG operations.
@@ -147,24 +148,33 @@ for i in "${!key_list[@]}"; do
 done
 echo "$(( ${#key_list[@]} + 1 ))) No signing"
 
-read -rp "Choose a key by number for signing or select 'No signing': " choice
+ZEF_SWITCHES=""
+
+read -rp "Choose a key by number for signing or press enter for 'No signing': " choice
 if [[ "$choice" -gt 0 && "$choice" -le "${#key_list[@]}" ]]; then
     IFS=',' read -r selected_key selected_signer <<< "${key_list[$((choice - 1))]}"
     echo "Selected GPG Key ID: $selected_key"
+
+    zef upgrade Sparrow6
+    zef upgrade Tomty
+    pushd tests/configuration
+    tomty --color --all
+    popd
 else
     echo "No signing selected."
     selected_signer="(none)"
     selected_key=""
+    ZEF_SWITCHES="--/test --/test-depends"
 fi
+
+mkdir -p airootfs/root/.raku
+zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
 
 # Terminate any running keyboxd process to prevent conflicts with root-level GPG operations in mkarchiso.
 # The keyboxd daemon is part of the GnuPG package and is started automatically by GPG whenever the keybox database is accessed.
 # Currently, a user-owned keyboxd process is running, because we accessed it above. It holds locks or permissions that interfere
 # with root-level operations in mkarchiso, leading to conflicts.
 sudo pkill keyboxd
-
-mkdir -p airootfs/root/.raku
-zef --force-install --contained -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
 
 # Delete temporary files from test installations
 rm -f airootfs/root/bind-mount/root/installation-steps.sh
