@@ -4,7 +4,8 @@ index 6cda400..ab1bd18 100755
 +++ b/airootfs/root/bind-mount/root/enable-ditana.sh
 @@ -21,7 +21,7 @@
  
- cat <<EOF >>/etc/pacman.conf
+ if ! grep -q "^\[ditana\]" /etc/pacman.conf; then
+     cat <<EOF >>/etc/pacman.conf
  
  [ditana]
 -Include = /etc/pacman.d/ditana-mirrorlist

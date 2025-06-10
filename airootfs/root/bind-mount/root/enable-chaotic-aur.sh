@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
-if [[ "$1" == "y" ]]; then
+if [[ "$1" == "y" ]] && ! grep -q "^\[chaotic-aur\]" /etc/pacman.conf; then
     echo -e "\033[32m--- Enabling and signing the automated building repo for AUR packages (https://github.com/chaotic-aur/packages) --- \033[0m"
 
     execute_with_retries() {
