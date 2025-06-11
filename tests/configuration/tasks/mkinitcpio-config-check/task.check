@@ -1,40 +1,3 @@
-note: collect modules info
-~regexp: ^^ \s* "MODULES=(" (.*) ")" \s* $$
-code: <<RAKU
-!raku
-RAKU
-
-generator: <<CODE
-!raku
-my %mods;
-if !matched() {
-   say "note: 0 MODULES= section found";
-} else {
-   for capture()[0].split(/s+/) ->$i {
-      %mods{$i} = True;
-   };
-}
-update_state(%( mods => %mods ))
-CODE
-
-note: collect hooks info
-~regexp: ^^ \s* "HOOKS=(" (.*) ")" \s* $$
-
-generator: <<CODE
-!raku
-my %hooks;
-if !matched() {
-   say "note: 0 HOOKS= section found";
-} else {
-   for capture()[0].split(/s+/) -> $i {
-      %hooks{$i} = True;
-   };
-}
-my $s = get_state(); $s<hooks> = %hooks;
-update_state($s)
-CODE
-
-
 note: check for mandotary hooks parameters
 
 generator: <<CODE
@@ -56,19 +19,67 @@ CODE
 
 generator: <<CODE
 !raku
+my $hooks = config()<hooks>;
+my $mods = config()<mods>;
 
 if config()<with-zfs> {
+
    say q[note: zfs related checks];
    say q[note: ==================];
+
    say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
-   say q[note: Insert "zfs" into HOOKS before "filesystems" if filesystem is zfs];
-   say q[regexp: <?wb> zfs \s filesystems <?wb> ];
+   if not $hooks{"zfs"}:exists {
+      say q[note: Insert "zfs" into HOOKS before "filesystems" if filesystem is zfs];
+      say q[regexp: <?wb> zfs \s filesystems <?wb>];
+   }
+
    say q[note: Remove "fsck" from HOOKS if filesystem is zfs];
    say q[!regexp: <?wb> fsck <?wb> ];
    say "end:";
+   
    say q[note: Add "zfs" to MODULES if filesystem is zfs];
    say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
    say q[regexp: <?wb> zfs  <?wb> ];
+   
+   say "end:";
+   say q[note: ==================];
+}
+
+if config()<encrypt-root-partition> {
+
+   say q[note: encryption related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   if not $hooks{"keyboard"}:exists {
+      say q[note: For LUKS encryption on all init systems, add keyboard hook after kms hook];
+      say q[regexp: <?wb> kms  \s keyboard <?wb>];
+   }
+
+   say "end:";
+   say q[note: ==================];
+}
+
+if config()<nvidia-but-no-nouveau> {
+
+   say q[note: nvidia related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   say q[note: For NVIDIA drivers, except Nouveau, remove the kms hook];
+   say q[!regexp: <?wb> kms <?wb>];
+   say "end:";
+   say q[note: ==================];
+}
+
+if config()<nvidia-but-no-nouveau> {
+
+   say q[note: nvidia related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   say q[note: For NVIDIA drivers, except Nouveau, remove the kms hook];
+   say q[!regexp: <?wb> kms <?wb>];
    say "end:";
    say q[note: ==================];
 }

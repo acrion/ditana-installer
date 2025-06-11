@@ -1,0 +1,37 @@
+note: collect modules info
+~regexp: ^^ \s* "MODULES=(" (.*) ")" \s* $$
+code: <<RAKU
+!raku
+RAKU
+
+generator: <<CODE
+!raku
+my %mods;
+if !matched() {
+   say "note: 0 MODULES= section found";
+} else {
+   for capture()[0].split(/s+/) ->$i {
+      %mods{$i} = True;
+   };
+}
+update_state(%( mods => %mods ))
+CODE
+
+note: collect hooks info
+~regexp: ^^ \s* "HOOKS=(" (.*) ")" \s* $$
+
+generator: <<CODE
+!raku
+my %hooks;
+if !matched() {
+   say "note: 0 HOOKS= section found";
+} else {
+   for capture()[0].split(/s+/) -> $i {
+      %hooks{$i} = True;
+   };
+}
+my $s = get_state(); $s<hooks> = %hooks;
+update_state($s)
+CODE
+
+
