@@ -33,7 +33,7 @@
         fi
     fi
 
-    if [[ -f /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso ]]; then
+    if [[ -f /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso ]] && systemd-detect-virt -q; then
         echo "Installing VirtualBox guest additions..."
         mkdir -p /tmp/virtualbox-guest
         mount -o loop /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso /tmp/virtualbox-guest/
