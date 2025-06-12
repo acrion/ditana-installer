@@ -951,7 +951,16 @@
             ],
             "spdx-identifiers": "CDDL",
             "required-by-chroot": true,
-            "available": "`install-standard-lts-kernel OR install-standard-stable-kernel OR install-zen-kernel`",
+            // OpenZFS has two compatibility constraints:
+            // (1) Kernel version compatibility. OpenZFS typically supports new kernel versions within days/weeks of release,
+            //     see https://github.com/openzfs/zfs/releases for current status.
+            // (2) DKMS compilation compatibility. While ZFS compiles against standard, lts, and zen kernels, it fails
+            //     against hardened kernels due to broken cross-architecture Kconfig references in the headers package
+            //     (see https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/issues/11 and
+            //     https://aur.archlinux.org/pkgbase/linux-hardened-lts#comment-1028414).
+            // Both constraints can cause installation failures (see runtime check in bind-mount/root/install-and-configure-bootloader.sh)
+            // and system update issues. We restrict ZFS to LTS kernel only for maximum stability.
+            "available": "`install-standard-lts-kernel`",
             "default-value": "`install-standard-lts-kernel`"
         },
         {
@@ -1471,7 +1480,7 @@
             ],
             "required-by-chroot": true,
             "available": "`enable-multilib`",
-            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion OR install-pinta`"
+            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
         },
 
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"
@@ -1659,6 +1668,18 @@
             ],
             "required-by-chroot": true,
             "default-value": true
+        },
+        {
+            "name": "install-kmscon",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install kmscon userspace console emulator",
+            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
+            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
+            "arch-packages": [
+                "kmscon"
+            ],
+            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
+            "default-value": "`install-desktop-environment`"
         },
         {
             "name": "install-cron",

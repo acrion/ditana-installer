@@ -32,7 +32,28 @@ ansible-playbook -i localhost, configure-mkinitcpio.yaml -e "use_init_systemd=$U
 
 if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
     echo -e "\033[32m--- Installing Kernel modules for the Zettabyte File System (zfs-dkms) ---\033[0m"
-    pacman -S --noconfirm zfs-dkms # generates initramfs
+    
+    PACMAN_LOG_FILE=$(mktemp)
+    pacman -S --noconfirm zfs-dkms 2>&1 | tee "$PACMAN_LOG_FILE" # generates initramfs
+    PACMAN_EXIT=${PIPESTATUS[0]}
+    
+    if grep -q "module not found: 'zfs'" "$PACMAN_LOG_FILE"; then
+        echo -e "\033[31m--- ERROR: ZFS modules compilation failed ---\033[0m"
+        echo -e "\033[31m--- This is likely due to kernel version incompatibility with OpenZFS ---\033[0m"
+        echo -e "\033[31m--- Check selected kernel version compatibility with current OpenZFS version on https://github.com/openzfs/zfs/releases ---\033[0m"
+        echo -e "\033[31m--- Installation cannot continue with ZFS filesystem ---\033[0m"
+        rm -f "$PACMAN_LOG_FILE"
+        exit 1
+    fi
+    
+    if [[ $PACMAN_EXIT -ne 0 ]]; then
+        echo -e "\033[31m--- ERROR: pacman failed to install zfs-dkms ---\033[0m"
+        rm -f "$PACMAN_LOG_FILE"
+        exit 1
+    fi
+    
+    rm -f "$PACMAN_LOG_FILE"
+    echo -e "\033[32m--- ZFS modules successfully installed and compiled ---\033[0m"
 
     echo -e "\033[32m--- Installing zfsbootmenu ---\033[0m"
     runuser -u builduser -- pikaur -S zfsbootmenu --noconfirm

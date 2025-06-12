@@ -59,11 +59,11 @@ libfido2
 libpwquality
 librsvg
 libusb-compat
-linux
+linux-lts
 linux-atm
 linux-firmware
 linux-firmware-marvell
-linux-headers
+linux-lts-headers
 livecd-sounds
 lsscsi
 lvm2

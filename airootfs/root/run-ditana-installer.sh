@@ -23,9 +23,31 @@ if [[ "$(whoami)" == "root" ]] && [[ ! -f /tmp/ditana-set-font.sh ]] && blkid -L
     if dialog --yesno "Detected Ditana installation. Enter rescue system?" 5 56; then
         source ./rescue.sh
         exit 0
+    else
+        # Check for unexpected mounts that would interfere with installation
+        UNEXPECTED_MOUNTS=""
+        while IFS= read -r MOUNT; do
+            [[ -z "$MOUNT" ]] && continue
+            [[ "$MOUNT" =~ ^/run/archiso/ ]] && continue
+
+            UNEXPECTED_MOUNTS="${UNEXPECTED_MOUNTS}${MOUNT}\n"
+        done < <(lsblk -no MOUNTPOINTS) 
+        
+        if [[ -n "$UNEXPECTED_MOUNTS" ]]; then
+            dialog --msgbox "Error: Unexpected filesystems are mounted.
+
+The following mounts were detected:
+$(echo -e "$UNEXPECTED_MOUNTS")
+This typically happens when rescue mode was previously
+entered but not properly exited.
+
+The system will now reboot to ensure a clean state
+for installation." 15 60
+            
+            reboot
+        fi
     fi
 fi
-
 
 if [[ $TERM == "linux" ]]; then
     setfont ter-112n

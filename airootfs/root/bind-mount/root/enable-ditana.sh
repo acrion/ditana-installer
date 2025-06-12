@@ -19,11 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
-cat <<EOF >>/etc/pacman.conf
+if ! grep -q "^\[ditana\]" /etc/pacman.conf; then
+    cat <<EOF >>/etc/pacman.conf
 
 [ditana]
 Include = /etc/pacman.d/ditana-mirrorlist
 EOF
+fi
 
 # package 'ditana-filesystem' replaces base package 'filesystem'
 sed -i 's/^#IgnorePkg[ ]*=/IgnorePkg   = filesystem/' /etc/pacman.conf

@@ -69,6 +69,12 @@ sub curate-chroot-files() is export {
         '/mnt/etc/systemd/zram-generator.conf'.IO.spurt("[zram0]\n");
     }
 
+    if $s.get("install-kmscon") {
+        '/mnt/etc/kmscon'.IO.mkdir;
+        '/mnt/etc/kmscon/kmscon.conf'.IO.spurt("font-name=JetBrainsMono Nerd Font\n"); # font is installed by package ditana-config-xfce
+        '/mnt/etc/kmscon/kmscon.conf'.spurt("no-drm\n", :append) if $s.get('nvidia-pci-id');
+    }
+
     unless $s.get("install-variety") {
         '/mnt/etc/skel/.config/variety/variety.conf'.IO.unlink;
         '/mnt/etc/skel/.config/autostart/variety.desktop'.IO.unlink;
@@ -193,6 +199,13 @@ sub generate-chroot-script() is export {
         add-chrooted-step("systemctl enable systemd-timesyncd"); # https://wiki.archlinux.org/title/Systemd-timesyncd#Enable_and_start
         add-chrooted-step("systemctl enable NetworkManager");
         add-chrooted-step("systemctl enable systemd-resolved");
+    }
+
+    if $s.get("install-kmscon") {
+        for 2..5 -> $tty {
+            add-chrooted-step("systemctl disable getty\@tty{$tty}.service");
+            add-chrooted-step("systemctl enable kmsconvt\@tty{$tty}.service");
+        }
     }
 
     if $s.get("install-bluetooth") {
