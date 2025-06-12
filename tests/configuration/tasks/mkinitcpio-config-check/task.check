@@ -3,7 +3,7 @@ note: check for mandotary hooks parameters
 generator: <<CODE
 !raku
 my @mandotary-parameters = [
-    "kms",
+    #"kms",
     "[udev || systemd]",
     "filesystems",
  ];
