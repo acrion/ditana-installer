@@ -3,7 +3,6 @@ note: check for mandotary hooks parameters
 generator: <<CODE
 !raku
 my @mandotary-parameters = [
-    #"kms",
     "[udev || systemd]",
     "filesystems",
  ];
@@ -46,29 +45,17 @@ if config()<with-zfs> {
    say q[note: ==================];
 }
 
-if config()<encrypt-root-partition> {
+if config()<encrypt-root-partition> and not config()<with-zfs> {
 
-   say q[note: encryption related checks];
+   say q[note: encryption related checks (non-ZFS)];
    say q[note: ==================];
 
    say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
    if not $hooks{"keyboard"}:exists {
-      say q[note: For LUKS encryption on all init systems, add keyboard hook after kms hook];
-      say q[regexp: <?wb> kms  \s keyboard <?wb>];
+      say q[note: For LUKS encryption on non-ZFS systems, keyboard hook should be present];
+      say q[regexp: <?wb> keyboard <?wb>];
    }
 
-   say "end:";
-   say q[note: ==================];
-}
-
-if config()<nvidia-but-no-nouveau> {
-
-   say q[note: nvidia related checks];
-   say q[note: ==================];
-
-   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
-   say q[note: For NVIDIA drivers, except Nouveau, remove the kms hook];
-   say q[!regexp: <?wb> kms <?wb>];
    say "end:";
    say q[note: ==================];
 }
@@ -96,19 +83,19 @@ if not config()<use-init-systemd> {
    say q[regexp: <?wb> udev <?wb>];
    say q[!regexp: <?wb> systemd <?wb>];
 
-   if config()<encrypt-root-partition> and not $hooks{"keyboard"}:exists {
-      say q[note: For LUKS or ZFS encryption on BusyBox init system, add keymap hook after keyboard hook];
-      say q[regexp: <?wb>keyboard \s keymap<?wb>];
+   if config()<encrypt-root-partition> and not $hooks{"keymap"}:exists {
+      say q[note: For LUKS or ZFS encryption on BusyBox init system, keymap hook should be present];
+      say q[regexp: <?wb> keymap <?wb>];
    }
 
    if config()<encrypt-root-partition> and not $hooks{"consolefont"}:exists and not config()<with-zfs> {
-      say q[note: For LUKS encryption on BusyBox init system, add consolefont hook after keymap hook];
-      say q[regexp: <?wb>eymap \s consolefont<?wb>];
+      say q[note: For LUKS encryption on BusyBox init system, consolefont hook should be present];
+      say q[regexp: <?wb> consolefont <?wb>];
    }
 
    if config()<encrypt-root-partition> and not $hooks{"encrypt"}:exists and not config()<with-zfs> {
-      say q[note: For LUKS encryption on BusyBox init systems, add encrypt hook before filesystems hook];
-      say q[regexp: <?wb>encrypt \s filesystems<?wb>];
+      say q[note: For LUKS encryption on BusyBox init systems, encrypt hook should be present];
+      say q[regexp: <?wb> encrypt <?wb>];
    }
 
    say "end:";
@@ -136,13 +123,13 @@ if config()<use-init-systemd> {
    say q[!regexp: <?wb>consolefont<?wb>];
 
    if config()<encrypt-root-partition> and not config()<with-zfs> and not $hooks{"sd-vconsole"}:exists {
-      say q[note: For LUKS encryption on systemd init system, add sd-vconsole hook after keyboard hook];
-      say q[regexp: <?wb>keyboard \s sd\-vconsole<?wb>];
+      say q[note: For LUKS encryption on systemd init system, sd-vconsole hook should be present];
+      say q[regexp: <?wb> sd\-vconsole <?wb>];
    }
 
    if config()<encrypt-root-partition> and not config()<with-zfs> and not $hooks{"sd-encrypt"}:exists {
-      say q[note: For LUKS encryption on systemd init system, add sd-encrypt hook before filesystems hook];
-      say q[regexp: <?wb>sd\-encrypt \s filesystems<?wb>];
+      say q[note: For LUKS encryption on systemd init system, sd-encrypt hook should be present];
+      say q[regexp: <?wb> sd\-encrypt <?wb>];
    }
 
    say "end:";
@@ -151,4 +138,3 @@ if config()<use-init-systemd> {
 }
 
 CODE
-

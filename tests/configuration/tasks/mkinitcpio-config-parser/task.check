@@ -1,8 +1,5 @@
 note: collect modules info
 ~regexp: ^^ \s* "MODULES=(" (.*) ")" \s* $$
-code: <<RAKU
-!raku
-RAKU
 
 generator: <<CODE
 !raku
@@ -10,7 +7,8 @@ my %mods;
 if !matched() {
    say "note: 0 MODULES= section found";
 } else {
-   for capture()[0].split(/s+/) ->$i {
+   for capture()[0].split(/\s+/) -> $i {
+      next unless $i; # skip empty strings
       %mods{$i} = True;
    };
 }
@@ -26,12 +24,11 @@ my %hooks;
 if !matched() {
    say "note: 0 HOOKS= section found";
 } else {
-   for capture()[0].split(/s+/) -> $i {
+   for capture()[0].split(/\s+/) -> $i {
+      next unless $i; # skip empty strings
       %hooks{$i} = True;
    };
 }
 my $s = get_state(); $s<hooks> = %hooks;
 update_state($s)
 CODE
-
-
