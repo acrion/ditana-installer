@@ -84,5 +84,32 @@ if config()<nvidia-but-no-nouveau> {
    say q[note: ==================];
 }
 
+if not config()<use-init-systemd> {
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   say q[note: For a BusyBox init system, replace systemd with udev hook];
+   say q[regexp: <?wb> udev <?wb>];
+   say q[!regexp: <?wb> systemd <?wb>];
+
+   if config()<encrypt-root-partition> and not $hooks{"keyboard"}:exists {
+      say q[note: For LUKS or ZFS encryption on BusyBox init system, add keymap hook after keyboard hook];
+      say q[regexp: <?wb>keyboard \s keymap<?wb>];
+   }
+
+   if config()<encrypt-root-partition> and not $hooks{"consolefont"}:exists and not config()<with-zfs> {
+      say q[note: For LUKS encryption on BusyBox init system, add consolefont hook after keymap hook];
+      say q[regexp: <?wb>eymap \s consolefont<?wb>];
+   }
+
+   if config()<encrypt-root-partition> and not $hooks{"encrypt"}:exists and not config()<with-zfs> {
+      say q[note: For LUKS encryption on BusyBox init systems, add encrypt hook before filesystems hook];
+      say q[regexp: <?wb>encrypt \s filesystems<?wb>];
+   }
+
+   say "end:";
+   say q[note: ==================];
+
+}
+
 CODE
 
