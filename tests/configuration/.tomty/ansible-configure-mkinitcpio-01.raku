@@ -1,5 +1,11 @@
 #!raku
 
+=begin tomty
+%(
+  tag => $["mkinitcpio", "positive"]
+);
+=end tomty
+
 copy "examples/mkinitcpio.conf", "/tmp/mkinitcpio.conf";
 
 my $s = task-run "tasks/mkinitcpio-config-parser", %(
