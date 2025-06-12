@@ -2,7 +2,7 @@
 
 =begin tomty
 %(
-  tag => $["mkinitcpio", "systemd", "with_zfs"]
+  tag => $["mkinitcpio", "systemd","without_zfs"]
 );
 =end tomty
 
@@ -17,12 +17,12 @@ my $mods = $s<mods>;
 
 task-run "tasks/run-ansible", %(
   :playbook<../../airootfs/root/bind-mount/root/configure-mkinitcpio.yaml>,
-  vars => "path=/tmp/mkinitcpio.conf zfs_filesystem=y encrypt_root_partition=n use_init_systemd=y nvidia_but_no_nouveau=n",
+  vars => "path=/tmp/mkinitcpio.conf zfs_filesystem=n encrypt_root_partition=n use_init_systemd=y nvidia_but_no_nouveau=n",
 );
 
 task-run "tasks/mkinitcpio-config-check", %(
   :path</tmp/mkinitcpio.conf>,
-  :with-zfs,
+  :!with-zfs,
   :use-init-systemd,
   :$hooks,
   :$mods,
