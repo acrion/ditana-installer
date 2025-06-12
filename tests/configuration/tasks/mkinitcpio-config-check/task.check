@@ -28,6 +28,7 @@ if config()<with-zfs> {
    say q[note: ==================];
 
    say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+
    if not $hooks{"zfs"}:exists {
       say q[note: Insert "zfs" into HOOKS before "filesystems" if filesystem is zfs];
       say q[regexp: <?wb> zfs \s filesystems <?wb>];
@@ -86,7 +87,11 @@ if config()<nvidia-but-no-nouveau> {
 
 if not config()<use-init-systemd> {
 
+   say q[note: BusyBox related checks];
+   say q[note: ==================];
+
    say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+
    say q[note: For a BusyBox init system, replace systemd with udev hook];
    say q[regexp: <?wb> udev <?wb>];
    say q[!regexp: <?wb> systemd <?wb>];
@@ -104,6 +109,40 @@ if not config()<use-init-systemd> {
    if config()<encrypt-root-partition> and not $hooks{"encrypt"}:exists and not config()<with-zfs> {
       say q[note: For LUKS encryption on BusyBox init systems, add encrypt hook before filesystems hook];
       say q[regexp: <?wb>encrypt \s filesystems<?wb>];
+   }
+
+   say "end:";
+   say q[note: ==================];
+
+}
+
+if config()<use-init-systemd> {
+
+   say q[note: systemd related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+
+   say q[note: For a systemd init system, replace udev hook with systemd];
+   say q[regexp: <?wb>systemd<?wb>];
+   say q[!regexp: <?wb>udev<?wb>];
+
+   if not (config()<encrypt-root-partition> and config()<with-zfs>)  {
+      say q[note: For a systemd init system, remove the keymap hook unless it is encrypted ZFS];
+      say q[!regexp: <?wb>keymap<?wb>];
+   }
+
+   say q[note: For a systemd init system, remove consolefont hook];
+   say q[!regexp: <?wb>consolefont<?wb>];
+
+   if config()<encrypt-root-partition> and not config()<with-zfs> and not $hooks{"sd-vconsole"}:exists {
+      say q[note: For LUKS encryption on systemd init system, add sd-vconsole hook after keyboard hook];
+      say q[regexp: <?wb>keyboard \s sd\-vconsole<?wb>];
+   }
+
+   if config()<encrypt-root-partition> and not config()<with-zfs> and not $hooks{"sd-encrypt"}:exists {
+      say q[note: For LUKS encryption on systemd init system, add sd-encrypt hook before filesystems hook];
+      say q[regexp: <?wb>sd\-encrypt \s filesystems<?wb>];
    }
 
    say "end:";
