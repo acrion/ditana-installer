@@ -417,8 +417,16 @@ sub partition-drive() is export {
     run-and-echo('fdisk', '--wipe', 'always', '--wipe-partitions', 'always', "/dev/$install-disk", :input($fdisk-input));
     
     Logging.log("Finished fdisk /dev/$install-disk");
+
+    # Ensure kernel partition table is updated
     run-and-echo('partprobe', "/dev/$install-disk");
+
+    # Wait for all pending udev events to complete
     run-and-echo('udevadm', "settle");
+
+    # Additional sync as defensive measure to ensure all changes are committed
+    run-and-echo('sync');
+    
     run-and-echo('lsblk');
     
     # Partition Detection
