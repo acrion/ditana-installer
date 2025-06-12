@@ -10,3 +10,4 @@ airootfs/root/bind-mount/root/installation-steps.sh
 airootfs/root/bind-mount/root/settings.sh
 *.log
 *.cache
+*.tom

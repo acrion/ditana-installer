@@ -1,0 +1,154 @@
+note: check for mandotary hooks parameters
+
+generator: <<CODE
+!raku
+my @mandotary-parameters = [
+    #"kms",
+    "[udev || systemd]",
+    "filesystems",
+ ];
+
+say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+for @mandotary-parameters -> $i {
+    say q[note: check mandotary hooks parameter %p%].subst("%p%",$i);
+    say q[regexp: <?wb> %p% <?wb> ].subst("%p%",$i);
+}
+say "end:";
+CODE
+
+
+generator: <<CODE
+!raku
+my $hooks = config()<hooks>;
+my $mods = config()<mods>;
+
+if config()<with-zfs> {
+
+   say q[note: zfs related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+
+   if not $hooks{"zfs"}:exists {
+      say q[note: Insert "zfs" into HOOKS before "filesystems" if filesystem is zfs];
+      say q[regexp: <?wb> zfs \s filesystems <?wb>];
+   }
+
+   say q[note: Remove "fsck" from HOOKS if filesystem is zfs];
+   say q[!regexp: <?wb> fsck <?wb> ];
+   say "end:";
+   
+   say q[note: Add "zfs" to MODULES if filesystem is zfs];
+   say q[within: ^^ "MODULES=(" (.*) ")" \s* $$];
+   say q[regexp: <?wb> zfs  <?wb> ];
+   
+   say "end:";
+   say q[note: ==================];
+}
+
+if config()<encrypt-root-partition> {
+
+   say q[note: encryption related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   if not $hooks{"keyboard"}:exists {
+      say q[note: For LUKS encryption on all init systems, add keyboard hook after kms hook];
+      say q[regexp: <?wb> kms  \s keyboard <?wb>];
+   }
+
+   say "end:";
+   say q[note: ==================];
+}
+
+if config()<nvidia-but-no-nouveau> {
+
+   say q[note: nvidia related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   say q[note: For NVIDIA drivers, except Nouveau, remove the kms hook];
+   say q[!regexp: <?wb> kms <?wb>];
+   say "end:";
+   say q[note: ==================];
+}
+
+if config()<nvidia-but-no-nouveau> {
+
+   say q[note: nvidia related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+   say q[note: For NVIDIA drivers, except Nouveau, remove the kms hook];
+   say q[!regexp: <?wb> kms <?wb>];
+   say "end:";
+   say q[note: ==================];
+}
+
+if not config()<use-init-systemd> {
+
+   say q[note: BusyBox related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+
+   say q[note: For a BusyBox init system, replace systemd with udev hook];
+   say q[regexp: <?wb> udev <?wb>];
+   say q[!regexp: <?wb> systemd <?wb>];
+
+   if config()<encrypt-root-partition> and not $hooks{"keyboard"}:exists {
+      say q[note: For LUKS or ZFS encryption on BusyBox init system, add keymap hook after keyboard hook];
+      say q[regexp: <?wb>keyboard \s keymap<?wb>];
+   }
+
+   if config()<encrypt-root-partition> and not $hooks{"consolefont"}:exists and not config()<with-zfs> {
+      say q[note: For LUKS encryption on BusyBox init system, add consolefont hook after keymap hook];
+      say q[regexp: <?wb>eymap \s consolefont<?wb>];
+   }
+
+   if config()<encrypt-root-partition> and not $hooks{"encrypt"}:exists and not config()<with-zfs> {
+      say q[note: For LUKS encryption on BusyBox init systems, add encrypt hook before filesystems hook];
+      say q[regexp: <?wb>encrypt \s filesystems<?wb>];
+   }
+
+   say "end:";
+   say q[note: ==================];
+
+}
+
+if config()<use-init-systemd> {
+
+   say q[note: systemd related checks];
+   say q[note: ==================];
+
+   say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+
+   say q[note: For a systemd init system, replace udev hook with systemd];
+   say q[regexp: <?wb>systemd<?wb>];
+   say q[!regexp: <?wb>udev<?wb>];
+
+   if not (config()<encrypt-root-partition> and config()<with-zfs>)  {
+      say q[note: For a systemd init system, remove the keymap hook unless it is encrypted ZFS];
+      say q[!regexp: <?wb>keymap<?wb>];
+   }
+
+   say q[note: For a systemd init system, remove consolefont hook];
+   say q[!regexp: <?wb>consolefont<?wb>];
+
+   if config()<encrypt-root-partition> and not config()<with-zfs> and not $hooks{"sd-vconsole"}:exists {
+      say q[note: For LUKS encryption on systemd init system, add sd-vconsole hook after keyboard hook];
+      say q[regexp: <?wb>keyboard \s sd\-vconsole<?wb>];
+   }
+
+   if config()<encrypt-root-partition> and not config()<with-zfs> and not $hooks{"sd-encrypt"}:exists {
+      say q[note: For LUKS encryption on systemd init system, add sd-encrypt hook before filesystems hook];
+      say q[regexp: <?wb>sd\-encrypt \s filesystems<?wb>];
+   }
+
+   say "end:";
+   say q[note: ==================];
+
+}
+
+CODE
+
