@@ -76,7 +76,7 @@ if config()<encrypt-root-partition> and
 
 say q[note: case03b - For LUKS encryption on all init systems, add keyboard hook after kms hook];
 
-# variation for the case
+# variation for the case03
 # when nvidia-but-no-nouveau
 # leads to removing kms
 
