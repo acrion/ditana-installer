@@ -61,12 +61,31 @@ if config()<with-zfs> and $hooks{"fsck"}:exists {
 
 say q[note: case03 - For LUKS encryption on all init systems, add keyboard hook after kms hook];
 
-if config()<encrypt-root-partition> and 
-   not config()<with-zfs> and 
+if config()<encrypt-root-partition> and
+   not config()<with-zfs> and
    not $hooks{"keyboard"}:exists and
    not config()<nvidia-but-no-nouveau> {
 
    say q[regexp: <?wb> kms \s keyboard <?wb>];
+
+} else {
+
+   say "note: - SKIP";
+
+}
+
+say q[note: case03b - For LUKS encryption on all init systems, add keyboard hook after kms hook];
+
+# variation for the case
+# when nvidia-but-no-nouveau
+# leads to removing kms
+
+if config()<encrypt-root-partition> and
+   not config()<with-zfs> and
+   not $hooks{"keyboard"}:exists and
+   config()<nvidia-but-no-nouveau> {
+
+   say q[regexp: <?wb>keyboard <?wb>];
 
 } else {
 
