@@ -2,7 +2,7 @@
 
 =begin tomty
 %(
-  tag => $["mkinitcpio", "systemd", "nvidia", "luks", "without_zfs"]
+  tag => ["mkinitcpio", "systemd", "without-zfs", "with-encrypt-root-partition","with-nvidia-but-no-nouveau"]
 );
 =end tomty
 

@@ -8,7 +8,6 @@ if !matched() {
    say "note: 0 MODULES= section found";
 } else {
    for capture()[0].split(/\s+/) -> $i {
-      next unless $i; # skip empty strings
       %mods{$i} = True;
    };
 }
@@ -25,7 +24,6 @@ if !matched() {
    say "note: 0 HOOKS= section found";
 } else {
    for capture()[0].split(/\s+/) -> $i {
-      next unless $i; # skip empty strings
       %hooks{$i} = True;
    };
 }
