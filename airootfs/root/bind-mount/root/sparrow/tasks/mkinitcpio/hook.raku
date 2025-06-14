@@ -1,17 +1,20 @@
 #!raku
 
 # First check requirements
-my %state = task-run "check-requirements";
+run_task "check-requirements";
+
+# Get the current state after checks
+my $state = get_state();
 
 # Update hooks based on configuration
-task-run "update-hooks", %(
-    hooks => %state<hooks> // %(),
-    hooks_rc => %state<hooks_rc> // %()
+run_task "update-hooks", %(
+    hooks => $state<hooks> // %(),
+    hooks_rc => $state<hooks_rc> // %()
 );
 
 # Update modules if needed
 if config()<zfs_filesystem> eq "y" {
-    task-run "update-modules", %(
-        modules => %state<modules> // %()
+    run_task "update-modules", %(
+        modules => $state<modules> // %()
     );
 }
