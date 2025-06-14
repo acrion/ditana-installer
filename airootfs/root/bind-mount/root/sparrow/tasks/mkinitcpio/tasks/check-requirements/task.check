@@ -1,0 +1,90 @@
+note: Check required hooks are present
+
+# Check for udev or systemd
+~regexp: ^^ "HOOKS=" .* \b ( udev || systemd ) \b
+
+generator: <<RAKU
+!raku
+if !matched() {
+    die "ERROR: Neither 'udev' nor 'systemd' found in HOOKS";
+}
+say "note: Found udev or systemd in HOOKS";
+RAKU
+
+# Check for filesystems
+~regexp: ^^ "HOOKS=" .* \b filesystems \b
+
+generator: <<RAKU
+!raku
+if !matched() {
+    die "ERROR: 'filesystems' not found in HOOKS";
+}
+say "note: Found filesystems in HOOKS";
+RAKU
+
+# Check for kms (unless nvidia_but_no_nouveau)
+generator: <<RAKU
+!raku
+if config()<nvidia_but_no_nouveau> ne "y" {
+    say '~regexp: ^^ "HOOKS=" .* \b kms \b';
+}
+RAKU
+
+generator: <<RAKU
+!raku
+if config()<nvidia_but_no_nouveau> ne "y" and !matched() {
+    die "ERROR: 'kms' not found in HOOKS";
+}
+say "note: kms check passed";
+RAKU
+
+# Collect current hooks information
+note: Collecting current hooks information
+
+generator: <<RAKU
+!raku
+my %hooks_rc;
+my @checks = <udev systemd keyboard keymap consolefont encrypt sd-vconsole sd-encrypt zfs fsck>;
+
+for @checks -> $hook {
+    say "~regexp: ^^ \"HOOKS=\" .* \\b $hook \\b";
+    say qq:to/CODE/;
+    generator: <<PERL
+    !perl
+    update_state({ hooks_rc => { "$hook" => matched() ? 0 : 1 } });
+    PERL
+    CODE
+}
+
+# Parse HOOKS line
+say '~regexp: ^^ "HOOKS=" \s* "(" (.*) ")" \s* $$';
+say q:to/CODE/;
+generator: <<PERL
+!perl
+my %hooks;
+if (matched()) {
+    my $hooks_str = capture()->[0];
+    for my $hook (split /\s+/, $hooks_str) {
+        $hooks{$hook} = 1;
+    }
+}
+update_state({ hooks => \%hooks });
+PERL
+CODE
+
+# Parse MODULES line  
+say '~regexp: ^^ "MODULES=" \s* "(" (.*) ")" \s* $$';
+say q:to/CODE/;
+generator: <<PERL
+!perl
+my %modules;
+if (matched()) {
+    my $modules_str = capture()->[0];
+    for my $mod (split /\s+/, $modules_str) {
+        $modules{$mod} = 1;
+    }
+}
+update_state({ modules => \%modules });
+PERL
+CODE
+RAKU
