@@ -1,7 +1,7 @@
 note: Check required hooks are present
 
 # Check for udev or systemd
-~regexp: ^^ "HOOKS=" .* \b ( udev || systemd ) \b
+~regexp: ^^ "HOOKS=" .* <?wb> ( udev || systemd ) <?wb>
 
 generator: <<RAKU
 !raku
@@ -12,7 +12,7 @@ say "note: Found udev or systemd in HOOKS";
 RAKU
 
 # Check for filesystems
-~regexp: ^^ "HOOKS=" .* \b filesystems \b
+~regexp: ^^ "HOOKS=" .* <?wb> filesystems <?wb>
 
 generator: <<RAKU
 !raku
@@ -26,7 +26,7 @@ RAKU
 generator: <<RAKU
 !raku
 if config()<nvidia_but_no_nouveau> ne "y" {
-    say '~regexp: ^^ "HOOKS=" .* \b kms \b';
+    say '~regexp: ^^ "HOOKS=" .* <?wb> kms <?wb>';
 }
 RAKU
 
@@ -47,44 +47,49 @@ my %hooks_rc;
 my @checks = <udev systemd keyboard keymap consolefont encrypt sd-vconsole sd-encrypt zfs fsck>;
 
 for @checks -> $hook {
-    say "~regexp: ^^ \"HOOKS=\" .* \\b $hook \\b";
+    say "~regexp: ^^ \"HOOKS=\" .* <?wb> $hook <?wb>";
     say qq:to/CODE/;
-    generator: <<PERL
-    !perl
-    update_state({ hooks_rc => { "$hook" => matched() ? 0 : 1 } });
-    PERL
+    generator: <<RAKU2
+    !raku
+    my \$s = get_state() // %(); 
+    \$s<hooks_rc> //= %();
+    \$s<hooks_rc><$hook> = matched() ?? 0 !! 1;
+    update_state(\$s);
+    RAKU2
     CODE
 }
+RAKU
 
 # Parse HOOKS line
-say '~regexp: ^^ "HOOKS=" \s* "(" (.*) ")" \s* $$';
-say q:to/CODE/;
-generator: <<PERL
-!perl
+~regexp: ^^ "HOOKS=" \s* "(" (.*) ")" \s* $$
+
+generator: <<RAKU
+!raku
 my %hooks;
-if (matched()) {
-    my $hooks_str = capture()->[0];
-    for my $hook (split /\s+/, $hooks_str) {
-        $hooks{$hook} = 1;
+if matched() {
+    my $hooks_str = capture()[0];
+    for $hooks_str.words -> $hook {
+        %hooks{$hook} = True;
     }
 }
-update_state({ hooks => \%hooks });
-PERL
-CODE
+my $s = get_state() // %();
+$s<hooks> = %hooks;
+update_state($s);
+RAKU
 
 # Parse MODULES line  
-say '~regexp: ^^ "MODULES=" \s* "(" (.*) ")" \s* $$';
-say q:to/CODE/;
-generator: <<PERL
-!perl
+~regexp: ^^ "MODULES=" \s* "(" (.*) ")" \s* $$
+
+generator: <<RAKU
+!raku
 my %modules;
-if (matched()) {
-    my $modules_str = capture()->[0];
-    for my $mod (split /\s+/, $modules_str) {
-        $modules{$mod} = 1;
+if matched() {
+    my $modules_str = capture()[0];
+    for $modules_str.words -> $mod {
+        %modules{$mod} = True;
     }
 }
-update_state({ modules => \%modules });
-PERL
-CODE
+my $s = get_state() // %();
+$s<modules> = %modules;
+update_state($s);
 RAKU
