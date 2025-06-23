@@ -55,3 +55,39 @@ if matched() {
     say "assert: 0 GRUB_DISTRIBUTOR parameter found";
 }
 RAKU
+
+note: set GRUB_ENABLE_CRYPTODISK
+
+~regexp: ^^ \s* \x[23] \s* "GRUB_ENABLE_CRYPTODISK=" .*
+
+generator: <<RAKU
+!raku
+if matched() {
+    if config()<encrypt_root_partition> eq "y" {
+        say "note: patching GRUB_ENABLE_CRYPTODISK";
+        replace(
+            config()<path>,
+            captures-full()[0]<index>,
+            "GRUB_ENABLE_CRYPTODISK=y",
+        );
+    }
+}
+RAKU
+
+note: set GRUB_DISABLE_OS_PROBER
+
+~regexp: ^^ \s* \x[23] \s* "GRUB_DISABLE_OS_PROBER=" .*
+
+generator: <<RAKU
+!raku
+if matched() {
+    if config()<enable_os_prober> eq "y" {
+        say "note: patching GRUB_DISABLE_OS_PROBER";
+        replace(
+            config()<path>,
+            captures-full()[0]<index>,
+            "GRUB_DISABLE_OS_PROBER=false",
+        );
+    }
+}
+RAKU
