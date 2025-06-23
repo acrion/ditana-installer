@@ -29,9 +29,29 @@ if matched() {
     replace(
         config()<path>,
         captures-full()[0]<index>,
-        "GRUB_CMDLINE_LINUX_DEFAULT={config()<kernel_options>}",
+        "GRUB_CMDLINE_LINUX_DEFAULT=\"{config()<kernel_options>}\"",
     );
 } else {
     say "assert: 0 GRUB_CMDLINE_LINUX_DEFAULT parameter found";
+}
+RAKU
+
+
+note: set GRUB_DISTRIBUTOR
+
+~regexp: ^^ \s* "GRUB_DISTRIBUTOR=" .*
+
+generator: <<RAKU
+!raku
+if matched() {
+    say "assert: 1 GRUB_DISTRIBUTOR parameter found: [{matched()}]";
+    say "note: patching GRUB_DISTRIBUTOR";
+    replace(
+        config()<path>,
+        captures-full()[0]<index>,
+        "GRUB_DISTRIBUTOR=\"Ditana\"",
+    );
+} else {
+    say "assert: 0 GRUB_DISTRIBUTOR parameter found";
 }
 RAKU
