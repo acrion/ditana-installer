@@ -24,4 +24,13 @@ if matched() {
 } else {
     say "assert: 0 valid exit code found";
 }
+
+if config()<with-idempotency> {
+    say q:to /CHECK/;
+        note: idempotency check
+        NO CHANGES
+    CHECK
+}
+
 RAKU
+
