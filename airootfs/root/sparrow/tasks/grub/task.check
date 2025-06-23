@@ -1,0 +1,18 @@
+note: set grub timeout
+
+~regexp: ^^ \s* "GRUB_TIMEOUT=" .*
+
+generator: <<RAKU
+!raku
+if matched() {
+    say "assert: 1 grub timeout parameter found: [{matched()}]";
+    say "note: patching timeout";
+    replace(
+        config()<path>,
+        captures-full()[0]<index>,
+        "GRUB_TIMEOUT={config()<timeout>}",
+    );
+} else {
+    say "assert: 0 grub timeout parameter found";
+}
+RAKU
