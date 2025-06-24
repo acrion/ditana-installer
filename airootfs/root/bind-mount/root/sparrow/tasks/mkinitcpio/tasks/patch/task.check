@@ -1,0 +1,258 @@
+note: collect modules info
+~regexp: ^^ \s* "MODULES=(" (.*) ")" \s* $$
+
+generator: <<CODE
+!raku
+my %mods;
+my @mods;
+my $mods-index;
+if !matched() {
+   say "note: 0 MODULES= section found";
+} else {
+   $mods-index = captures-full()[0][0]<index>;
+   for capture()[0].split(/\s+/).grep({/\S+/}) -> $i {
+      push @mods, $i;
+      %mods{$i} = True;
+   };
+}
+update_state(%( mods => %mods, mods-list => @mods, mods-index => $mods-index ));
+CODE
+
+note: collect hooks info
+~regexp: ^^ \s* "HOOKS=(" (.*) ")" \s* $$
+
+generator: <<CODE
+!raku
+my %hooks; 
+my @hooks;
+my $hooks-index;
+
+if !matched() {
+   say "note: 0 HOOKS= section found";
+} else {
+   $hooks-index = captures-full()[0][0]<index>;
+   for capture()[0].split(/\s+/).grep({/\S+/}) -> $i {
+      push @hooks, $i;
+      %hooks{$i} = True;
+   };
+}
+my $s = get_state();
+$s<hooks-index> = $hooks-index; 
+$s<hooks> = %hooks;
+$s<hooks-list> = @hooks;
+update_state($s)
+CODE
+
+generator: <<CODE
+!raku
+my @mandotary-parameters = [
+    "kms",
+    "[udev || systemd]",
+    "filesystems",
+ ];
+
+say q[within: ^^ "HOOKS=(" (.*) ")" \s* $$];
+for @mandotary-parameters -> $i {
+    say q[note: check mandotary hooks parameter %p%].subst("%p%",$i);
+    say q[regexp: <?wb> %p% <?wb> ].subst("%p%",$i);
+}
+say "end:";
+CODE
+
+
+generator: <<CODE
+!raku
+
+my $state = get_state();
+my $hooks = $state<hooks>;
+my @hooks = $state<hooks-list><>;
+my $mods = $state<mods><>;
+my @mods = $state<mods-list><>;
+
+say q[note: patching configuration file];
+
+say "note: config: ", config().keys.sort.grep({ 
+   $_ ne "path"
+}).map(
+   { my $k = $_; "{$k}={config(){$k}}" } 
+);
+
+# remove fsck, add zfs before filesystems, make it sure zfs in modules list
+if task_var("zfs_filesystem") {
+   my @new = Array.new;
+   for @hooks -> $i {
+      if $i eq "filesystems" {
+         push @new, "zfs";
+         push @new, "filesystems";
+         next;
+      } 
+      next if $i eq "fsck";
+      next if $i eq "zfs";
+      push @new, $i;
+   }
+   @hooks = @new;
+
+   # make it sure zfs in modules list
+   @new = Array.new;
+   for @mods -> $i {
+      next if $i eq "zfs";
+      push @new, $i;
+   }
+   push @new, "zfs";
+   @mods = @new;
+
+}
+
+# insert keyboard after kms
+if task_var("encrypt_root_partition") and not task_var("zfs_filesystem") {
+   my @new;
+   for @hooks -> $i {
+      if $i eq "kms" {
+         push @new, "kms";
+         push @new, "keyboard";
+         next;
+      }
+      next if $i eq "keyboard";
+      next if $i eq "kms";
+      push @new, $i;
+   }
+   @hooks = @new;
+}
+
+# remove kms if nvidia_but_no_nouveau is enabled
+if task_var("nvidia_but_no_nouveau") {
+   @hooks = @hooks.grep({ $_ ne "kms" });
+}
+
+# replace systemd by udev
+if not task_var("use_init_systemd") {
+   @hooks = @hooks.map({ $_ eq "systemd" ?? "udev" !! $_  });
+}
+
+# add keymap hook after keyboard hook
+if task_var("encrypt_root_partition") and not task_var("use_init_systemd") {
+   my @new;
+   for @hooks -> $i {
+      if $i eq "keyboard" {
+         push @new, "keyboard";
+         push @new, "keymap";
+         next;
+      } 
+      next if $i eq "keymap";
+      push @new, $i;
+   }
+   @hooks = @new;
+}
+
+# add consolefont hook after keymap hook
+if task_var("encrypt_root_partition") and
+   not task_var("use_init_systemd") and 
+   not task_var("zfs_filesystem") {
+   my @new;
+   for @hooks -> $i {
+      if $i eq "keymap" {
+         push @new, "keymap";
+         push @new, "consolefont";
+         next;
+      } 
+      next if $i eq "consolefont";
+      push @new, $i;
+   }
+   @hooks = @new;
+}
+
+# add encrypt hook before filesystems
+if task_var("encrypt_root_partition") and
+   not task_var("use_init_systemd") and 
+   not task_var("zfs_filesystem") {
+   my @new;
+   for @hooks -> $i {
+      if $i eq "filesystems" {
+         push @new, "encrypt";
+         push @new, "filesystems";
+         next;
+      } 
+      next if $i eq "filesystems";
+      push @new, $i;
+   }
+   @hooks = @new;
+}
+
+# replace udev hook with systemd
+if task_var("use_init_systemd") and not $hooks{"systemd"} {
+   @hooks = @hooks.map({ $_ eq "udev" ?? "systemd" !! $_  });
+}
+
+#  remove the keymap hook
+if task_var("use_init_systemd") and not (task_var("encrypt_root_partition") and task_var("zfs_filesystem")) {
+   @hooks = @hooks.grep({ $_ ne "keymap" });
+}
+
+# remove consolefont hook
+if task_var("use_init_systemd") {
+   @hooks = @hooks.grep({ $_ ne "consolefont" });
+}
+
+# add sd-vconsole hook after keyboard hook
+if task_var("use_init_systemd") and
+   task_var("encrypt_root_partition") and
+   not task_var("zfs_filesystem") {
+
+   my @new;
+   for @hooks -> $i {
+      if $i eq "keyboard" {
+         push @new, "keyboard";
+         push @new, "sd-vconsole";
+         next;
+      } 
+      next if $i eq "keyboard";
+      push @new, $i;
+   }
+   @hooks = @new;
+}
+
+# add sd-encrypt hook before filesystems hook
+if task_var("use_init_systemd") and
+   task_var("encrypt_root_partition") and
+   not task_var("zfs_filesystem") {
+
+   my @new;
+   for @hooks -> $i {
+      if $i eq "filesystems" {
+         push @new, "sd-encrypt";
+         push @new, "filesystems";
+         next;
+      } 
+      next if $i eq "filesystems";
+      push @new, $i;
+   }
+   @hooks = @new;
+
+}
+
+say "note: ===================";
+say "note: update mods: ";
+say "note: old: ", $state<mods-list>;
+say "note: new: ", @mods;
+say "note: ===================";
+say "note: update hooks: ";
+say "note: old: ", $state<hooks-list>;
+say "note: new: ", @hooks;
+say "note: ===================";
+
+replace(
+   config()<path>,
+   $state<mods-index>,
+   "MODULES=({@mods.join(" ")})",
+);
+
+say "note: update hooks: {$state<hooks-list>} => {@hooks}";
+replace(
+   config()<path>,
+   $state<hooks-index>,
+   "HOOKS=({@hooks.join(" ")})",
+);
+
+CODE
+
+
