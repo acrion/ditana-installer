@@ -178,7 +178,7 @@ EOF
 
 else # GRUB (used for all non-zfs file systems)
     echo -e "\033[32m--- Installing and configuring GRUB ---\033[0m"
-    s6 --task-run sparrow/tasks/grub@"kernel_options=$KERNEL_OPTIONS,encrypt_root_partition=$ENCRYPT_ROOT_PARTITION,enable_os_prober=$ENABLE_OS_PROBER"
+    s6 --task-run sparrow/tasks/grub@"path=/etc/default/grub,kernel_options=$KERNEL_OPTIONS,encrypt_root_partition=$ENCRYPT_ROOT_PARTITION,enable_os_prober=$ENABLE_OS_PROBER"
     if [[ -d /sys/firmware/efi ]]; then
         grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Ditana
 
