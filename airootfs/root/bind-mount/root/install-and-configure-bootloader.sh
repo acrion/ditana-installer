@@ -28,7 +28,7 @@ if [[ "$INSTALL_NVIDIA_PROPRIETARY" == "y" ]] || [[ "$INSTALL_NVIDIA_OPENSOURCE"
     NVIDIA_BUT_NO_NOUVEAU="y"
 fi
 
-s6 --task-run sparrow/tasks/mkinitcpio@use_init_systemd=$USE_INIT_SYSTEMD,encrypt_root_partition=$ENCRYPT_ROOT_PARTITION,zfs_filesystem=$ZFS_FILESYSTEM,nvidia_but_no_nouveau=$NVIDIA_BUT_NO_NOUVEAU
+s6 --task-run sparrow/tasks/mkinitcpio@path=/etc/mkinitcpio.conf,use_init_systemd=$USE_INIT_SYSTEMD,encrypt_root_partition=$ENCRYPT_ROOT_PARTITION,zfs_filesystem=$ZFS_FILESYSTEM,nvidia_but_no_nouveau=$NVIDIA_BUT_NO_NOUVEAU
 
 if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
     echo -e "\033[32m--- Installing Kernel modules for the Zettabyte File System (zfs-dkms) ---\033[0m"
