@@ -1,5 +1,0 @@
-path: /tmp/mkinitcpio.conf
-use_init_systemd: y
-zfs_filesystem: y
-encrypt_root_partition: n
-nvidia_but_no_nouveau: n
