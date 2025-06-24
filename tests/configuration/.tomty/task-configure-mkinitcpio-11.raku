@@ -2,23 +2,28 @@
 
 =begin tomty
 %(
-  tag => ["mkinitcpio", "negative"]
+  tag => ["mkinitcpio", "idempotance"]
 );
 =end tomty
 
-copy "examples/mkinitcpio.broken.conf", "/tmp/mkinitcpio.conf";
+copy "examples/mkinitcpio.conf", "/tmp/mkinitcpio.conf";
 
-my $s = task-run "tasks/mkinitcpio-config-parser", %(
-  :path</tmp/mkinitcpio.conf>,
+my $s = task-run '../../airootfs/root/bind-mount/root/sparrow/tasks/mkinitcpio', %(
+  path => '/tmp/mkinitcpio.conf',
+  zfs_filesystem => 'y',
+  encrypt_root_partition => 'n',
+  use_init_systemd => 'y',
+  nvidia_but_no_nouveau => 'n',
 );
 
-my $hooks = $s<hooks>;
-my $mods = $s<mods>;
+die "state should change" unless $s<changed>;
 
-task-run "tasks/run-task", %(
-  :should_fail,
-  :error_message<TASK CHECK FAIL>,
-  :task<../../airootfs/root/bind-mount/root/sparrow/tasks/mkinitcpio>,
-  vars => "path=/tmp/mkinitcpio.conf,zfs_filesystem=n,encrypt_root_partition=y,use_init_systemd=y,nvidia_but_no_nouveau=y",
+$s = task-run '../../airootfs/root/bind-mount/root/sparrow/tasks/mkinitcpio', %(
+  path => '/tmp/mkinitcpio.conf',
+  zfs_filesystem => 'y',
+  encrypt_root_partition => 'n',
+  use_init_systemd => 'y',
+  nvidia_but_no_nouveau => 'n',
 );
 
+die "state should not change" if $s<changed>;
