@@ -320,14 +320,8 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
 }
 
 sub debug-info() {
-    my $output = qqx{ip addr show};
-    my $match-ip-addr = $output.match(/'inet ' ((10|172|192)\.\d+\.\d+\.\d+)/);
-    my $ip-addr = $match-ip-addr ?? ~$match-ip-addr[0] !! "<IP>";
 
-    my $path-to-log = "/mnt/var/log/install_ditana.log";
-    $path-to-log = "/root/folders/var/log/install_ditana.log" unless $path-to-log.IO.e;
-
-    my $debug-info = "Please create a GitHub issue on https://github.com/acrion/ditana-installer or write an email to support@ditana.org and attach the file $path-to-log. To retrieve this log from another machine, first execute /root/folders/usr/share/ditana/create-debug-user.sh on this machine. Then, from the other machine, use the following command: `scp debuguser@$ip-addr:$path-to-log .` Thank you!";
+    my $debug-info = "Please create a GitHub issue on https://github.com/acrion/ditana-installer or write an email to support@ditana.org and attach the log file install_ditana.log. To retrieve this file from another machine, execute /root/folders/usr/share/ditana/create-debug-user.sh on this machine and follow the instructions. Thank you!";
 
     say $debug-info;
     Logging.log($debug-info);

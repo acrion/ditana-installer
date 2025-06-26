@@ -328,6 +328,11 @@
             "available": "`real-install`"
         },
         {
+            "name": "update-keyring",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
             "name": "pacstrap",
             "type": "procedure",
             "available": "`real-install`"

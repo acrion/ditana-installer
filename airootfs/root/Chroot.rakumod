@@ -134,12 +134,23 @@ sub genfstab() is export {
     '/mnt/etc/fstab'.IO.spurt($fstab);
 }
 
+sub update-keyring is export {
+    # Update the host system’s archlinux-keyring package before running pacstrap
+    # This ensures the Live ISO’s keyring contains all current Arch Linux packager keys
+    # Without this update, packages signed by recently added packagers may fail verification
+    run-and-echo("pacman", "-Sy", "--noconfirm", "archlinux-keyring");
+}
+
 
 sub pacstrap() is export {
     my @native-packages = Settings.instance.get-installed-native-packages;
     Logging.echo(@native-packages.gist);
+
+    # At this point, the system time is synchronized. We log the status here to include it in bug reports (should include "System clock synchronized: yes").
+    run-and-echo("timedatectl", "status");
     
-    run-and-echo("pacstrap", "-K", "/mnt", |@native-packages)
+    # In case of an error, we retry once, in case the error was related to a temporary download issue
+    run-and-echo("pacstrap", "-K", "/mnt", |@native-packages, :retry(2))
 }
 
 sub generate-chroot-settings-file() is export {

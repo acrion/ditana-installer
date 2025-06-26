@@ -36,18 +36,13 @@ allow_access_to_logfile() {
     done
 
     setfacl -m u:debuguser:r "$log_path"
-    echo "path to relevant logfile: $log_path"
-}
 
-if [ -f "/var/log/install_ditana.log" ]; then
-    allow_access_to_logfile /var/log/install_ditana.log
-elif [ -f "/mnt/var/log/install_ditana.log" ]; then
-    allow_access_to_logfile /mnt/var/log/install_ditana.log
-elif [ -f "/root/folders/var/log/install_ditana.log" ]; then
-    allow_access_to_logfile /root/folders/var/log/install_ditana.log
-else
-    echo "Error: The file install_ditana.log is missing."
-fi
+    ip_addr=$(ip addr show | grep -oE 'inet (10|172|192)\.[0-9]+\.[0-9]+\.[0-9]+' | head -1 | cut -d' ' -f2)
+    ip_addr=${ip_addr:-"<IP>"}
+
+    echo "To retrieve the log file from another machine, please execute this command from the other machine (don’t forget the dot . at the end):"
+    echo "scp debuguser@$ip_addr:$log_path ."
+}
 
 log_paths=("/var/log/install_ditana.log" # chrooted or running system
            "/mnt/var/log/install_ditana.log" # live system after copying
