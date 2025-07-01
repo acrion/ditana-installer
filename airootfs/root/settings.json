@@ -755,6 +755,18 @@
             "default-value": false
         },
         {
+            "name": "install-fluffychat",
+            "dialog-name": "Desktop Applications",
+            "short-description": "Install FluffyChat",
+            "long-description": "FluffyChat is a cute and user-friendly Matrix client that provides secure end-to-end encrypted instant messaging. It supports all major Matrix features including group chats, file sharing, voice messages, and video calls. It is able to manage multiple Matrix accounts within the same window, allowing users to conveniently switch between different accounts without opening separate instances. The application offers a modern, intuitive interface that makes Matrix messaging accessible to users of all technical levels. FluffyChat connects to the decentralized Matrix network, ensuring your communications remain private and under your control.",
+            "arch-packages": [
+                "fluffychat"
+            ],
+            "spdx-identifiers": "AGPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
             "name": "install-zapzap",
             "dialog-name": "Desktop Applications",
             "short-description": "Install ZapZap",
