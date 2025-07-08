@@ -1628,6 +1628,16 @@
             "default-value": true
         },
         {
+            "name": "configure-lingering",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Enable persistent user services",
+            "long-description": "Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks.",
+            "spdx-identifiers": "",
+            "arch-packages": [""],
+            "required-by-chroot": true,
+            "default-value": "true"
+        },
+        {
             "name": "install-rate-mirrors",
             "dialog-name": "System Maintenance Tools",
             "short-description": "Install rate-mirrors",

@@ -77,6 +77,11 @@ export PATH="$HOME/.raku/bin:$PATH"
         useradd -m -u "$USER_ID" -g "$USER_GROUP" "$USER_NAME"
     fi
 
+    if [[ "$CONFIGURE_LINGERING" == "y" ]]; then
+        mkdir -p /var/lib/systemd/linger
+        touch "/var/lib/systemd/linger/$USER_NAME"
+    fi
+
     # Create the temporary builduser. We need it to use makepkg and pikaur
     echo -e "\033[32m--- Creating temporary build user ---\033[0m"
     useradd -m builduser
