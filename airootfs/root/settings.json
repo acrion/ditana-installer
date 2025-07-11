@@ -718,6 +718,18 @@
             "default-value": "`install-desktop-environment`"
         },
         {
+            "name": "install-font-manager",
+            "dialog-name": "Desktop Applications",
+            "short-description": "Install Font Manager",
+            "long-description": "Font Manager provides an intuitive interface for installing, removing, and organizing fonts on your system. The application allows users to preview fonts, group them into collections, and manage font activation/deactivation.",
+            "arch-packages": [
+                "font-manager"
+            ],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
             "name": "install-etcher",
             "dialog-name": "Desktop Applications",
             "short-description": "Install Etcher",
