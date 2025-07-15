@@ -58,6 +58,26 @@ sub add-repos-and-sync() is export {
     run-and-log 'pacman', '-Sy';
 }
 
+sub update-keyring is export {
+    # Update the Live ISO’s archlinux-keyring package before running pacstrap
+    # This ensures the keyring contains all current Arch Linux packager keys
+    # Without this update, packages signed by recently added packagers may fail verification
+    show-dialog-raw('--infobox', "Loading security certificates...", 4, 65);
+    run-and-log("pacman", "-Sy", "--noconfirm", "archlinux-keyring");
+}
+
+sub update-mirrorlist is export {
+    # Update the Live ISO's pacman mirrorlist to use its latest version, rather than the one from ISO build time
+    show-dialog-raw('--infobox', "Finding download servers...", 4, 65);
+    run-and-log("pacman", "-Sy", "--noconfirm", "pacman-mirrorlist");
+    
+    # Use the updated mirrorlist if pacnew was created
+    my $pacnew = "/etc/pacman.d/mirrorlist.pacnew".IO;
+    if $pacnew.e {
+        $pacnew.move("/etc/pacman.d/mirrorlist");
+    }
+}
+
 sub rate-mirrors() is export {
     show-dialog-raw('--infobox', "Checking server speeds...", 4, 65);
     run-and-log "rate-mirrors", "--allow-root", "--save=/etc/pacman.d/mirrorlist", "arch"
