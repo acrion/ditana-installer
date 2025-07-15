@@ -28,7 +28,22 @@ if [[ "$INSTALL_NVIDIA_PROPRIETARY" == "y" ]] || [[ "$INSTALL_NVIDIA_OPENSOURCE"
     NVIDIA_BUT_NO_NOUVEAU="y"
 fi
 
-ansible-playbook -i localhost, configure-mkinitcpio.yaml -e "use_init_systemd=$USE_INIT_SYSTEMD encrypt_root_partition=$ENCRYPT_ROOT_PARTITION zfs_filesystem=$ZFS_FILESYSTEM nvidia_but_no_nouveau=$NVIDIA_BUT_NO_NOUVEAU"
+
+rm -rf .mkinitcpio.changed
+
+raku -MSparrow6::DSL -e "
+  my \$s = task-run 'sparrow/tasks/mkinitcpio', %(
+    path => '/etc/mkinitcpio.conf',
+    use_init_systemd => '$USE_INIT_SYSTEMD',
+    encrypt_root_partition => '$ENCRYPT_ROOT_PARTITION',
+    zfs_filesystem => '$ZFS_FILESYSTEM',
+    nvidia_but_no_nouveau => '$NVIDIA_BUT_NO_NOUVEAU',
+  );
+
+  if \$s<changed> {
+    '.mkinitcpio.changed'.IO.spurt('');
+  }
+";
 
 if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
     echo -e "\033[32m--- Installing Kernel modules for the Zettabyte File System (zfs-dkms) ---\033[0m"
@@ -195,7 +210,7 @@ else # GRUB (used for all non-zfs file systems)
 
     grub-mkconfig -o /boot/grub/grub.cfg
 
-    if [[ "$ENCRYPT_ROOT_PARTITION" == "y" ]] || [[ "$USE_INIT_SYSTEMD" == "y" ]] || [[ "$NVIDIA_BUT_NO_NOUVEAU" == "y" ]]; then
+    if [[ -f .mkinitcpio.changed ]]; then
         mkinitcpio -P
     fi
 fi
