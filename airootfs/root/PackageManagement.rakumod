@@ -35,7 +35,7 @@ sub add-repos-and-sync() is export {
     return unless $s.get('real-install');
     establish-internet-connection();
 
-    show-dialog-raw('--infobox', "Reading information from online package repositories...", 4, 65);
+    show-dialog-raw('--infobox', "Downloading software information...", 4, 65);
     
     run-and-log 'pacman-key', '--init'; # initialize pacman keyring
 
@@ -59,6 +59,6 @@ sub add-repos-and-sync() is export {
 }
 
 sub rate-mirrors() is export {
-    Logging.log("Finding fastest Arch mirrors");
-    run-and-echo "rate-mirrors", "--allow-root", "--save=/etc/pacman.d/mirrorlist", "arch"
+    show-dialog-raw('--infobox', "Checking server speeds...", 4, 65);
+    run-and-log "rate-mirrors", "--allow-root", "--save=/etc/pacman.d/mirrorlist", "arch"
 }

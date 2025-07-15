@@ -135,12 +135,18 @@ sub genfstab() is export {
 }
 
 sub update-keyring is export {
-    # Update the host system’s archlinux-keyring package before running pacstrap
-    # This ensures the Live ISO’s keyring contains all current Arch Linux packager keys
+    # Update the Live ISO’s archlinux-keyring package before running pacstrap
+    # This ensures the keyring contains all current Arch Linux packager keys
     # Without this update, packages signed by recently added packagers may fail verification
-    run-and-echo("pacman", "-Sy", "--noconfirm", "archlinux-keyring");
+    show-dialog-raw('--infobox', "Loading security certificates...", 4, 65);
+    run-and-log("pacman", "-Sy", "--noconfirm", "archlinux-keyring");
 }
 
+sub update-mirrorlist is export {
+    # Update the Live ISO’s pacman mirrorlist to use its latest version, rather than the one from ISO build time
+    show-dialog-raw('--infobox', "Finding download servers...", 4, 65);
+    run-and-log("pacman", "-Sy", "--noconfirm", "pacman-mirrorlist");
+}
 
 sub pacstrap() is export {
     my @native-packages = Settings.instance.get-installed-native-packages;

@@ -143,6 +143,21 @@
             "available": "`real-install`"
         },
         {
+            "name": "update-keyring",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
+            "name": "update-mirrorlist",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
+            "name": "rate-mirrors",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
             "name": "check-nvidia",
             "type": "procedure",
             "available": "`nvidia-pci-id`"
@@ -303,11 +318,6 @@
             "available": "`real-install`"
         },
         {
-            "name": "rate-mirrors",
-            "type": "procedure",
-            "available": "`real-install`"
-        },
-        {
             "name": "set-host-dpi",
             "type": "procedure",
             "available": "`real-install AND virtual-environment`"
@@ -324,11 +334,6 @@
         },
         {
             "name": "add-version",
-            "type": "procedure",
-            "available": "`real-install`"
-        },
-        {
-            "name": "update-keyring",
             "type": "procedure",
             "available": "`real-install`"
         },
