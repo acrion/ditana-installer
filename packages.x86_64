@@ -1,6 +1,5 @@
 alsa-utils
 amd-ucode
-ansible
 arch-install-scripts
 archinstall
 b43-firmware
@@ -15,7 +14,6 @@ clonezilla
 cryptsetup
 darkhttpd
 ddrescue
-dhclient
 dhcpcd
 dialog
 diffutils
@@ -35,8 +33,6 @@ fatresize
 fbida
 foot-terminfo
 fsarchiver
-ghostscript
-gnu-netcat
 gpart
 gptfdisk
 grml-zsh-config
@@ -78,6 +74,7 @@ mesa
 mkinitcpio
 mkinitcpio-archiso
 mkinitcpio-nfs-utils
+mmc-utils
 modemmanager
 mtools
 nano
@@ -109,7 +106,6 @@ rakudo-bin
 rate-mirrors
 refind
 reflector
-rp-pppoe
 rsync
 rxvt-unicode-terminfo
 screen
@@ -140,6 +136,7 @@ wireless-regdb
 wireless_tools
 wpa_supplicant
 wvdial
+xdg-utils
 xfsprogs
 xf86-video-vesa
 xkeyboard-config

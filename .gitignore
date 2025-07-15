@@ -11,3 +11,4 @@ airootfs/root/bind-mount/root/settings.sh
 *.log
 *.cache
 *.tom
+nohup.out
