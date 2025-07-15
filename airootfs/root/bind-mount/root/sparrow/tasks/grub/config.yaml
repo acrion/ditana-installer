@@ -1,0 +1,5 @@
+enable_os_prober: y
+encrypt_root_partition: y
+timeout: 20
+path: /tmp/grub
+kernel_options: ""

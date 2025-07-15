@@ -10,7 +10,7 @@ vars=$(config vars)
 echo "vars: $vars"
 
 set +e
-s6 --task-run $task@$vars
+s6 --task-run $task@"$vars"
 exit_code=$?
 set -e
 
