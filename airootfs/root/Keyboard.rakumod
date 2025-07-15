@@ -21,6 +21,8 @@ use v6.d;
 use Settings;
 use Chroot;
 
+# Sets keyboard repeat rate for Virtual Terminals only.
+# This does not affect graphical environments like Wayfire or XFCE.
 sub create-keyboard-service() is export {
     my $keyboard-rate = Settings.instance.get("keyboard-rate");
     my $keyboard-delay = Settings.instance.get("keyboard-delay");
@@ -33,14 +35,13 @@ Description=Set keyboard repeat rate and delay in tty.
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/kbdrate --silent --delay $keyboard-delay --rate $keyboard-rate
+ExecStart=/bin/bash -c '/usr/bin/kbdrate --silent --delay $keyboard-delay --rate $keyboard-rate || echo "VT keyboard repeat settings unchanged - hardware does not support configuration"'
 
 [Install]
 WantedBy=multi-user.target
 END
 
     "/mnt/etc/systemd/system/$service_name.service".IO.spurt($content);
-
     add-chrooted-step("systemctl enable $service_name");
 }
 

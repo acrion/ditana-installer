@@ -235,8 +235,6 @@ sub generate-chroot-script() is export {
         add-chrooted-step("usermod -aG audio {$s.get('user-name')}")
     }
     
-    add-chrooted-step(q{systemctl enable ditana_kbdrate}); # see create-keyboard-service in Keyboard.rakumod
-    
     if $s.get("install-cron") {
         add-chrooted-step(q{systemctl enable cronie});
     }

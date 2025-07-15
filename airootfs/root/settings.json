@@ -377,7 +377,7 @@
         {
             "name": "create-keyboard-service",
             "type": "procedure",
-            "available": "`real-install`"
+            "available": "`real-install AND NOT virtual-environment`"
         },
         {
             "name": "create-hostid",
@@ -614,7 +614,6 @@
         {
             "name": "ditana-base",
             "arch-packages": [
-                "ansible",            // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
                 "base",               // Minimal package set to define a basic Arch Linux installation.
                 "base-devel",         // Provides various essential tools like sudo. Optional dependency of pacman, required to use makepkg.
                 "dialog",             // Utilized in chroot-install.sh to prompt for the user password.
