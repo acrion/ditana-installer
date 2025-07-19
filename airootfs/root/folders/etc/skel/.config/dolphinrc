@@ -1,0 +1,32 @@
+[DetailsMode]
+PreviewSize=32
+
+[General]
+BrowseThroughArchives=true
+DoubleClickViewAction=none
+EditableUrl=true
+FilterBar=true
+OpenExternallyCalledFolderInNewTab=true
+ShowFullPath=true
+ShowFullPathInTitlebar=true
+ShowStatusBar=FullWidth
+ShowToolTips=false
+ShowZoomSlider=true
+UseTabForSwitchingSplitView=true
+Version=202
+
+[InformationPanel]
+showHovered=false
+
+[KFileDialog Settings]
+Places Icons Auto-resize=false
+Places Icons Static Size=22
+
+[MainWindow][Toolbar mainToolBar]
+ToolButtonStyle=IconOnly
+
+[Toolbar mainToolBar]
+ToolButtonStyle=IconOnly
+
+[VersionControl]
+enabledPlugins=Git,Dropbox

@@ -104,9 +104,11 @@
             "instruction": "Group of user «$user-name».\n\nIn Linux, every user belongs to at least one group. Groups help manage permissions for shared resources. The default value (1000) creates a private group for the user, which is suitable for most personal systems.\n\nYou might want to change this if:\n\n• You’re integrating this system into an existing network with predefined group structures.\n• You’re mounting drives with data owned by a specific group and want to maintain access permissions.\n• You’re setting up a multi-user system and want to implement a specific group-based access control.\n\nIf unsure, it’s recommended to keep the default value."
         },
         {
-            "name": "install-desktop-environment",
-            "type": "ask-for-yes-no",
-            "instruction": "Install Desktop Environment?"
+            "name": "System Environment Selection",
+            "type": "radiolist",
+            "instruction": "Choose which type of system environment Ditana should install.",
+            "help-intro": "Select one of the following options:",
+            "help-note": "If you are unsure, keep the default (Wayfire)."
         },
         {
             "name": "host-dpi",
@@ -114,7 +116,7 @@
             "validation": "integer",
             "extra-validation": "$_ ∈ 102..185",
             "instruction": "Virtual Environment Detected: Please enter the DPI of your display.\n\nDitana automatically scales your desktop based on your main display’s DPI, ensuring optimal visuals when changing resolutions or display connections. This setting allows Ditana to provide the same seamless experience in your virtual setup as it would on physical hardware.\n\nNote: Enter the DPI value of your host display, not the virtual\n      environment’s.",
-            "available": "`virtual-environment AND install-desktop-environment`"
+            "available": "`virtual-environment AND use-env-xfce`" // TODO maybe offer for Wayfire, i.e. wayland-font-dpi (override DPI part of display-info)
         },
         {
             "name": "select-disk",
@@ -168,7 +170,69 @@
             "categories":
             [
                 {
-                    "name": "Desktop Applications",
+                    "name": "Desktop Application Choices",
+                    "type": "categories",
+                    "categories": [
+                        {
+                            "name": "Web Browser",
+                            "type": "radiolist",
+                            "instruction": "Select your preferred web browser:",
+                            "help-intro": "Choose the web browser that best fits your privacy and feature needs.",
+                            "help-note": ""
+                        },
+                        {
+                            "name": "Media Player", 
+                            "type": "radiolist",
+                            "instruction": "Select your preferred media player:",
+                            "help-intro": "Choose between full-featured or lightweight media players.",
+                            "help-note": ""
+                        },
+                        {
+                            "name": "File Manager",
+                            "type": "radiolist", 
+                            "instruction": "Select your preferred file manager:",
+                            "help-intro": "Choose the file manager that matches your workflow and feature requirements.",
+                            "help-note": ""
+                        },
+                        {
+                            "name": "Document Viewer",
+                            "type": "radiolist",
+                            "instruction": "Select your preferred PDF and document viewer:",
+                            "help-intro": "Choose between traditional and modern document viewing applications.",
+                            "help-note": ""
+                        },
+                        {
+                            "name": "Image Viewer",
+                            "type": "radiolist",
+                            "instruction": "Select your preferred image viewer:",
+                            "help-intro": "Choose between lightweight and feature-rich image viewing applications.",
+                            "help-note": ""
+                        },
+                        {
+                            "name": "System Monitor",
+                            "type": "radiolist",
+                            "instruction": "Select your preferred system monitoring tool:",
+                            "help-intro": "Choose between traditional and modern system monitoring interfaces.",
+                            "help-note": ""
+                        },
+                        {
+                            "name": "Terminal Emulator",
+                            "type": "radiolist",
+                            "instruction": "Select your preferred terminal emulator:",
+                            "help-intro": "Choose the terminal that best suits your workflow and feature needs.",
+                            "help-note": ""
+                        },
+                        {
+                            "name": "Code Editor",
+                            "type": "radiolist",
+                            "instruction": "Select your preferred code editor:",
+                            "help-intro": "Choose between traditional and modern editors, each optimised for different workflows.",
+                            "help-note": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Desktop Software",
                     "type": "checklist",
                     "instruction": "Choose desktop options:",
                     "help-intro": "",
@@ -193,6 +257,47 @@
                     "type": "categories",
                     "categories":
                     [
+                        {
+                            "name": "Advanced Desktop Applications",
+                            "type": "checklist",
+                            "instruction": "Choose desktop applications to install:",
+                            "help-intro": "Select the graphical applications you want to use on your desktop system.",
+                            "help-note": "These applications provide functionality for everyday desktop tasks like browsing, media playback, and system management."
+                        },
+                        {
+                            "name": "Desktop Infrastructure",
+                            "type": "checklist", 
+                            "instruction": "Choose desktop infrastructure components:",
+                            "help-intro": "These components provide the underlying functionality for your desktop environment.",
+                            "help-note": "Most users should keep the default selections. Only modify these if you have specific requirements."
+                        },
+                        {
+                            "name": "Terminal Tool Choices",
+                            "type": "categories",
+                            "categories": [
+                                {
+                                    "name": "Shell",
+                                    "type": "radiolist",
+                                    "instruction": "Select your preferred command-line shell:",
+                                    "help-intro": "Choose the shell that provides the features and syntax you prefer.",
+                                    "help-note": ""
+                                },
+                                {
+                                    "name": "Terminal Text Editor",
+                                    "type": "radiolist",
+                                    "instruction": "Select your preferred terminal text editor:",
+                                    "help-intro": "Choose the editor that matches your workflow and experience level.",
+                                    "help-note": ""
+                                },
+                                {
+                                    "name": "Terminal File Manager",
+                                    "type": "radiolist",
+                                    "instruction": "Select your preferred terminal-based file manager:",
+                                    "help-intro": "Choose the file manager that best suits your command-line workflow.",
+                                    "help-note": ""
+                                }
+                            ]
+                        },
                         {
                             "name": "File System",
                             "type": "radiolist",
@@ -320,7 +425,22 @@
         {
             "name": "set-host-dpi",
             "type": "procedure",
-            "available": "`real-install AND virtual-environment`"
+            "available": "`real-install AND virtual-environment AND use-env-xfce`"
+        },
+        {
+            "name": "configure-slick-greeter",
+            "type": "procedure",
+            "available": "`real-install AND install-lightdm`"
+        },
+        {
+            "name": "enable-lightdm",
+            "type": "procedure",
+            "available": "`real-install AND install-lightdm`"
+        },
+        {
+            "name": "disable-dmabuf-for-webkit",
+            "type": "procedure",
+            "available": "`real-install AND nvidia-pci-id AND install-desktop-environment`"
         },
         {
             // Copy system files that should not be part of packages into the chroot before pacstrap. This
@@ -393,6 +513,11 @@
             "name": "curate-chroot-files",
             "type": "procedure",
             "available": "`real-install`"
+        },
+        {
+            "name": "create-mimeapps-list",
+            "type": "procedure",
+            "available": "`install-desktop-environment`"
         },
         {
             "name": "generate-aur-package-installation-script",
@@ -649,21 +774,321 @@
 
         // Settings that correspond to the mandatory dialogs prior the dialog "Configuration Categories"
 
-        // Dialog "Install Desktop Environment?"
+        // Settings that correspond to the dialog "System Environment Selection"
         {
-            "name": "install-desktop-environment",
-            "short-description": "Install Desktop Environment?",
-            "arch-packages": [
-                "ditana-config-xfce",
-                "xfce-wallpaper-overlay"
-            ],
+            "name": "use-env-wayfire",
+            "dialog-name": "System Environment Selection",
+            "short-description": "Wayfire: Wayland Desktop",
+            "long-description": "Wayfire is a lightweight Wayland compositor with 3D effects, plugin-based customization and excellent HiDPI support. Wayland provides enhanced application isolation and modern security architecture. Recommended for most laptops and workstations.",
+            "spdx-identifiers": "",
+            "required-by-chroot": false,
             "default-value": "`NOT installing-over-ssh`"
         },
+        {
+            "name": "use-env-xfce",
+            "dialog-name": "System Environment Selection",
+            "short-description": "XFCE: Classic X11 Desktop",
+            "long-description": "XFCE is traditional X11 desktop environment with familiar panel-based layout and conventional window management. Ditana includes extensive theming, HiDPI configuration, and power management. A robust choice for users who prefer established desktop workflows.",
+            "spdx-identifiers": "",
+            "required-by-chroot": false,
+            "default-value": false
+        },
+        {
+            "name": "use-env-server",
+            "dialog-name": "System Environment Selection",
+            "short-description": "Server: No Desktop",
+            "long-description": "Select «Server» to install a minimal system without graphical interface. Only essential command-line tools are provided, making it ideal for headless or remotely managed systems.",
+            "spdx-identifiers": "",
+            "required-by-chroot": false,
+            "default-value": "`installing-over-ssh`"
+        },
 
-        // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Applications"
+        // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Application Choices"
+
+        // Web Browser
+        {
+            "name": "install-librewolf",
+            "dialog-name": "Web Browser",
+            "short-description": "Install LibreWolf",
+            "long-description": "LibreWolf is a privacy-focused fork of Firefox that removes all telemetry, data collection, and experiments. It includes hardened security settings by default and blocks fingerprinting techniques. Ditana enhances LibreWolf's usability while preserving core privacy features: fingerprinting resistance is disabled to ensure compatibility with modern web applications like AI services and banking sites, while letterboxing remains active for window-size privacy protection. Browser history and downloads are preserved between sessions for convenience. Firefox Sync is enabled, allowing secure synchronization of bookmarks and passwords across devices. The search engine selection includes Google alongside privacy-focused alternatives, with StartPage configured as the default. Speech-dispatcher support enables text-to-speech functionality for accessibility.",
+            "arch-packages": ["librewolf", "speech-dispatcher"],
+            "spdx-identifiers": "MPL-2.0",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-firefox",
+            "dialog-name": "Web Browser",
+            "short-description": "Install Firefox",
+            "long-description": "Firefox is Mozilla's flagship browser offering extensive customization through about:config, a vast ecosystem of extensions, and sync capabilities across devices. While it includes telemetry and usage analytics by default, these can be disabled. It provides regular security updates and broad web standards support.",
+            "arch-packages": ["firefox"],
+            "spdx-identifiers": "MPL-2.0",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Media Player
+        {
+            "name": "install-vlc",
+            "dialog-name": "Media Player", 
+            "short-description": "Install VLC",
+            "long-description": "VLC is a comprehensive media player with built-in codecs for virtually every audio and video format. It features network streaming capabilities, media conversion tools, playlist management, subtitle synchronization, and audio/video filters. The interface provides extensive controls for fine-tuning playback.",
+            "arch-packages": ["vlc"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-mpv",
+            "dialog-name": "Media Player",
+            "short-description": "Install mpv",
+            "long-description": "mpv is a minimalist media player controlled primarily through keyboard shortcuts and command-line options. It excels at video playback performance with hardware acceleration, supports advanced scripting through Lua, and uses minimal system resources. The interface stays out of your way, appearing only when needed.",
+            "arch-packages": ["mpv"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // File Manager
+        {
+            "name": "install-dolphin",
+            "dialog-name": "File Manager",
+            "short-description": "Install Dolphin",
+            "long-description": "Dolphin offers advanced features, including split views, a comprehensive file search, and terminal integration. Ditana applies conservative default settings, such as disabling automatic preview pop-ups on file hover, to reduce distractions. All settings remain fully customizable through the interface. Git integration with status overlays and context menu actions for repositories is enabled, as well as Dropbox synchronization support.",
+            "arch-packages": [
+                "dolphin",
+                "dolphin-plugins",
+                "ffmpegthumbs",
+                "kde-cli-tools",
+                "kdegraphics-thumbnailers",
+                "kdenetwork-filesharing",
+                "kio-admin",
+                "kompare",
+                "konsole",
+                "purpose"
+            ],
+            "config-files": ["/etc/skel/.local/share/kxmlgui5/dolphin/dolphinui.rc", "/etc/skel/.config/dolphinrc"],
+            "spdx-identifiers": "LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-thunar",
+            "dialog-name": "File Manager",
+            "short-description": "Install Thunar",
+            "long-description": "Thunar focuses on fast startup times and responsive file operations. It provides bulk renaming with pattern support, custom actions for context menus, removable media handling, and a clean interface that displays only essential elements. The modular design allows extending functionality through plugins while maintaining speed.",
+            "arch-packages": ["thunar", "thunar-volman", "tumbler", "thunar-archive-plugin", "thunar-media-tags-plugin"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-only",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-caja",
+            "dialog-name": "File Manager",
+            "short-description": "Install Caja",
+            "long-description": "Caja offers a traditional file management experience with spatial browsing mode, where each folder opens in its own window with remembered size and position. It includes built-in search functionality, three view modes (icon/list/compact), property pages for detailed file information, and seamless handling of remote locations via GVFS.",
+            "arch-packages": ["caja", "gstreamer"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-nemo",
+            "dialog-name": "File Manager",
+            "short-description": "Install Nemo",
+            "long-description": "Nemo provides power-user features including dual-pane mode for side-by-side folder comparison, tree view in the sidebar, built-in terminal panel, batch operations with queuing, and extensive right-click actions. It displays detailed status information and progress for all file operations in a unified interface.",
+            "arch-packages": ["nemo", "ffmpegthumbnailer", "catdoc", "ghostscript", "libgsf", "odt2txt", "poppler"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-pcmanfm-qt",
+            "dialog-name": "File Manager",
+            "short-description": "Install PCManFM-Qt",
+            "long-description": "PCManFM-Qt prioritizes low memory footprint and instant response times. It starts up in under a second, uses minimal RAM even with multiple tabs open, provides desktop icon management, and includes a built-in task manager. Despite its lightweight nature, it supports all essential file operations and mount management.",
+            "arch-packages": ["pcmanfm-qt", "lxqt-archiver", "qt6-translations"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Document Viewer
+        {
+            "name": "install-okular",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Okular",
+            "long-description": "Okular is a comprehensive viewer supporting PDFs and many other formats, offering advanced annotation, document navigation, form filling, and presentation mode, suited for professional use.",
+            "arch-packages": ["okular"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-papers",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Papers",
+            "long-description": "Papers is a modern document viewer focused on smooth PDF reading, gesture navigation, and distraction-free interface. As a feature-rich Evince fork, it provides advanced Wayland support, improved touch controls, and active development.",
+            "arch-packages": ["papers"],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-xreader",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Xreader",
+            "long-description": "Xreader is a traditional document viewer with classic multi-window interface, comprehensive annotation tools, and persistent reading positions. It emphasises familiarity and straightforward usage.",
+            "arch-packages": ["xreader"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment AND x11`",
+            "default-value": false
+        },
+        {
+            "name": "install-evince",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Evince",
+            "long-description": "Evince is a clean and lightweight document viewer with simple interface, fast navigation and plugin-based format support.",
+            "arch-packages": ["evince"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Image Viewer
+        {
+            "name": "install-gthumb",
+            "dialog-name": "Image Viewer",
+            "short-description": "Install gThumb",
+            "long-description": "gThumb combines image viewing with organization and editing capabilities. It features batch operations for resizing and format conversion, catalogs for organizing images without moving files, basic editing tools including crop and color adjustment, slideshow creation with transitions, and direct upload to web services. The interface includes a customizable toolbar and sidebar for navigation.",
+            "arch-packages": ["gthumb"],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-ristretto",
+            "dialog-name": "Image Viewer",
+            "short-description": "Install Ristretto",
+            "long-description": "Ristretto is a fast image viewer optimized for quick browsing with minimal resource usage. It loads images instantly, provides a thumbnail bar for navigation, supports basic zoom and rotation, and includes a simple slideshow function. The uncluttered interface focuses purely on image display.",
+            "arch-packages": ["ristretto"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // System Monitor
+        {
+            "name": "install-resources",
+            "dialog-name": "System Monitor",
+            "short-description": "Install Resources",
+            "long-description": "Resources presents system information through a modern interface with animated graphs and clear categorization. It monitors CPU, memory, GPU, NPU, network interfaces, and storage devices with real-time updates. The application list shows only graphical applications by default for clarity, while the process view provides detailed technical information. Built with Rust for efficient resource usage.",
+            "arch-packages": ["resources"],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-gnome-system-monitor",
+            "dialog-name": "System Monitor",
+            "short-description": "Install GNOME System Monitor",
+            "long-description": "GNOME System Monitor provides comprehensive system analysis with tabbed interface for processes, resources, and file systems. It features process tree view showing parent-child relationships, detailed memory maps for each process, historical graphs with configurable time ranges, and network traffic monitoring per interface. The traditional interface follows established monitoring tool conventions.",
+            "arch-packages": ["gnome-system-monitor"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Terminal Emulator
+        {
+            "name": "install-kitty",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Kitty",
+            "long-description": "Kitty leverages GPU acceleration for smooth scrolling and rendering. It uniquely displays images directly in the terminal, supports font ligatures for programming, allows extensive customization through a Python API, and provides advanced features like Unicode input via ctrl+shift+u. Ditana includes optimized configurations for enhanced productivity.",
+            "arch-packages": ["ditana-config-kitty"],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-tabby",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Tabby",
+            "long-description": "Tabby integrates terminal emulation with SSH, Telnet, and serial connections in one application. It features split panes in any arrangement, connection profiles with saved credentials, plugin system for extensibility, PowerShell and WSL integration, and automatic session restoration. The web-based technology stack enables consistent experience across platforms.",
+            "arch-packages": ["tabby"],
+            "spdx-identifiers": "MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-contour",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Contour",
+            "long-description": "Contour introduces modal editing directly in the terminal with vi-like modes for selection and scrolling. It supports Sixel graphics protocol for inline images, provides vertical markers for quick navigation, includes synchronized rendering to prevent tearing, and features extensive Unicode support including emoji and grapheme clusters.",
+            "arch-packages": ["contour"],
+            "spdx-identifiers": "Apache-2.0",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-alacritty",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Alacritty",
+            "long-description": "Alacritty focuses on raw performance through GPU rendering and zero-latency input. It maintains simplicity with no tabs, splits, or GUI configuration – all settings via YAML file. The minimal feature set ensures consistent sub-millisecond response times, making it ideal for users who prioritize speed and use terminal multiplexers.",
+            "arch-packages": ["alacritty"],
+            "spdx-identifiers": "Apache-2.0,MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-konsole",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Konsole",
+            "long-description": "Konsole is a versatile terminal emulator supporting tabbed browsing, split views, configurable keyboard shortcuts, profile management, and direct drag-and-drop of files or URLs. It provides powerful search, bookmarking, extensive colour schemes, and advanced session management, making it suitable for demanding terminal workflows.",
+            "arch-packages": ["konsole"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-xfce4-terminal",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install XFCE Terminal",
+            "long-description": "XFCE Terminal provides a traditional terminal experience with tabs, configurable keyboard shortcuts, and drop-down mode for quick access. It supports background images with transparency, customizable colors per tab, and activity monitoring that highlights tabs with new output. The lightweight design integrates seamlessly with desktop environments.",
+            "arch-packages": ["xfce4-terminal"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Code Editor
+        {
+            "name": "install-kate",
+            "dialog-name": "Code Editor",
+            "short-description": "Install Kate",
+            "long-description": "Kate is an advanced text editor offering powerful multi-document editing, split views, extensive syntax highlighting, code folding, and integrated support for Language Server Protocols (LSP) for various programming languages. It features a highly customisable interface, robust plugin system, and a built-in terminal for efficient workflows.",
+            "arch-packages": ["kate"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-vscode",
+            "dialog-name": "Code Editor",
+            "short-description": "Install Visual Studio Code (Open Source build)",
+            "long-description": "Install the Open Source build of Visual Studio Code, including marketplace support. Font ligatures will be switched on, using an appropriate font.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "ditana-config-vscode"
+            ],
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Software"
         {
             "name": "install-libreoffice",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Libre Office",
             "long-description": "LibreOffice is a powerful open-source office suite that includes applications for word processing, spreadsheets, presentations, vector graphics, databases, and more. It provides a wide range of tools and features, making it a versatile alternative to proprietary office software. With comprehensive file format compatibility and robust support for extensions, LibreOffice is ideal for users seeking a complete office solution. The appropriate language pack for your system will be installed.",
             "arch-packages": [ // will be determined by chroot-install.sh depending on the locale
@@ -675,7 +1100,7 @@
         },
         {
             "name": "install-betterbird",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Betterbird",
             "long-description": "Betterbird is an enhanced version of the popular Thunderbird email client, offering additional features and bug fixes not found in Thunderbird. It includes advanced functionalities such as a multi-line view, vertical tabs, enhanced sorting options, and improved search capabilities, making email management more efficient and customizable. Betterbird also addresses many long-standing issues and user requests, offering a smoother, more reliable email experience. The appropriate language pack for your system will be installed.",
             "arch-packages": [ // will be determined by chroot-install.sh depending on the locale
@@ -686,8 +1111,20 @@
             "default-value": "`install-desktop-environment`"
         },
         {
+            "name": "install-syncthing-gtk",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Syncthing file synchronization",
+            "long-description": "Syncthing is a continuous file synchronization program that synchronizes files between two or more computers in real time, securely and privately. Unlike cloud storage services, your data is never stored on central servers - it's synchronized directly between your devices using encrypted connections. The GTK interface provides easy configuration, monitoring, and a system tray icon for quick access. Ideal for keeping documents, photos, and other files synchronized across multiple devices without relying on third-party cloud services.",
+            "arch-packages": [
+                "syncthing-gtk"
+            ],
+            "spdx-identifiers": "MPL-2.0,GPL-2.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
             "name": "install-backintime",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Back In Time",
             "long-description": "Back In Time is a straightforward backup tool that provides an easy-to-use interface for restoring previously saved snapshots of your file system. This also ensures that cron is installed, as Back In Time can automatically create a cron job to run periodic backups.",
             "arch-packages": [
@@ -699,7 +1136,7 @@
         },
         {
             "name": "install-pdfarranger",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install PDF Arranger",
             "long-description": "PDF Arranger is a versatile tool designed for modifying PDF files. It enables users to merge, split, rotate, rearrange, and crop PDF pages, providing an intuitive interface for managing PDF documents.",
             "arch-packages": [
@@ -711,7 +1148,7 @@
         },
         {
             "name": "install-xournalpp",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Xournal++",
             "long-description": "Xournal++ is an application for sketching, keeping a journal using a stylus, and annotating PDFs. It’s particularly useful for interactive work with PDF documents, including writing into non-form based PDFs.",
             "arch-packages": [
@@ -723,7 +1160,7 @@
         },
         {
             "name": "install-font-manager",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Font Manager",
             "long-description": "Font Manager provides an intuitive interface for installing, removing, and organizing fonts on your system. The application allows users to preview fonts, group them into collections, and manage font activation/deactivation.",
             "arch-packages": [
@@ -735,7 +1172,7 @@
         },
         {
             "name": "install-etcher",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Etcher",
             "long-description": "Etcher: Flash OS images to SD cards & USB drives, safely and easily.",
             "aur-packages": [
@@ -747,7 +1184,7 @@
         },
         {
             "name": "install-bitwarden",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Bitwarden",
             "long-description": "Bitwarden is a free and open-source password management service that stores sensitive information such as website credentials in an encrypted vault.",
             "arch-packages": [
@@ -759,7 +1196,7 @@
         },
         {
             "name": "install-nomachine",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install NoMachine",
             "long-description": "NoMachine is a remote desktop application that uses NX technology to provide a highly efficient and low-latency remote desktop experience. It supports multimedia capabilities, including audio and video streaming, USB forwarding, and file transfer. NoMachine is platform-independent and ensures secure connections through SSH encryption, making it suitable for both personal and professional remote access needs.",
             "aur-packages": [
@@ -772,7 +1209,7 @@
         },
         {
             "name": "install-fluffychat",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install FluffyChat",
             "long-description": "FluffyChat is a cute and user-friendly Matrix client that provides secure end-to-end encrypted instant messaging. It supports all major Matrix features including group chats, file sharing, voice messages, and video calls. It is able to manage multiple Matrix accounts within the same window, allowing users to conveniently switch between different accounts without opening separate instances. The application offers a modern, intuitive interface that makes Matrix messaging accessible to users of all technical levels. FluffyChat connects to the decentralized Matrix network, ensuring your communications remain private and under your control.",
             "arch-packages": [
@@ -784,7 +1221,7 @@
         },
         {
             "name": "install-zapzap",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install ZapZap",
             "long-description": "ZapZap is a reliable WhatsApp desktop application that avoids heavy CPU load in browsers. It allows you to paste images directly into a chat.",
             "arch-packages": [
@@ -796,7 +1233,7 @@
         },
         {
             "name": "install-variety",
-            "dialog-name": "Desktop Applications",
+            "dialog-name": "Desktop Software",
             "short-description": "Install Variety",
             "long-description": "Variety is a wallpaper changer that automatically downloads and switches wallpapers on your desktop. It offers a wide range of customization options, allowing users to display random quotes, apply effects, and use images from various online sources.",
             "arch-packages": [
@@ -804,11 +1241,60 @@
                 "python-setuptools" // missing dependency in package 'variety'
             ],
             "spdx-identifiers": "GPL3",
-            "available": "`install-desktop-environment`",
-            "default-value": "`install-desktop-environment`"
+            "config-files": ["/etc/xdg/autostart/variety.desktop"]
+            "available": "`x11`",
+            "default-value": "`x11`"
         },
 
         // Settings that correspond to the dialog "Configuration Categories" -> "Multimedia Applications"
+        {
+            "name": "install-krita",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Krita digital painting",
+            "long-description": "Install Krita, a professional digital painting application designed by artists, for artists. Krita offers advanced brush engines, layer management, animation capabilities, and comprehensive tools for digital illustration, concept art, and texture painting. Features include pressure-sensitive brush dynamics, vector tools, timeline animation, and support for various graphics tablets. Krita provides a complete professional workflow for digital artists and is significantly more powerful than basic painting applications.",
+            "arch-packages": [
+                "krita"
+            ],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment AND wayland`"
+        },
+        {
+            "name": "install-mypaint",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install MyPaint",
+            "long-description": "Install MyPaint: Opt for the installation of MyPaint, allowing the software to respond to different pressure levels and strokes from a digital pen or stylus. This feature enhances your drawing experience by mimicking the natural variations in line thickness, opacity, and texture that you would get with real paintbrushes on canvas.",
+            "arch-packages": [
+                "mypaint"
+            ],
+            "spdx-identifiers": "GPL",
+            "available": "`install-desktop-environment AND x11`",
+            "default-value": "`install-desktop-environment AND x11`"
+        },
+        {
+            "name": "install-kdenlive",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Kdenlive video editor",
+            "long-description": "Install Kdenlive, a professional non-linear video editor using the MLT framework. Kdenlive offers advanced video editing capabilities including multi-track editing, effects, transitions, and support for a wide range of video formats. It includes features for color correction, audio mixing, and timeline-based editing suitable for both amateur and professional video production.",
+            "arch-packages": [
+                "kdenlive"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-digikam",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install digiKam photo management",
+            "long-description": "Install digiKam, an advanced digital photo management application for organizing, editing, and sharing digital photographs. Features include RAW processing, facial recognition, geotagging, advanced search capabilities, and non-destructive editing tools. digiKam supports a wide range of image formats and provides professional-grade photo organization and workflow management.",
+            "arch-packages": [
+                "digikam"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
         {
             "name": "install-unigine",
             "dialog-name": "Multimedia Applications",
@@ -868,18 +1354,6 @@
                 "inkscape"
             ],
             "spdx-identifiers": "GPL,LGPL",
-            "available": "`install-desktop-environment`",
-            "default-value": "`install-desktop-environment`"
-        },
-        {
-            "name": "install-mypaint",
-            "dialog-name": "Multimedia Applications",
-            "short-description": "Install MyPaint",
-            "long-description": "Install MyPaint: Opt for the installation of MyPaint, allowing the software to respond to different pressure levels and strokes from a digital pen or stylus. This feature enhances your drawing experience by mimicking the natural variations in line thickness, opacity, and texture that you would get with real paintbrushes on canvas.",
-            "arch-packages": [
-                "mypaint"
-            ],
-            "spdx-identifiers": "GPL",
             "available": "`install-desktop-environment`",
             "default-value": "`install-desktop-environment`"
         },
@@ -971,6 +1445,596 @@
                 "nccl"
             ],
             "default-value": "`install-gpu-libraries AND nvidia-pci-id`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Advanced Desktop Applications"
+        {
+            "name": "install-xfce-screenshooter",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "XFCE Screenshooter",
+            "long-description": "XFCE Screenshooter is a screenshot utility suitable for X11",
+            "arch-packages": ["xfce4-screenshooter"],
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-xfce-wallpaper-overlay",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "XFCE Wallpaper Overlay",
+            "long-description": "XFCE Wallpaper Overlay automatically overlays your wallpaper with text from configuration files",
+            "arch-packages": ["xfce-wallpaper-overlay"],
+            "spdx-identifiers": "AGPL-3.0-or-later AND MIT-Modern-Variant",
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-engrampa",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Engrampa archive manager",
+            "long-description": "Engrampa is an archive manager that supports various compression formats.",
+            "arch-packages": [
+                "engrampa"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-gnome-disk-utility",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install GNOME Disks",
+            "long-description": "GNOME Disks provides advanced disk management tool with features like SMART monitoring, benchmarking, partition management, and easy fstab configuration.",
+            "arch-packages": [
+                "gnome-disk-utility"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-seahorse",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Seahorse password manager",
+            "long-description": "Seahorse is a graphical interface for managing GPG, SSH, and system login keys, as well as cryptographic trust settings.",
+            "arch-packages": [
+                "seahorse"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-pavucontrol", 
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install PulseAudio Volume Control",
+            "long-description": "PulseAudio Volume Control is an advanced volume control application for PulseAudio. Allows per-application volume control, device selection, and audio routing configuration.",
+            "arch-packages": [
+                "pavucontrol"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-system-config-printer",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install system-config-printer",
+            "long-description": "system-config-printer is a CUPS printer configuration tool with status applet for easy printer management and monitoring.",
+            "arch-packages": [
+                "system-config-printer"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-blueman",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Blueman Bluetooth manager",
+            "long-description": "Blueman is a graphical Bluetooth manager with system tray integration for easy device pairing and management.",
+            "arch-packages": [
+                "blueman"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment AND has-bluetooth`",
+            "default-value": "`install-desktop-environment AND has-bluetooth`"
+        },
+        {
+            "name": "install-network-manager-applet",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Network Manager applet",
+            "long-description": "The Network Manager applet is a system tray icon for managing WiFi and network connections with easy switching between networks.",
+            "arch-packages": [
+                "network-manager-applet"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-kalu",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Kalu upgrade notifier",
+            "long-description": "Kalu is an upgrade notifier with AUR support, watched packages, and Arch Linux news integration. Double-click the tray icon to upgrade Ditana.",
+            "arch-packages": [
+                "kalu"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-arch-audit-gtk",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install security update notifier arch-audit-gtk",
+            "long-description": "arch-audit-gtk shows a tray indicator when security updates are missing, checking for known vulnerabilities in installed packages.",
+            "arch-packages": [
+                "arch-audit-gtk"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-onboard",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Onboard on-screen keyboard",
+            "long-description": "Onboard is an on-screen keyboard useful for tablet PCs or mobility impaired users. Features word prediction and customizable layouts.",
+            "arch-packages": [
+                "onboard"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-squeekboard",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Squeekboard on-screen keyboard",
+            "long-description": "Squeekboard is an on-screen keyboard useful for tablet PCs or mobility impaired users.",
+            "arch-packages": [
+                "squeekboard"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`wayland`",
+            "default-value": "`wayland`"
+        },
+        {
+            "name": "install-gpick",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Gpick color picker",
+            "long-description": "Gpick is an advanced color picker with palette generation, color scheme creation, and minimal dependencies.",
+            "arch-packages": [
+                "gpick"
+            ],
+            "spdx-identifiers": "BSD-3-Clause",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-mugshot",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Mugshot User Profile Manager",
+            "long-description": "Mugshot is a lightweight utility «About Me» to manage user profile pictures and details. Quickly update your personal profile and sync your updates across applications.",
+            "arch-packages": ["mugshot"],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-catfish",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Catfish file searching tool",
+            "long-description": "Catfish is a versatile file search application that provides powerful search capabilities across your file system. It features an intuitive interface with support for multiple search methods including filename searches, content searches, and advanced filtering options. Catfish can search through various file types, supports regular expressions, and offers real-time search results. The application integrates well with different desktop environments and serves as an excellent complement to any file manager, making it easy to locate files quickly and efficiently.",
+            "arch-packages": ["catfish"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": true
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Desktop Infrastructure"
+        {
+            "name": "install-gvfs",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install GVfs",
+            "long-description": "GVfs provides essential backend services that enable file managers to access advanced features such as network locations, trash functionality, and removable media handling. It allows file managers to seamlessly browse SFTP servers, SMB/CIFS shares, FTP sites, and other network resources directly from the file manager interface. GVfs also enables proper trash support, automatic mounting of USB drives and other removable media, and metadata storage. Most file managers rely on GVfs for these extended capabilities, making it highly recommended for desktop installations.",
+            "arch-packages": [
+                "gvfs"
+            ],
+            "spdx-identifiers": "LGPL-2.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-xfce-core",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install XFCE core components",
+            "long-description": "Core XFCE desktop environment components $packages.",
+            "arch-packages": [
+                "exo", "garcon", "xfce4-appfinder", 
+                "xfce4-panel", "xfce4-power-manager", "xfce4-session", "xfce4-settings", 
+                "xfconf", "xfdesktop", "xfwm4", "xfwm4-themes"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-x11-utilities",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install X11 utilities",
+            "long-description": "Essential X11 tools: $packages.",
+            "arch-packages": [
+                "xclip", "xorg-xev", "xorg-xkill", "xorg-xrandr", "lxsession"
+            ],
+            "spdx-identifiers": "GPL-2.0-only,MIT,X11,HPND-sell-variant",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-wayfire-core",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Wayfire core components",
+            "long-description": "Core Wayfire compositor with $packages.",
+            "arch-packages": [
+                "wayfire", "wayfire-plugins-extra", "wf-shell", "wcm"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`use-env-wayfire`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "customize-wayfire",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Customize Wayfire",
+            "long-description": "Configure Wayfire to use XDG autostart, import Wayland environment variables into systemd user session, update D-Bus activation environment with Wayland variables and configure it with useful shortcuts and other customizations.",
+            "spdx-identifiers": "MIT",
+            "config-files": [
+                "/etc/skel/.config/wayfire.ini",
+                "/etc/xdg/autostart/wayland-env-systemd.desktop",
+                "/etc/xdg/autostart/wayland-dbus-env.desktop"
+            ],
+            "available": "`install-wayfire-core`",
+            "default-value": "`install-wayfire-core`"
+        },
+        {
+            "name": "install-wayland-utilities",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Wayland utilities",
+            "long-description": "Essential Wayland tools: $packages.",
+            "arch-packages": [
+                "wl-clipboard", "wlr-randr", "slurp", "wf-recorder-git"
+            ],
+            "spdx-identifiers": "MIT,GPL-3.0-only,AGPL-3.0-or-later",
+            "available": "`wayland`",
+            "default-value": "`wayland`"
+        },
+        {
+            "name": "install-xfce-panel-plugins",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "XFCE Panel Plugins",
+            "long-description": "Additional panel plugins for XFCE: $packages",
+            "arch-packages": [
+                "xfce4-docklike-plugin",
+                "xfce4-genmon-plugin", 
+                "xfce4-notes-plugin",
+                "xfce4-weather-plugin",
+                "xfce4-whiskermenu-plugin",
+                "xfce4-xkb-plugin",
+                "xfce4-pulseaudio-plugin"
+            ],
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-xfce-display-config-observer",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "XFCE Display Config Observer",
+            "long-description": "Monitors XFCE display changes to adjust font DPI and panel height automatically",
+            "arch-packages": ["xfce-display-config-observer"],
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-lightdm",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install LightDM display manager",
+            "long-description": "LightDM display manager with slick greeter for graphical login, including the configuration tool «Login Window».",
+            "arch-packages": [
+                "lightdm", "lightdm-settings" // lightdm-settings provides lightdm-slick-greeter
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later,LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-lightdm-x11",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "LightDM X11 Setup",
+            "long-description": "Packages for LightDM under X11.",
+            "arch-packages": ["xorg-xhost", "lxsession"],
+            "available": "`x11`",
+            "default-value": "`x11 AND install-lightdm`"
+        },
+        {
+            "name": "install-xdg-integration",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install XDG desktop integration",
+            "long-description": "Essential XDG tools for desktop integration including terminal detection, user directories, and desktop portals.",
+            "arch-packages": [
+                "xdg-terminal-exec-git", "xdg-user-dirs", "xdg-utils"
+            ],
+            "spdx-identifiers": "MIT,GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-desktop-fonts",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install desktop fonts",
+            "long-description": "Comprehensive font collection including Noto fonts for extensive Unicode coverage and JetBrains Mono for programming.",
+            "arch-packages": [
+                "noto-fonts", "noto-fonts-cjk", "noto-fonts-extra", "noto-fonts-emoji",
+                "ttf-jetbrains-mono-nerd"
+            ],
+            "spdx-identifiers": "OFL-1.1",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-desktop-theme",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Dracula theme and Kora icons",
+            "long-description": "Dracula GTK theme and Kora Yellow icon theme for a consistent, modern desktop appearance.",
+            "arch-packages": [
+                "dracula-gtk-theme", "kora-yellow-icon-theme"
+            ],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-wdisplays-persistent",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install persistent Display Config",
+            "long-description": "Installs a GUI display configurator with Kanshi configuration saving and automatic Kanshi startup. This enables automatic setup of your display configuration upon startup.",
+            "arch-packages": ["wdisplays-persistent"],
+            "spdx-identifiers": "GPL3",
+            "config-files": ["/etc/xdg/autostart/kanshi.desktop"],
+            "available": "`wlroots AND xdg-autostart-is-active`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-wayland-font-dpi",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Automatic Font Scaling",
+            "long-description": "Dynamic text scaling based on display DPI for Wayland",
+            "arch-packages": ["wayland-font-dpi"],
+            "spdx-identifiers": "AGPL3",
+            "config-files": ["/etc/xdg/autostart/waybar.desktop"],
+            "available": "`wlroots AND xdg-autostart-is-active`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-waybar",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Waybar status bar",
+            "long-description": "Highly customizable status bar for Wayland compositors with extensive module support.",
+            "arch-packages": [
+                "waybar", "otf-font-awesome"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`wlroots`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "customize-waybar",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Customize Waybar",
+            "long-description": "Configure Waybar with a responsive stylesheet and to use nwggrid as start button and nwgbar for log/suspend/logout/reboot/shutdown/software update/system logs/.",
+            "arch-packages": [
+                "nwg-launchers",
+            ],
+            "spdx-identifiers": "GPL3",
+            "config-files": [
+                "/etc/skel/.config/waybar/config.jsonc",
+                "/etc/skel/.config/waybar/style.css"
+            ],
+            "available": "`install-waybar`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-rofi",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Rofi application launcher",
+            "long-description": "Versatile application launcher and window switcher with extensive theming support.",
+            "arch-packages": [
+                "rofi"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-desktop-portal-gtk",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install GTK desktop portal",
+            "long-description": "Desktop integration portal for GTK applications, enabling file dialogs and other desktop integration features.",
+            "arch-packages": [
+                "xdg-desktop-portal-gtk"
+            ],
+            "spdx-identifiers": "LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-desktop-portal-wlr",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install wlroots desktop portal",
+            "long-description": "Desktop integration portal for wlroots-based Wayland compositors, enabling screen sharing and other features.",
+            "arch-packages": [
+                "xdg-desktop-portal-wlr"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`wlroots`",
+            "default-value": "`wlroots`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" -> "Terminal Tool Choices"
+
+        // Shell
+        {
+            "name": "install-zsh",
+            "dialog-name": "Shell",
+            "short-description": "Install zsh and make it default",
+            "long-description": "Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting.",
+            "spdx-identifiers": "zsh",
+            "arch-packages": [
+                "ditana-config-zsh"
+            ],
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "install-nushell",
+            "dialog-name": "Shell",
+            "short-description": "Install Nushell",
+            "long-description": "Install Nushell, a new type of shell that works with structured data. Nushell treats command output as structured data (tables, lists, records) rather than text, enabling powerful data processing pipelines similar to PowerShell but with a more intuitive syntax. It features built-in data filtering, sorting, and selection commands, making it excellent for data manipulation tasks. The type system helps catch errors early, and the modern error messages with helpful suggestions improve the user experience.",
+            "arch-packages": [
+                "nushell"
+            ],
+            "spdx-identifiers": "MIT",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+        {
+            "name": "install-fish",
+            "dialog-name": "Shell",
+            "short-description": "Install Fish shell",
+            "long-description": "Install Fish (Friendly Interactive Shell), a smart and user-friendly command line shell. Fish features autosuggestions based on history and completions, web-based configuration interface, syntax highlighting with error checking before execution, and sane scripting with readable syntax. It works out-of-the-box with minimal configuration needed, providing helpful features like tab completions for commands, options, and arguments. Fish's design philosophy emphasizes user-friendliness without sacrificing power.",
+            "arch-packages": [
+                "fish",
+                "pkgfile",
+                "mandoc"
+            ],
+            "spdx-identifiers": "GPL-2.0-only,BSD-3-Clause,ISC,MIT,PSF-2.0",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+        {
+            "name": "install-bash-enhanced",
+            "dialog-name": "Shell",
+            "short-description": "Configure bash as the main Shell",
+            "long-description": "This selection configures bash as the main shell. The other choices in this category also install bash, but configure a different shell as the main shell.",
+            "arch-packages": [
+                "bash-completion",
+                "starship"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,ISC",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+
+        // Terminal Text Editor
+        {
+            "name": "install-micro",
+            "dialog-name": "Terminal Text Editor",
+            "short-description": "Install micro editor and set it as default",
+            "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "ditana-config-micro"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-helix",
+            "dialog-name": "Terminal Text Editor",
+            "short-description": "Install Helix",
+            "long-description": "Install Helix, a post-modern modal text editor written in Rust. Helix provides powerful editing capabilities with built-in features that typically require plugins in other editors: LSP support, DAP debugging protocol, tree-sitter syntax highlighting, and multiple selections. Its modal editing is inspired by Vim and Kakoune, offering intuitive keybindings and visual feedback. Helix works out-of-the-box without configuration while remaining highly capable for advanced users.",
+            "arch-packages": [
+                "helix"
+            ],
+            "spdx-identifiers": "MPL-2.0",
+            "default-value": false
+        },
+        {
+            "name": "install-neovim",
+            "dialog-name": "Terminal Text Editor",
+            "short-description": "Install Neovim",
+            "long-description": "Install Neovim, a hyperextensible Vim-based text editor. Neovim modernizes Vim with features like built-in LSP client, treesitter integration for syntax highlighting, Lua scripting API, and asynchronous plugin architecture. It maintains full Vim compatibility while adding a powerful API that enables rich plugin ecosystems. The built-in terminal emulator, floating windows, and extensive customization options make it suitable for creating complete development environments.",
+            "arch-packages": [
+                "neovim",
+                "python-pynvim"
+            ],
+            "spdx-identifiers": "Apache-2.0,LicenseRef-vim",
+            "default-value": false
+        },
+
+        // Terminal File Manager
+        {
+            // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
+            // to raku, depending on `install-desktop-environment`
+            "name": "install-ranger",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install ranger terminal file manager including optional packages",
+            "long-description": "Install ranger, a terminal file manager, including optional packages. It will be configured\n\n (1) to make use of the kitty terminal to display true graphics,\n (2) to display git information, which is particularly useful for directories, and\n (3) to display hidden items.",
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "arch-packages": [
+                // ranger including its optional dependencies
+                "atool", "elinks", "ffmpegthumbnailer", "highlight", "imagemagick", "libcaca", "mediainfo", "odt2txt", "perl-image-exiftool", "poppler", "python-chardet", "python-pillow", "transmission-cli", "ueberzug", "w3m", "ranger"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-nnn",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install nnn",
+            "long-description": "Install nnn, a blazing-fast, lightweight file manager with minimal dependencies. It features instant filtering, disk usage analyzer, batch operations, plugin support, and multiple contexts (tabs). The interface is designed for efficiency with single-key navigation and operations. nnn can preview images, PDFs, and videos in terminal, mount remote filesystems, and integrate with your shell for quick directory changes.",
+            "arch-packages": [
+                "nnn",
+                "atool",
+                "libarchive",
+                "trash-cli",
+                "sshfs",
+                "rclone",
+                "fuse2"
+            ],
+            "spdx-identifiers": "BSD-2-Clause",
+            "default-value": false
+        },
+        {
+            "name": "install-lf",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install lf",
+            "long-description": "Install lf, a terminal file manager inspired by ranger and written in Go. lf provides a minimalist, fast, and cross-platform file management experience with vi-like key bindings. It features asynchronous I/O, built-in file preview, customizable keybindings, and shell command integration. The single binary design ensures quick startup and low memory usage while maintaining powerful functionality through its scripting capabilities.",
+            "arch-packages": [
+                "lf"
+            ],
+            "spdx-identifiers": "MIT",
+            "default-value": false
+        },
+        {
+            "name": "install-mc",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install Midnight Commander",
+            "long-description": "Install Midnight Commander (mc), a classic two-panel file manager that emulates Norton Commander. mc provides a full-featured file management interface with built-in viewer/editor, FTP/SFTP client, archive browsing (including RPM/DEB packages), and extensive keyboard shortcuts. Its text-based UI works over SSH connections and includes mouse support, making it ideal for both local and remote system administration. The dual-pane layout enables efficient file operations between directories.",
+            "arch-packages": [
+                "mc",
+                "aspell",
+                "cabextract",
+                "cdparanoia",
+                "cdrkit",
+                "cvs",
+                "gawk",
+                "libisoburn",
+                "mtools",
+                "unace",
+                "rpm-tools"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "default-value": false
         },
 
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "File System"
@@ -1346,7 +2410,7 @@
             "long-description": "systemd integrates several boot and process management functions into one framework. It is designed to handle system initialization, service management, and logging in a unified way, with built-in parallelization and dependency management. systemd offers a modular architecture where different components work together to manage the system’s lifecycle from boot to shutdown.\n\nNote that using systemd with a ZFS root filesystem is presently only possible if the root partition is not encrypted. As a result, Ditana does not currently support the use of systemd with ZFS.",
             "spdx-identifiers": "GPL-2.0-only",
             "required-by-chroot": true,
-            // Using systemd init system for ZFS requires https://github.com/dasJ/sd-zfs, but this project does not yet support ZFS encryption (which we configure when encrypt-root-partition is true). We could still support this, but currently do not.
+            // Using systemd init system for ZFS requires https://github.com/dasJ/sd-zfs, but this project does not yet support ZFS encryption (which we configure when encrypt-root-partition is true). We could still support systemd init system for ZFS without encryption, but currently do not.
             "available": "`NOT zfs-filesystem`",
             "default-value": "`NOT zfs-filesystem`"
         },
@@ -1560,12 +2624,13 @@
             "name": "install-firewalld",
             "dialog-name": "Network and Security Tools",
             "short-description": "Install and enable firewalld",
-            "long-description": "Install firewalld, a dynamically managed firewall with D-Bus interface. Key features include support for network zones, IPv4/IPv6, runtime/permanent configurations, and a rich language for complex rules. It utilizes nftables, the modern successor to iptables, offering improved performance and flexibility. firewalld allows easy integration for services and applications to modify firewall settings without service restarts. For desktop installations, a graphical configuration tool is included.",
+            "long-description": "Install firewalld, a dynamically managed firewall with D-Bus interface. Key features include support for network zones, IPv4/IPv6, runtime/permanent configurations, and a rich language for complex rules. It utilizes nftables, the modern successor to iptables, offering improved performance and flexibility. firewalld allows easy integration for services and applications to modify firewall settings without service restarts. For desktop installations, a graphical configuration tool is included. Ditana repairs the Tray icon for the Wayfire Traybar.",
             "spdx-identifiers": "GPL-2.0-or-later",
             "arch-packages": [
                 "firewalld"
             ],
-            "available": "`enable-network`",
+            "config-files": ["/etc/xdg/autostart/firewall-applet.desktop"],
+            "available": "`enable-network AND xdg-autostart-is-active`",
             "default-value": true
         },
         {
@@ -1698,19 +2763,19 @@
             "default-value": "`NOT virtual-environment`",
             "available": "`NOT virtual-environment`"
         },
-        
+
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Terminal Tools and Utilities"
         {
-            "name": "install-zsh",
+            "name": "install-syncthing",
             "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install zsh and make it default",
-            "long-description": "Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting.",
-            "spdx-identifiers": "zsh",
+            "short-description": "Install Syncthing file synchronization (headless)",
+            "long-description": "Syncthing is a continuous file synchronization program that synchronizes files between two or more computers in real time, securely and privately. Unlike cloud storage services, your data is never stored on central servers - it's synchronized directly between your devices using encrypted connections. This headless version runs as a background service and can be configured through a web interface at http://localhost:8384. Perfect for servers and headless systems that need file synchronization without a graphical interface.",
             "arch-packages": [
-                "ditana-config-zsh"
+                "syncthing"
             ],
-            "required-by-chroot": true,
-            "default-value": true
+            "spdx-identifiers": "MPL-2.0",
+            "available": "`NOT install-desktop-environment`",
+            "default-value": false
         },
         {
             "name": "install-kmscon",
@@ -1743,31 +2808,6 @@
             "spdx-identifiers": "",
             "arch-packages": [
                 "bat", "bc", "bind", "expect", "git-lfs", "jq", "graphviz", "grep", "htop", "img2pdf", "less", "lsof", "lua", "man-db", "mediainfo", "ncdu", "neovim", "perl-image-exiftool", "ripgrep", "rsync", "shellcheck", "sed", "systemctl-tui", "turbostat"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-micro",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install micro editor and set it as default",
-            "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
-            "spdx-identifiers": "MIT",
-            "arch-packages": [
-                "ditana-config-micro"
-            ],
-            "default-value": true
-        },
-        {
-            // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
-            // to raku, depending on `install-desktop-environment`
-            "name": "install-ranger",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install ranger terminal file manager including optional packages",
-            "long-description": "Install ranger, a terminal file manager, including optional packages. It will be configured\n\n (1) to make use of the kitty terminal to display true graphics,\n (2) to display git information, which is particularly useful for directories, and\n (3) to display hidden items.",
-            "spdx-identifiers": "GPL-3.0-or-later",
-            "arch-packages": [
-                // ranger including its optional dependencies
-                "atool", "elinks", "ffmpegthumbnailer", "highlight", "imagemagick", "libcaca", "mediainfo", "odt2txt", "perl-image-exiftool", "poppler", "python-chardet", "python-pillow", "transmission-cli", "ueberzug", "w3m", "ranger"
             ],
             "default-value": true
         },
@@ -1808,18 +2848,6 @@
             "default-value": true
         },
         {
-            "name": "install-vscode",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install Visual Studio Code (Open Source build)",
-            "long-description": "Install the Open Source build of Visual Studio Code, including marketplace support. Font ligatures will be switched on, using an appropriate font.",
-            "spdx-identifiers": "MIT",
-            "arch-packages": [
-                "ditana-config-vscode"
-            ],
-            "available": "`install-desktop-environment`",
-            "default-value": false
-        },
-        {
             "name": "install-diffuse",
             "dialog-name": "Development Tools and Libraries",
             "short-description": "Install Diffuse and configure as git diff/merge tool",
@@ -1831,6 +2859,18 @@
             "required-by-chroot": true,
             "available": "`install-desktop-environment`",
             "default-value": false
+        },
+        {
+            "name": "install-kcharselect",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install KCharSelect character selector",
+            "long-description": "Install KCharSelect, a character selector utility for choosing special characters and Unicode symbols. Particularly useful for developers and writers who need to insert characters that are not available on their keyboard layout. Features include character search by name, Unicode block browsing, and character information display.",
+            "arch-packages": [
+                "kcharselect"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
         },
         {
             "name": "install-java-jdk",
@@ -1913,6 +2953,16 @@
             "available": "`install-desktop-environment`",
             "default-value": false
         },
+
+        // Common desktop packages
+
+        // X11 packages
+
+        // XFCE specific packages
+
+        // Wayland packages
+
+        // Wayfire specific packages
 
         // Settings that correspond to the main installer logic
         {
@@ -2051,6 +3101,28 @@
             "name": "terminal-font",
             "required-by-chroot": true,
             "default-value": ""
+        },
+        {
+            "name": "install-desktop-environment",
+            "default-value": "`use-env-wayfire OR use-env-xfce`"
+        },
+        {
+            "name": "x11",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "wayland",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "wlroots",
+            "default-value": "`use-env-wayfire`",
+            "description": "Indicates wlroots-based compositor environment"
+        }
+        {
+            "name": "xdg-autostart-is-active",
+            "default-value": "`x11 OR customize-wayfire`",
+            "description": "Indicates if desktop entries under /etc/xdg/autostart and \$XDG_CONFIG_HOME/autostart are executed at login"
         }
     ]
 }

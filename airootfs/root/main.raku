@@ -24,8 +24,12 @@ use lib ".";
 use AskForSetting;
 use AskForYesNo;
 use Chroot;
-use Desktop;
 use Dialogs;
+use EnvCommonDesktop;
+use EnvWayfire;
+use EnvWayland;
+use EnvX11;
+use EnvXfce;
 use Font;
 use Kernel;
 use Keyboard;
@@ -33,6 +37,7 @@ use Keymap;
 use Locale;
 use Logging;
 use Mount;
+use MimeApps;
 use Nvidia;
 use NvmeFormat;
 use PackageManagement;
@@ -248,6 +253,15 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 when 'set-host-dpi' {
                     set-host-dpi();
                 }
+                when 'configure-slick-greeter' {
+                    configure-slick-greeter();
+                }
+                when 'enable-lightdm' {
+                    enable-lightdm();
+                }
+                when 'disable-dmabuf-for-webkit' {
+                    disable-dmabuf-for-webkit();
+                }
                 when 'configure-bind-mounts' {
                     configure-bind-mounts();
                 }
@@ -289,6 +303,9 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 }
                 when 'curate-chroot-files' {
                     curate-chroot-files();
+                }
+                when 'create-mimeapps-list' {
+                    create-mimeapps-list();
                 }
                 when 'generate-aur-package-installation-script' {
                     generate-aur-package-installation-script();
