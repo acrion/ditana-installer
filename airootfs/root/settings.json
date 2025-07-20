@@ -1974,20 +1974,6 @@
 
         // Terminal File Manager
         {
-            // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
-            // to raku, depending on `install-desktop-environment`
-            "name": "install-ranger",
-            "dialog-name": "Terminal File Manager",
-            "short-description": "Install ranger terminal file manager including optional packages",
-            "long-description": "Install ranger, a terminal file manager, including optional packages. It will be configured\n\n (1) to make use of the kitty terminal to display true graphics,\n (2) to display git information, which is particularly useful for directories, and\n (3) to display hidden items.",
-            "spdx-identifiers": "GPL-3.0-or-later",
-            "arch-packages": [
-                // ranger including its optional dependencies
-                "atool", "elinks", "ffmpegthumbnailer", "highlight", "imagemagick", "libcaca", "mediainfo", "odt2txt", "perl-image-exiftool", "poppler", "python-chardet", "python-pillow", "transmission-cli", "ueberzug", "w3m", "ranger"
-            ],
-            "default-value": true
-        },
-        {
             "name": "install-nnn",
             "dialog-name": "Terminal File Manager",
             "short-description": "Install nnn",
@@ -2002,6 +1988,20 @@
                 "fuse2"
             ],
             "spdx-identifiers": "BSD-2-Clause",
+            "default-value": true
+        },
+        {
+            // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
+            // to raku, depending on `install-desktop-environment`
+            "name": "install-ranger",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install ranger terminal file manager including optional packages",
+            "long-description": "Install ranger, a terminal file manager, including optional packages. It will be configured\n\n (1) to make use of the kitty terminal to display true graphics,\n (2) to display git information, which is particularly useful for directories, and\n (3) to display hidden items.",
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "arch-packages": [
+                // ranger including its optional dependencies
+                "atool", "elinks", "ffmpegthumbnailer", "highlight", "imagemagick", "libcaca", "mediainfo", "odt2txt", "perl-image-exiftool", "poppler", "python-chardet", "python-pillow", "transmission-cli", "ueberzug", "w3m", "ranger"
+            ],
             "default-value": false
         },
         {
