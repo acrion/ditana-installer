@@ -1241,7 +1241,7 @@
                 "python-setuptools" // missing dependency in package 'variety'
             ],
             "spdx-identifiers": "GPL3",
-            "config-files": ["/etc/xdg/autostart/variety.desktop"]
+            "config-files": ["/etc/xdg/autostart/variety.desktop"],
             "available": "`x11`",
             "default-value": "`x11`"
         },
@@ -1834,7 +1834,7 @@
             "short-description": "Customize Waybar",
             "long-description": "Configure Waybar with a responsive stylesheet and to use nwggrid as start button and nwgbar for log/suspend/logout/reboot/shutdown/software update/system logs/.",
             "arch-packages": [
-                "nwg-launchers",
+                "nwg-launchers"
             ],
             "spdx-identifiers": "GPL3",
             "config-files": [
@@ -3118,11 +3118,11 @@
             "name": "wlroots",
             "default-value": "`use-env-wayfire`",
             "description": "Indicates wlroots-based compositor environment"
-        }
+        },
         {
             "name": "xdg-autostart-is-active",
             "default-value": "`x11 OR customize-wayfire`",
-            "description": "Indicates if desktop entries under /etc/xdg/autostart and \$XDG_CONFIG_HOME/autostart are executed at login"
+            "description": "Indicates if desktop entries under /etc/xdg/autostart and \\$XDG_CONFIG_HOME/autostart are executed at login"
         }
     ]
 }
