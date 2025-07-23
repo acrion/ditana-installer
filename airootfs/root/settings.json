@@ -3290,3 +3290,2580 @@
     }
   ]
 }
+=======
+    ],
+    "settings": [
+        // Settings that are detected based on the properties of the system:
+        {
+            "name": "uefi",
+            "detect": "'/sys/firmware/efi'.IO.e",
+            "required-by-chroot": true
+        },
+        {
+            "name": "total-ram-gib",
+            "detect": "('/proc/meminfo'.IO.lines.grep(/MemTotal/).first.words[1] / 1024 / 1024).ceiling"
+        },
+        {
+            "name": "avx2-available",
+            "detect": "'/proc/cpuinfo'.IO.lines.first(*.contains('flags')).contains('avx2').so"
+        },
+        {
+            "name": "has-bluetooth",
+            "detect": "qx{lsusb}.lines.grep(*.contains(/:i bluetooth/)).so || qx{lspci}.lines.grep(*.contains(/:i bluetooth/)).so || 'sys/class/bluetooth'.IO.e"
+        },
+        {
+            "name": "nvidia-pci-id",
+            "detect": "qx{lspci -nn}.lines.grep(/:i 'vga'.*'nvidia'/).&{ $_ ?? .first.match(/\\w+':' (\\w+) ']'/).[0].Str !! '' }"
+        },
+        {
+            "name": "has-hybrid-nvidia-gpu",
+            "detect": "my @gpus = qx{lspci -d ::0300}.lines.grep(*.chars > 0); @gpus > 1 && @gpus.any.contains(/:i nvidia/) && !@gpus.all.contains(/:i nvidia/)"
+        },
+        {
+            "name": "b43-required",
+            "detect": "qx{journalctl -k}.grep(rx/«b43 .* Loading/).so"
+        },
+        {
+            "name": "cpu-name",
+            "detect": "'/proc/cpuinfo'.IO.lines.grep(/^model\\sname\\s*\\:/).unique.map({ .split(':')[1].trim }).first"
+        },
+        {
+            "name": "intel-cpu",
+            "detect": "'/proc/cpuinfo'.IO.lines.first(* ~~ /vendor_id/).contains('GenuineIntel')"
+        },
+        {
+            "name": "amd-cpu",
+            "detect": "'/proc/cpuinfo'.IO.lines.first(* ~~ /vendor_id/).contains('AuthenticAMD')"
+        },
+        {
+            "name": "virtual-environment",
+            "detect": "run('systemd-detect-virt', '-q').exitcode eq 0"
+        },
+        {
+            "name": "virtualbox",
+            "detect": "qx{lspci}.contains(/:i virtualbox/)"
+        },
+        {
+            "name": "display-hardware-in-use",
+            "detect": "%*ENV<DISPLAY>.defined && %*ENV<DISPLAY>.chars > 0"
+        },
+        {
+            "name": "installing-over-ssh",
+            "detect": "%*ENV<SSH_CONNECTION>.defined && %*ENV<SSH_CONNECTION>.chars > 0"
+        },
+        {
+            "name": "virtual-terminal",
+            "detect": "(%*ENV<TERM>.defined && %*ENV<TERM> eq 'linux') || (%*ENV<PARENT_TERM>.defined && %*ENV<PARENT_TERM> eq 'linux')"
+        },
+        {
+            "name": "release-version",
+            "detect": "run('pacman', '-Qs', 'ditana-mirrorlist', :out(False), :err(False)).exitcode == 0"
+        },
+        {
+            "name": "real-install",
+            "detect": "$*USER eq 'root'"
+        },
+        {
+            "name": "is-spectre-v2-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/spectre_v2'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-l1tf-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/l1tf'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-mds-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/mds'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-taa-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/tsx_async_abort'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-meltdown-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/meltdown'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-mmio-stale-data-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/mmio_stale_data'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-retbleed-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/retbleed'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-srso-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/spec_rstack_overflow'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-gds-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/gather_data_sampling'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "is-rfds-vulnerable",
+            "detect": "given '/sys/devices/system/cpu/vulnerabilities/reg_file_data_sampling'.IO { .e && .slurp.chomp ne 'Not affected' }"
+        },
+        {
+            "name": "set-font-hook-exists",
+            "detect": "'/tmp/ditana-set-font.sh'.IO.e"
+        },
+        {
+            "name": "display-size",
+            "detect": "%*ENV<DISPLAY_SIZE>.defined ?? %*ENV<DISPLAY_SIZE> !! 11"
+        },
+        {
+            "name": "terminal-columns",
+            "detect": "%*ENV<TERMINAL_COLUMNS>.defined ?? %*ENV<TERMINAL_COLUMNS> !! 0"
+        },
+        {
+            "name": "terminal-lines",
+            "detect": "%*ENV<TERMINAL_LINES>.defined ?? %*ENV<TERMINAL_LINES> !! 0"
+        },
+        {
+            "name": "tmux",
+            "detect": "%*ENV<TMUX>.so"
+        },
+
+        // Non-configurable settings that define the installation of packages determined by
+        // default values, which are derived from the installation logic.
+        {
+            "name": "intel-microcode",
+            "arch-packages": [
+                "intel-ucode"
+            ],
+            "default-value": "`intel-cpu`"
+        },
+        {
+            "name": "amd-microcode",
+            "arch-packages": [
+                "amd-ucode"
+            ],
+            "default-value": "`amd-cpu`"
+        },
+        {
+            "name": "firmware",
+            "arch-packages": [ // should match those packages of `packages.x86_64` that install into `/usr/lib/firmware`, with the exception of amd-ucode, intel-ucode and b43-firmware
+                "linux-atm",
+                "linux-firmware",
+                "linux-firmware-marvell",
+                "sof-firmware",
+                "wireless-regdb" ],
+            "default-value": true
+        },
+        {
+            "name": "b43-firmware",
+            "arch-packages": [ "b43-firmware" ], // we separate this from the rest of the firmware packages and install it only if it is required, because it requires a specific kernel
+            "default-value": "`b43-required`"
+        },
+        {
+            "name": "install-syslinux",
+            "arch-packages": [
+                "syslinux"
+            ],
+            "default-value": "`zfs-filesystem AND NOT uefi`"
+        },
+        {
+            "name": "install-grub",
+            "arch-packages": [
+                "grub"
+            ],
+            "default-value": "`NOT zfs-filesystem`"
+        },
+        {
+            "name": "install-efibootmgr",
+            "arch-packages": [
+                "efibootmgr"
+            ],
+            "default-value": "`uefi`"
+        },
+        {
+            "name": "ditana-base",
+            "arch-packages": [
+                "base",               // Minimal package set to define a basic Arch Linux installation.
+                "base-devel",         // Provides various essential tools like sudo. Optional dependency of pacman, required to use makepkg.
+                "dialog",             // Utilized in chroot-install.sh to prompt for the user password.
+                "ditana-config-bash", // Ditana bash configuration.
+                "ditana-filesystem",  // Base Ditana GNU/Linux files, based on the original 'filesystem' package from Arch Linux.
+                "glibc-locales",      // Required for localized output and locale-dependent functions in various applications (even for users who choose en_US.UTF-8 for LC_MESSAGES).
+                "libpwquality",       // Provides pwscore which we use in chroot-install.sh to validate user passwort quality
+                "lsb-release",        // Provides the lsb_release command, as referenced at https://refspecs.linuxfoundation.org/lsb.shtml.
+                "os-prober",          // See https://wiki.archlinux.org/title/GRUB/Detecting_other_operating_systems
+                "pikaur",             // Ditana’s chosen AUR helper for enhanced security
+                "python-defusedxml",  // Enables pikaur to safeguard against XML-related vulnerabilities.
+                "python-pysocks",     // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
+                "rakudo-bin",         // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
+                "terminus-font",      // The terminal font that will be configured.
+                "util-linux"          // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
+            ],
+            "default-value": true
+        },
+        {
+            "name": "ditana-mirrorlist",
+            "arch-packages": [
+                "ditana-mirrorlist"
+            ],
+            "default-value": "`release-version`"
+        },
+        {
+            "name": "ditana-testing-mirrorlist",
+            "arch-packages": [
+                "ditana-testing-mirrorlist"
+            ],
+            "default-value": "`NOT release-version`"
+        },
+
+        // Settings that correspond to the mandatory dialogs prior the dialog "Configuration Categories"
+
+        // Settings that correspond to the dialog "System Environment Selection"
+        {
+            "name": "use-env-wayfire",
+            "dialog-name": "System Environment Selection",
+            "short-description": "Wayfire: Wayland Desktop",
+            "long-description": "Wayfire is a lightweight Wayland compositor with 3D effects, plugin-based customization and excellent HiDPI support. Wayland provides enhanced application isolation and modern security architecture. Recommended for most laptops and workstations.",
+            "spdx-identifiers": "",
+            "required-by-chroot": false,
+            "default-value": "`NOT installing-over-ssh`"
+        },
+        {
+            "name": "use-env-xfce",
+            "dialog-name": "System Environment Selection",
+            "short-description": "XFCE: Classic X11 Desktop",
+            "long-description": "XFCE is traditional X11 desktop environment with familiar panel-based layout and conventional window management. Ditana includes extensive theming, HiDPI configuration, and power management. A robust choice for users who prefer established desktop workflows.",
+            "spdx-identifiers": "",
+            "required-by-chroot": false,
+            "default-value": false
+        },
+        {
+            "name": "use-env-server",
+            "dialog-name": "System Environment Selection",
+            "short-description": "Server: No Desktop",
+            "long-description": "Select «Server» to install a minimal system without graphical interface. Only essential command-line tools are provided, making it ideal for headless or remotely managed systems.",
+            "spdx-identifiers": "",
+            "required-by-chroot": false,
+            "default-value": "`installing-over-ssh`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Application Choices"
+
+        // Web Browser
+        {
+            "name": "install-librewolf",
+            "dialog-name": "Web Browser",
+            "short-description": "Install LibreWolf",
+            "long-description": "LibreWolf is a privacy-focused fork of Firefox that removes all telemetry, data collection, and experiments. It includes hardened security settings by default and blocks fingerprinting techniques. Ditana enhances LibreWolf's usability while preserving core privacy features: fingerprinting resistance is disabled to ensure compatibility with modern web applications like AI services and banking sites, while letterboxing remains active for window-size privacy protection. Browser history and downloads are preserved between sessions for convenience. Firefox Sync is enabled, allowing secure synchronization of bookmarks and passwords across devices. The search engine selection includes Google alongside privacy-focused alternatives, with StartPage configured as the default. Speech-dispatcher support enables text-to-speech functionality for accessibility.",
+            "arch-packages": ["librewolf", "speech-dispatcher"],
+            "spdx-identifiers": "MPL-2.0",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-firefox",
+            "dialog-name": "Web Browser",
+            "short-description": "Install Firefox",
+            "long-description": "Firefox is Mozilla's flagship browser offering extensive customization through about:config, a vast ecosystem of extensions, and sync capabilities across devices. While it includes telemetry and usage analytics by default, these can be disabled. It provides regular security updates and broad web standards support.",
+            "arch-packages": ["firefox"],
+            "spdx-identifiers": "MPL-2.0",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Media Player
+        {
+            "name": "install-vlc",
+            "dialog-name": "Media Player", 
+            "short-description": "Install VLC",
+            "long-description": "VLC is a comprehensive media player with built-in codecs for virtually every audio and video format. It features network streaming capabilities, media conversion tools, playlist management, subtitle synchronization, and audio/video filters. The interface provides extensive controls for fine-tuning playback.",
+            "arch-packages": ["vlc"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-mpv",
+            "dialog-name": "Media Player",
+            "short-description": "Install mpv",
+            "long-description": "mpv is a minimalist media player controlled primarily through keyboard shortcuts and command-line options. It excels at video playback performance with hardware acceleration, supports advanced scripting through Lua, and uses minimal system resources. The interface stays out of your way, appearing only when needed.",
+            "arch-packages": ["mpv"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // File Manager
+        {
+            "name": "install-dolphin",
+            "dialog-name": "File Manager",
+            "short-description": "Install Dolphin",
+            "long-description": "Dolphin offers advanced features, including split views, a comprehensive file search, and terminal integration. Ditana applies conservative default settings, such as disabling automatic preview pop-ups on file hover, to reduce distractions. All settings remain fully customizable through the interface. Git integration with status overlays and context menu actions for repositories is enabled, as well as Dropbox synchronization support.",
+            "arch-packages": [
+                "dolphin",
+                "dolphin-plugins",
+                "ffmpegthumbs",
+                "kde-cli-tools",
+                "kdegraphics-thumbnailers",
+                "kdenetwork-filesharing",
+                "kio-admin",
+                "kompare",
+                "konsole",
+                "purpose"
+            ],
+            "config-files": ["/etc/skel/.local/share/kxmlgui5/dolphin/dolphinui.rc", "/etc/skel/.config/dolphinrc"],
+            "spdx-identifiers": "LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-thunar",
+            "dialog-name": "File Manager",
+            "short-description": "Install Thunar",
+            "long-description": "Thunar focuses on fast startup times and responsive file operations. It provides bulk renaming with pattern support, custom actions for context menus, removable media handling, and a clean interface that displays only essential elements. The modular design allows extending functionality through plugins while maintaining speed.",
+            "arch-packages": ["thunar", "thunar-volman", "tumbler", "thunar-archive-plugin", "thunar-media-tags-plugin"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-only",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-caja",
+            "dialog-name": "File Manager",
+            "short-description": "Install Caja",
+            "long-description": "Caja offers a traditional file management experience with spatial browsing mode, where each folder opens in its own window with remembered size and position. It includes built-in search functionality, three view modes (icon/list/compact), property pages for detailed file information, and seamless handling of remote locations via GVFS.",
+            "arch-packages": ["caja", "gstreamer"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-nemo",
+            "dialog-name": "File Manager",
+            "short-description": "Install Nemo",
+            "long-description": "Nemo provides power-user features including dual-pane mode for side-by-side folder comparison, tree view in the sidebar, built-in terminal panel, batch operations with queuing, and extensive right-click actions. It displays detailed status information and progress for all file operations in a unified interface.",
+            "arch-packages": ["nemo", "ffmpegthumbnailer", "catdoc", "ghostscript", "libgsf", "odt2txt", "poppler"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-pcmanfm-qt",
+            "dialog-name": "File Manager",
+            "short-description": "Install PCManFM-Qt",
+            "long-description": "PCManFM-Qt prioritizes low memory footprint and instant response times. It starts up in under a second, uses minimal RAM even with multiple tabs open, provides desktop icon management, and includes a built-in task manager. Despite its lightweight nature, it supports all essential file operations and mount management.",
+            "arch-packages": ["pcmanfm-qt", "lxqt-archiver", "qt6-translations"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Document Viewer
+        {
+            "name": "install-okular",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Okular",
+            "long-description": "Okular is a comprehensive viewer supporting PDFs and many other formats, offering advanced annotation, document navigation, form filling, and presentation mode, suited for professional use.",
+            "arch-packages": ["okular"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-papers",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Papers",
+            "long-description": "Papers is a modern document viewer focused on smooth PDF reading, gesture navigation, and distraction-free interface. As a feature-rich Evince fork, it provides advanced Wayland support, improved touch controls, and active development.",
+            "arch-packages": ["papers"],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-xreader",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Xreader",
+            "long-description": "Xreader is a traditional document viewer with classic multi-window interface, comprehensive annotation tools, and persistent reading positions. It emphasises familiarity and straightforward usage.",
+            "arch-packages": ["xreader"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment AND x11`",
+            "default-value": false
+        },
+        {
+            "name": "install-evince",
+            "dialog-name": "Document Viewer",
+            "short-description": "Install Evince",
+            "long-description": "Evince is a clean and lightweight document viewer with simple interface, fast navigation and plugin-based format support.",
+            "arch-packages": ["evince"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Image Viewer
+        {
+            "name": "install-gthumb",
+            "dialog-name": "Image Viewer",
+            "short-description": "Install gThumb",
+            "long-description": "gThumb combines image viewing with organization and editing capabilities. It features batch operations for resizing and format conversion, catalogs for organizing images without moving files, basic editing tools including crop and color adjustment, slideshow creation with transitions, and direct upload to web services. The interface includes a customizable toolbar and sidebar for navigation.",
+            "arch-packages": ["gthumb"],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-ristretto",
+            "dialog-name": "Image Viewer",
+            "short-description": "Install Ristretto",
+            "long-description": "Ristretto is a fast image viewer optimized for quick browsing with minimal resource usage. It loads images instantly, provides a thumbnail bar for navigation, supports basic zoom and rotation, and includes a simple slideshow function. The uncluttered interface focuses purely on image display.",
+            "arch-packages": ["ristretto"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // System Monitor
+        {
+            "name": "install-resources",
+            "dialog-name": "System Monitor",
+            "short-description": "Install Resources",
+            "long-description": "Resources presents system information through a modern interface with animated graphs and clear categorization. It monitors CPU, memory, GPU, NPU, network interfaces, and storage devices with real-time updates. The application list shows only graphical applications by default for clarity, while the process view provides detailed technical information. Built with Rust for efficient resource usage.",
+            "arch-packages": ["resources"],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-gnome-system-monitor",
+            "dialog-name": "System Monitor",
+            "short-description": "Install GNOME System Monitor",
+            "long-description": "GNOME System Monitor provides comprehensive system analysis with tabbed interface for processes, resources, and file systems. It features process tree view showing parent-child relationships, detailed memory maps for each process, historical graphs with configurable time ranges, and network traffic monitoring per interface. The traditional interface follows established monitoring tool conventions.",
+            "arch-packages": ["gnome-system-monitor"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Terminal Emulator
+        {
+            "name": "install-kitty",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Kitty",
+            "long-description": "Kitty combines GPU-accelerated performance with rich features. It includes unique SSH kittens for seamless remote environment setup, displays images directly in the terminal, supports font ligatures for programming, and provides extensible kittens (mini-applications) for enhanced workflows. The Python API enables deep customization while maintaining excellent performance.",
+            "arch-packages": ["ditana-config-kitty"],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-tabby",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Tabby",
+            "long-description": "Tabby provides GUI-driven terminal management with integrated connection profiles for SSH, Telnet, and serial connections. Built on Electron for consistent cross-platform experience, it features graphical configuration, split panes, credential management, plugin ecosystem, and session synchronization. Ideal for users who prefer visual configuration over config files.",
+            "arch-packages": ["tabby"],
+            "spdx-identifiers": "MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-contour",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Contour",
+            "long-description": "Contour features modern C++ architecture with vi-like modal editing directly in the terminal. It supports Sixel graphics protocol for inline images, provides vertical navigation markers, includes synchronized rendering to prevent tearing, and offers extensive Unicode support including emoji and grapheme clusters. Perfect for vim users seeking modal terminal workflows.",
+            "arch-packages": ["contour"],
+            "spdx-identifiers": "Apache-2.0",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-alacritty",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Alacritty", 
+            "long-description": "Alacritty maximizes performance through GPU rendering and zero-latency input with deliberate minimalism. It provides no tabs, splits, or GUI configuration—all settings via TOML file. This Unix philosophy approach ensures sub-millisecond response times and pairs perfectly with terminal multiplexers like tmux for window management.",
+            "arch-packages": ["alacritty"],
+            "spdx-identifiers": "Apache-2.0,MIT", 
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-konsole",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install Konsole",
+            "long-description": "Konsole provides comprehensive features with deep desktop integration. It supports tabbed browsing, split views, profile management, drag-and-drop functionality, powerful search, bookmarking, and extensive customization.",
+            "arch-packages": ["konsole"], 
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-xfce4-terminal",
+            "dialog-name": "Terminal Emulator",
+            "short-description": "Install XFCE Terminal",
+            "long-description": "XFCE Terminal delivers a proven, traditional terminal experience with reliable functionality. It supports tabs, customizable shortcuts, drop-down mode, background images with transparency, per-tab colors, and activity monitoring. The lightweight design and mature codebase provide stability and seamless integration across desktop environments.",
+            "arch-packages": ["xfce4-terminal"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Code Editor
+        {
+            "name": "install-kate",
+            "dialog-name": "Code Editor",
+            "short-description": "Install Kate",
+            "long-description": "Kate is an advanced text editor offering powerful multi-document editing, split views, extensive syntax highlighting, code folding, and integrated support for Language Server Protocols (LSP) for various programming languages. It features a highly customisable interface, robust plugin system, and a built-in terminal for efficient workflows.",
+            "arch-packages": ["kate"],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-vscode",
+            "dialog-name": "Code Editor",
+            "short-description": "Install Visual Studio Code (Open Source build)",
+            "long-description": "Install the Open Source build of Visual Studio Code, including marketplace support. Font ligatures will be switched on, using an appropriate font.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "ditana-config-vscode"
+            ],
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Software"
+        {
+            "name": "install-libreoffice",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Libre Office",
+            "long-description": "LibreOffice is a powerful open-source office suite that includes applications for word processing, spreadsheets, presentations, vector graphics, databases, and more. It provides a wide range of tools and features, making it a versatile alternative to proprietary office software. With comprehensive file format compatibility and robust support for extensions, LibreOffice is ideal for users seeking a complete office solution. The appropriate language pack for your system will be installed.",
+            "arch-packages": [ // will be determined by chroot-install.sh depending on the locale
+            ],
+            "spdx-identifiers": "LGPL-3.0-or-later",
+            "required-by-chroot": true,
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-betterbird",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Betterbird",
+            "long-description": "Betterbird is an enhanced version of the popular Thunderbird email client, offering additional features and bug fixes not found in Thunderbird. It includes advanced functionalities such as a multi-line view, vertical tabs, enhanced sorting options, and improved search capabilities, making email management more efficient and customizable. Betterbird also addresses many long-standing issues and user requests, offering a smoother, more reliable email experience. The appropriate language pack for your system will be installed.",
+            "arch-packages": [ // will be determined by chroot-install.sh depending on the locale
+            ],
+            "spdx-identifiers": "MPL-2",
+            "required-by-chroot": true,
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-syncthing-gtk",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Syncthing file synchronization",
+            "long-description": "Syncthing is a continuous file synchronization program that synchronizes files between two or more computers in real time, securely and privately. Unlike cloud storage services, your data is never stored on central servers - it's synchronized directly between your devices using encrypted connections. The GTK interface provides easy configuration, monitoring, and a system tray icon for quick access. Ideal for keeping documents, photos, and other files synchronized across multiple devices without relying on third-party cloud services.",
+            "arch-packages": [
+                "syncthing-gtk"
+            ],
+            "spdx-identifiers": "MPL-2.0,GPL-2.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-backintime",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Back In Time",
+            "long-description": "Back In Time is a straightforward backup tool that provides an easy-to-use interface for restoring previously saved snapshots of your file system. This also ensures that cron is installed, as Back In Time can automatically create a cron job to run periodic backups.",
+            "arch-packages": [
+                "backintime"
+            ],
+            "spdx-identifiers": "GPL",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-pdfarranger",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install PDF Arranger",
+            "long-description": "PDF Arranger is a versatile tool designed for modifying PDF files. It enables users to merge, split, rotate, rearrange, and crop PDF pages, providing an intuitive interface for managing PDF documents.",
+            "arch-packages": [
+                "pdfarranger"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-xournalpp",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Xournal++",
+            "long-description": "Xournal++ is an application for sketching, keeping a journal using a stylus, and annotating PDFs. It’s particularly useful for interactive work with PDF documents, including writing into non-form based PDFs.",
+            "arch-packages": [
+                "xournalpp"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-font-manager",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Font Manager",
+            "long-description": "Font Manager provides an intuitive interface for installing, removing, and organizing fonts on your system. The application allows users to preview fonts, group them into collections, and manage font activation/deactivation.",
+            "arch-packages": [
+                "font-manager"
+            ],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-etcher",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Etcher",
+            "long-description": "Etcher: Flash OS images to SD cards & USB drives, safely and easily.",
+            "aur-packages": [
+                "etcher-bin"
+            ],
+            "spdx-identifiers": "Apache",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-bitwarden",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Bitwarden",
+            "long-description": "Bitwarden is a free and open-source password management service that stores sensitive information such as website credentials in an encrypted vault.",
+            "arch-packages": [
+                "bitwarden"
+            ],
+            "spdx-identifiers": "GPL3",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-nomachine",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install NoMachine",
+            "long-description": "NoMachine is a remote desktop application that uses NX technology to provide a highly efficient and low-latency remote desktop experience. It supports multimedia capabilities, including audio and video streaming, USB forwarding, and file transfer. NoMachine is platform-independent and ensures secure connections through SSH encryption, making it suitable for both personal and professional remote access needs.",
+            "aur-packages": [
+                "nomachine"
+            ],
+            "license-category": "CLOSED",
+            "spdx-identifiers": "NoMachine EULA",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-fluffychat",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install FluffyChat",
+            "long-description": "FluffyChat is a cute and user-friendly Matrix client that provides secure end-to-end encrypted instant messaging. It supports all major Matrix features including group chats, file sharing, voice messages, and video calls. It is able to manage multiple Matrix accounts within the same window, allowing users to conveniently switch between different accounts without opening separate instances. The application offers a modern, intuitive interface that makes Matrix messaging accessible to users of all technical levels. FluffyChat connects to the decentralized Matrix network, ensuring your communications remain private and under your control.",
+            "arch-packages": [
+                "fluffychat"
+            ],
+            "spdx-identifiers": "AGPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-zapzap",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install ZapZap",
+            "long-description": "ZapZap is a reliable WhatsApp desktop application that avoids heavy CPU load in browsers. It allows you to paste images directly into a chat.",
+            "arch-packages": [
+                "zapzap"
+            ],
+            "spdx-identifiers": "GPL3",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-variety",
+            "dialog-name": "Desktop Software",
+            "short-description": "Install Variety",
+            "long-description": "Variety is a wallpaper changer that automatically downloads and switches wallpapers on your desktop. It offers a wide range of customization options, allowing users to display random quotes, apply effects, and use images from various online sources.",
+            "arch-packages": [
+                "variety",
+                "python-setuptools" // missing dependency in package 'variety'
+            ],
+            "spdx-identifiers": "GPL3",
+            "config-files": ["/etc/xdg/autostart/variety.desktop"],
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Multimedia Applications"
+        {
+            "name": "install-krita",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Krita digital painting",
+            "long-description": "Install Krita, a professional digital painting application designed by artists, for artists. Krita offers advanced brush engines, layer management, animation capabilities, and comprehensive tools for digital illustration, concept art, and texture painting. Features include pressure-sensitive brush dynamics, vector tools, timeline animation, and support for various graphics tablets. Krita provides a complete professional workflow for digital artists and is significantly more powerful than basic painting applications.",
+            "arch-packages": [
+                "krita"
+            ],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment AND wayland`"
+        },
+        {
+            "name": "install-mypaint",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install MyPaint",
+            "long-description": "Install MyPaint: Opt for the installation of MyPaint, allowing the software to respond to different pressure levels and strokes from a digital pen or stylus. This feature enhances your drawing experience by mimicking the natural variations in line thickness, opacity, and texture that you would get with real paintbrushes on canvas.",
+            "arch-packages": [
+                "mypaint"
+            ],
+            "spdx-identifiers": "GPL",
+            "available": "`install-desktop-environment AND x11`",
+            "default-value": "`install-desktop-environment AND x11`"
+        },
+        {
+            "name": "install-kdenlive",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Kdenlive video editor",
+            "long-description": "Install Kdenlive, a professional non-linear video editor using the MLT framework. Kdenlive offers advanced video editing capabilities including multi-track editing, effects, transitions, and support for a wide range of video formats. It includes features for color correction, audio mixing, and timeline-based editing suitable for both amateur and professional video production.",
+            "arch-packages": [
+                "kdenlive"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-digikam",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install digiKam photo management",
+            "long-description": "Install digiKam, an advanced digital photo management application for organizing, editing, and sharing digital photographs. Features include RAW processing, facial recognition, geotagging, advanced search capabilities, and non-destructive editing tools. digiKam supports a wide range of image formats and provides professional-grade photo organization and workflow management.",
+            "arch-packages": [
+                "digikam"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-unigine",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Unigine graphics benchmark",
+            "long-description": "Install UNIGINE Superposition, an extreme performance and stability test for PC hardware (video card, power supply, cooling system).",
+            "aur-packages": [
+                "unigine-superposition"
+            ],
+            "license-category": "CLOSED",
+            "spdx-identifiers": "UNIGINE Engine",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-audacity",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Audacity",
+            "long-description": "Install Audacity, a versatile audio editing program that allows you to record and manipulate digital audio files with ease. Whether you’re mixing music, processing podcasts, or editing sound effects, Audacity offers a robust set of tools for precise audio control and effects.",
+            "arch-packages": [
+                "audacity"
+            ],
+            "spdx-identifiers": "GPL3,BSD",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-spotify",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Spotify",
+            "long-description": "Install Spotify: Opt to install Spotify, a widely popular music streaming service that offers instant access to a vast library of songs, playlists, and podcasts.",
+            "aur-packages": [
+                "spotify"
+            ],
+            "license-category": "CLOSED",
+            "spdx-identifiers": "",
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-pinta",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Pinta image editor",
+            "long-description": "Install Pinta image editor: Choose to install Pinta, a user-friendly raster graphics editor that resembles Windows’ Paint .NET application. Pinta offers a straightforward interface with essential image editing tools like layers, adjustments, and effects. It’s ideal for quick edits, creating simple graphics, or touching up photos without the complexity of more advanced software like GIMP.",
+            "arch-packages": [
+                "pinta"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-inkscape",
+            "dialog-name": "Multimedia Applications",
+            "short-description": "Install Inkscape",
+            "long-description": "Install Inkscape, a professional vector graphics editor. Inkscape supports SVG format natively and brings advanced features like markers, clones, and alpha blending, which are essential for graphic designers.",
+            "arch-packages": [
+                "inkscape"
+            ],
+            "spdx-identifiers": "GPL,LGPL",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "AI Tools and Libraries"
+        {
+            "name": "install-ditana-assistant",
+            "dialog-name": "AI Tools and Libraries",
+            "short-description": "Install Ditana Assistant",
+            "long-description": "Install Ditana Assistant AI: Offers both a graphical user interface and a terminal command to simplify everyday Linux tasks through natural language interaction, e.g.\n\n • Quick execution of common terminal commands through simple language inputs\n • Assistance with file operations, system queries, and basic troubleshooting\n • Ability to launch desktop applications or perform Internet searches\n\nDitana Assistant respects your privacy by running locally and asks for confirmation before executing any command.",
+            "arch-packages": [
+                "ditana-assistant"
+            ],
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "default-value": "`avx2-available AND total-ram-gib>=12`"
+        },
+        {
+            "name": "install-koboldcpp",
+            "dialog-name": "AI Tools and Libraries",
+            "short-description": "Install KoboldCpp Local AI API",
+            "long-description": "Install KoboldCpp: Provide a powerful local AI API on your computer with the pre-configured Gemma language model. KoboldCpp runs seamlessly as a systemd service, ensuring that applications like Ditana Assistant have constant access to advanced language capabilities such as text generation and code completion. By handling all AI processing locally, KoboldCpp ensures your privacy and data security without relying on external services. Additionally, you can interact directly with KoboldCpp through your web browser if desired. Enjoy the benefits of a robust AI backend integrated into your Ditana system.",
+            "arch-packages": [
+                "ditana-koboldcpp"
+            ],
+            "spdx-identifiers": "AGPL-3.0-only",
+            "available":     "`avx2-available AND total-ram-gib>=3`",
+            "default-value": "`avx2-available AND total-ram-gib>=12`"
+        },
+        {
+            "name": "install-logseq",
+            "dialog-name": "AI Tools and Libraries",
+            "short-description": "Install Logseq",
+            "long-description": "Logseq: More than just a note-taking app, Logseq serves as a comprehensive platform for organizing thoughts, managing tasks, and building knowledge databases. In Ditana, Logseq is specially configured to leverage the local AI powered by KoboldCpp. This integration enables AI-assisted note-taking, content generation, and knowledge management, all while maintaining privacy and security. Ideal for anyone looking to enhance their intellectual workflow with the power of AI, without compromising on data privacy.",
+            "arch-packages": [
+                "ditana-config-logseq"
+            ],
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "available":     "`install-desktop-environment AND avx2-available AND total-ram-gib>=3 AND install-koboldcpp`",
+            "default-value": "`install-desktop-environment AND avx2-available AND total-ram-gib>=12`"
+        },
+        {
+            "name": "install-stable-diffusion",
+            "dialog-name": "AI Tools and Libraries",
+            "short-description": "Install Stable Diffusion",
+            "long-description": "Install Stable Diffusion: Stable Diffusion is a powerful tool for generating high-quality images from textual descriptions. By installing this tool, you can create stunning visual content by simply providing text prompts. It’s useful for artists, designers, and anyone interested in AI-powered image generation.",
+            "aur-packages": [
+                "stable-diffusion-ui"
+            ],
+            "spdx-identifiers": "easydiffusion",
+            "available":     "`install-desktop-environment AND avx2-available AND total-ram-gib>=6`",
+            "default-value": false
+        },
+        {
+            "name": "install-codegpt",
+            "dialog-name": "AI Tools and Libraries",
+            "short-description": "Install codegpt",
+            "long-description": "Install codegpt to write git commit messages or do a code review for you using ChatGPT. For this, you need to copy your OpenAI API Key from https://platform.openai.com/api-keys to ~/.shell.d/openai.sh. Note that the configuration will be changed to use gpt-4o-mini instead of gpt-3.5-turbo, which OpenAI claims is cheaper, more capable, and just as fast.",
+            "aur-packages": [
+                "codegpt-bin"
+            ],
+            "spdx-identifiers": "MIT",
+            "default-value": false
+        },
+        {
+            "name": "install-gpu-libraries",
+            "dialog-name": "AI Tools and Libraries",
+            "short-description": "Install GPU libraries",
+            "long-description": "Install high-performance GPU computing libraries: This option installs a suite of libraries optimized for AI/ML workloads. These libraries provide essential functionality for GPU acceleration and efficient execution of AI/ML models across various hardware platforms:\n\n • clblast: a tuned OpenCL BLAS library for GPU-accelerated linear algebra\n • cuda: NVIDIA’s parallel computing platform and API model for GPU-accelerated computing\n • cudnn: NVIDIA’s Deep Neural Network library, optimized for deep learning operations\n • hipblas: AMD’s ROCm BLAS marshalling library for GPU computations\n • hip-runtime-amd: AMD’s Heterogeneous-compute Interface for Portability\n • ocl-icd, opencl-clhpp: Implementations of the Open Computing Language standard for heterogeneous computing\n • onednn: an optimized Deep Neural Network library for efficient deep learning operations\n\nFor NVIDIA GPU users, the following packages will be installed in addition:\n\n • opencl-nvidia: OpenCL implemention for NVIDIA\n • nccl: Library for NVIDIA multi-GPU and multi-node collective communication primitives",
+            "arch-packages": [
+                "clblast",
+                "cuda",
+                "cudnn",
+                "hipblas",
+                "hip-runtime-amd",
+                "ocl-icd",
+                "intel-compute-runtime", // optional dependency of ocl-icd, providing opencl-driver
+                "opencl-clhpp",
+                "onednn"
+            ],
+            "license-category": "CLOSED/FOSS",
+            "spdx-identifiers": "CUDA,BSD,Apache-2.0,MIT,BSD-3-Clause,MPICH",
+            "available":     "`avx2-available`",
+            "default-value": false
+        },
+        {
+            "name": "install-gpu-libraries-nvidia",
+            "arch-packages": [
+                "opencl-nvidia",
+                "nccl"
+            ],
+            "default-value": "`install-gpu-libraries AND nvidia-pci-id`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Advanced Desktop Applications"
+        {
+            "name": "install-xfce-screenshooter",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "XFCE Screenshooter",
+            "long-description": "XFCE Screenshooter is a screenshot utility suitable for X11",
+            "arch-packages": ["xfce4-screenshooter"],
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-xfce-wallpaper-overlay",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "XFCE Wallpaper Overlay",
+            "long-description": "XFCE Wallpaper Overlay automatically overlays your wallpaper with text from configuration files",
+            "arch-packages": ["xfce-wallpaper-overlay"],
+            "spdx-identifiers": "AGPL-3.0-or-later AND MIT-Modern-Variant",
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-engrampa",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Engrampa archive manager",
+            "long-description": "Engrampa is an archive manager that supports various compression formats.",
+            "arch-packages": [
+                "engrampa"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-gnome-disk-utility",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install GNOME Disks",
+            "long-description": "GNOME Disks provides advanced disk management tool with features like SMART monitoring, benchmarking, partition management, and easy fstab configuration.",
+            "arch-packages": [
+                "gnome-disk-utility"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-seahorse",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Seahorse password manager",
+            "long-description": "Seahorse is a graphical interface for managing GPG, SSH, and system login keys, as well as cryptographic trust settings.",
+            "arch-packages": [
+                "seahorse"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-pavucontrol", 
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install PulseAudio Volume Control",
+            "long-description": "PulseAudio Volume Control is an advanced volume control application for PulseAudio. Allows per-application volume control, device selection, and audio routing configuration.",
+            "arch-packages": [
+                "pavucontrol"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-system-config-printer",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install system-config-printer",
+            "long-description": "system-config-printer is a CUPS printer configuration tool with status applet for easy printer management and monitoring.",
+            "arch-packages": [
+                "system-config-printer"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-blueman",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Blueman Bluetooth manager",
+            "long-description": "Blueman is a graphical Bluetooth manager with system tray integration for easy device pairing and management.",
+            "arch-packages": [
+                "blueman"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`install-desktop-environment AND has-bluetooth`",
+            "default-value": "`install-desktop-environment AND has-bluetooth`"
+        },
+        {
+            "name": "install-network-manager-applet",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Network Manager applet",
+            "long-description": "The Network Manager applet is a system tray icon for managing WiFi and network connections with easy switching between networks.",
+            "arch-packages": [
+                "network-manager-applet"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-kalu",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Kalu upgrade notifier",
+            "long-description": "Kalu is an upgrade notifier with AUR support, watched packages, and Arch Linux news integration. Double-click the tray icon to upgrade Ditana.",
+            "arch-packages": [
+                "kalu"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-arch-audit-gtk",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install security update notifier arch-audit-gtk",
+            "long-description": "arch-audit-gtk shows a tray indicator when security updates are missing, checking for known vulnerabilities in installed packages.",
+            "arch-packages": [
+                "arch-audit-gtk"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-onboard",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Onboard on-screen keyboard",
+            "long-description": "Onboard is an on-screen keyboard useful for tablet PCs or mobility impaired users. Features word prediction and customizable layouts.",
+            "arch-packages": [
+                "onboard"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-squeekboard",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Squeekboard on-screen keyboard",
+            "long-description": "Squeekboard is an on-screen keyboard useful for tablet PCs or mobility impaired users.",
+            "arch-packages": [
+                "squeekboard"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "available": "`wayland`",
+            "default-value": "`wayland`"
+        },
+        {
+            "name": "install-gpick",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Gpick color picker",
+            "long-description": "Gpick is an advanced color picker with palette generation, color scheme creation, and minimal dependencies.",
+            "arch-packages": [
+                "gpick"
+            ],
+            "spdx-identifiers": "BSD-3-Clause",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-mugshot",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Mugshot User Profile Manager",
+            "long-description": "Mugshot is a lightweight utility «About Me» to manage user profile pictures and details. Quickly update your personal profile and sync your updates across applications.",
+            "arch-packages": ["mugshot"],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-catfish",
+            "dialog-name": "Advanced Desktop Applications",
+            "short-description": "Install Catfish file searching tool",
+            "long-description": "Catfish is a versatile file search application that provides powerful search capabilities across your file system. It features an intuitive interface with support for multiple search methods including filename searches, content searches, and advanced filtering options. Catfish can search through various file types, supports regular expressions, and offers real-time search results. The application integrates well with different desktop environments and serves as an excellent complement to any file manager, making it easy to locate files quickly and efficiently.",
+            "arch-packages": ["catfish"],
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": true
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Desktop Infrastructure"
+        {
+            "name": "install-gvfs",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install GVfs",
+            "long-description": "GVfs provides essential backend services that enable file managers to access advanced features such as network locations, trash functionality, and removable media handling. It allows file managers to seamlessly browse SFTP servers, SMB/CIFS shares, FTP sites, and other network resources directly from the file manager interface. GVfs also enables proper trash support, automatic mounting of USB drives and other removable media, and metadata storage. Most file managers rely on GVfs for these extended capabilities, making it highly recommended for desktop installations.",
+            "arch-packages": [
+                "gvfs"
+            ],
+            "spdx-identifiers": "LGPL-2.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-xfce-core",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install XFCE core components",
+            "long-description": "Core XFCE desktop environment components $packages.",
+            "arch-packages": [
+                "exo", "garcon", "xfce4-appfinder", 
+                "xfce4-panel", "xfce4-power-manager", "xfce4-session", "xfce4-settings", 
+                "xfconf", "xfdesktop", "xfwm4", "xfwm4-themes"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-x11-utilities",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install X11 utilities",
+            "long-description": "Essential X11 tools: $packages.",
+            "arch-packages": [
+                "xclip", "xorg-xev", "xorg-xkill", "xorg-xrandr", "lxsession"
+            ],
+            "spdx-identifiers": "GPL-2.0-only,MIT,X11,HPND-sell-variant",
+            "available": "`x11`",
+            "default-value": "`x11`"
+        },
+        {
+            "name": "install-wayfire-core",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Wayfire core components",
+            "long-description": "Core Wayfire compositor with $packages.",
+            "arch-packages": [
+                "wayfire", "wayfire-plugins-extra", "wf-shell", "wcm"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`use-env-wayfire`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "customize-wayfire",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Customize Wayfire",
+            "long-description": "Configure Wayfire to use XDG autostart, import Wayland environment variables into systemd user session, update D-Bus activation environment with Wayland variables and configure it with useful shortcuts and other customizations.",
+            "spdx-identifiers": "MIT",
+            "config-files": [
+                "/etc/skel/.config/wayfire.ini",
+                "/etc/xdg/autostart/wayland-env-systemd.desktop",
+                "/etc/xdg/autostart/wayland-dbus-env.desktop"
+            ],
+            "available": "`install-wayfire-core`",
+            "default-value": "`install-wayfire-core`"
+        },
+        {
+            "name": "install-wayland-utilities",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Wayland utilities",
+            "long-description": "Essential Wayland tools: $packages.",
+            "arch-packages": [
+                "wl-clipboard", "wlr-randr", "slurp", "wf-recorder-git"
+            ],
+            "spdx-identifiers": "MIT,GPL-3.0-only,AGPL-3.0-or-later",
+            "available": "`wayland`",
+            "default-value": "`wayland`"
+        },
+        {
+            "name": "install-xfce-panel-plugins",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "XFCE Panel Plugins",
+            "long-description": "Additional panel plugins for XFCE: $packages",
+            "arch-packages": [
+                "xfce4-docklike-plugin",
+                "xfce4-genmon-plugin", 
+                "xfce4-notes-plugin",
+                "xfce4-weather-plugin",
+                "xfce4-whiskermenu-plugin",
+                "xfce4-xkb-plugin",
+                "xfce4-pulseaudio-plugin"
+            ],
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-xfce-display-config-observer",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "XFCE Display Config Observer",
+            "long-description": "Monitors XFCE display changes to adjust font DPI and panel height automatically",
+            "arch-packages": ["xfce-display-config-observer"],
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "available": "`use-env-xfce`",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "install-lightdm",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install LightDM display manager",
+            "long-description": "LightDM display manager with slick greeter for graphical login, including the configuration tool «Login Window».",
+            "arch-packages": [
+                "lightdm", "lightdm-settings" // lightdm-settings provides lightdm-slick-greeter
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later,LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-lightdm-x11",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "LightDM X11 Setup",
+            "long-description": "Packages for LightDM under X11.",
+            "arch-packages": ["xorg-xhost", "lxsession"],
+            "available": "`x11`",
+            "default-value": "`x11 AND install-lightdm`"
+        },
+        {
+            "name": "install-xdg-integration",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install XDG desktop integration",
+            "long-description": "Essential XDG tools for desktop integration including terminal detection, user directories, and desktop portals.",
+            "arch-packages": [
+                "xdg-terminal-exec-git", "xdg-user-dirs", "xdg-utils"
+            ],
+            "spdx-identifiers": "MIT,GPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-desktop-fonts",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install desktop fonts",
+            "long-description": "Comprehensive font collection including Noto fonts for extensive Unicode coverage and JetBrains Mono for programming.",
+            "arch-packages": [
+                "noto-fonts", "noto-fonts-cjk", "noto-fonts-extra", "noto-fonts-emoji",
+                "ttf-jetbrains-mono-nerd"
+            ],
+            "spdx-identifiers": "OFL-1.1",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-desktop-theme",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Dracula theme and Kora icons",
+            "long-description": "Dracula GTK theme and Kora Yellow icon theme for a consistent, modern desktop appearance.",
+            "arch-packages": [
+                "dracula-gtk-theme", "kora-yellow-icon-theme"
+            ],
+            "spdx-identifiers": "GPL-3.0-only",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-wdisplays-persistent",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install persistent Display Config",
+            "long-description": "Installs a GUI display configurator with Kanshi configuration saving and automatic Kanshi startup. This enables automatic setup of your display configuration upon startup.",
+            "arch-packages": ["wdisplays-persistent"],
+            "spdx-identifiers": "GPL3",
+            "config-files": ["/etc/xdg/autostart/kanshi.desktop"],
+            "available": "`wlroots AND xdg-autostart-is-active`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-wayland-font-dpi",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Automatic Font Scaling",
+            "long-description": "Dynamic text scaling based on display DPI for Wayland",
+            "arch-packages": ["wayland-font-dpi"],
+            "spdx-identifiers": "AGPL3",
+            "config-files": ["/etc/xdg/autostart/waybar.desktop"],
+            "available": "`wlroots AND xdg-autostart-is-active`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-waybar",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Waybar status bar",
+            "long-description": "Highly customizable status bar for Wayland compositors with extensive module support.",
+            "arch-packages": [
+                "waybar", "otf-font-awesome"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`wlroots`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "customize-waybar",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Customize Waybar",
+            "long-description": "Configure Waybar with a responsive stylesheet and to use nwggrid as start button and nwgbar for log/suspend/logout/reboot/shutdown/software update/system logs/.",
+            "arch-packages": [
+                "nwg-launchers"
+            ],
+            "spdx-identifiers": "GPL3",
+            "config-files": [
+                "/etc/skel/.config/waybar/config.jsonc",
+                "/etc/skel/.config/waybar/style.css"
+            ],
+            "available": "`install-waybar`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-rofi",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install Rofi application launcher",
+            "long-description": "Versatile application launcher and window switcher with extensive theming support.",
+            "arch-packages": [
+                "rofi"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`install-desktop-environment`",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "install-desktop-portal-gtk",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install GTK desktop portal",
+            "long-description": "Desktop integration portal for GTK applications, enabling file dialogs and other desktop integration features.",
+            "arch-packages": [
+                "xdg-desktop-portal-gtk"
+            ],
+            "spdx-identifiers": "LGPL-2.1-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-desktop-portal-wlr",
+            "dialog-name": "Desktop Infrastructure",
+            "short-description": "Install wlroots desktop portal",
+            "long-description": "Desktop integration portal for wlroots-based Wayland compositors, enabling screen sharing and other features.",
+            "arch-packages": [
+                "xdg-desktop-portal-wlr"
+            ],
+            "spdx-identifiers": "MIT",
+            "available": "`wlroots`",
+            "default-value": "`wlroots`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" -> "Terminal Tool Choices"
+
+        // Shell
+        {
+            "name": "install-zsh",
+            "dialog-name": "Shell",
+            "short-description": "Install zsh and make it default",
+            "long-description": "Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting.",
+            "spdx-identifiers": "zsh",
+            "arch-packages": [
+                "ditana-config-zsh"
+            ],
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "install-nushell",
+            "dialog-name": "Shell",
+            "short-description": "Install Nushell",
+            "long-description": "Install Nushell, a new type of shell that works with structured data. Nushell treats command output as structured data (tables, lists, records) rather than text, enabling powerful data processing pipelines similar to PowerShell but with a more intuitive syntax. It features built-in data filtering, sorting, and selection commands, making it excellent for data manipulation tasks. The type system helps catch errors early, and the modern error messages with helpful suggestions improve the user experience.",
+            "arch-packages": [
+                "nushell"
+            ],
+            "spdx-identifiers": "MIT",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+        {
+            "name": "install-fish",
+            "dialog-name": "Shell",
+            "short-description": "Install Fish shell",
+            "long-description": "Install Fish (Friendly Interactive Shell), a smart and user-friendly command line shell. Fish features autosuggestions based on history and completions, web-based configuration interface, syntax highlighting with error checking before execution, and sane scripting with readable syntax. It works out-of-the-box with minimal configuration needed, providing helpful features like tab completions for commands, options, and arguments. Fish's design philosophy emphasizes user-friendliness without sacrificing power.",
+            "arch-packages": [
+                "fish",
+                "pkgfile",
+                "mandoc"
+            ],
+            "spdx-identifiers": "GPL-2.0-only,BSD-3-Clause,ISC,MIT,PSF-2.0",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+        {
+            "name": "install-bash-enhanced",
+            "dialog-name": "Shell",
+            "short-description": "Configure bash as the main Shell",
+            "long-description": "This selection configures bash as the main shell. The other choices in this category also install bash, but configure a different shell as the main shell.",
+            "arch-packages": [
+                "bash-completion",
+                "starship"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,ISC",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+
+        // Terminal Text Editor
+        {
+            "name": "install-helix",
+            "dialog-name": "Terminal Text Editor",
+            "short-description": "Install Helix",
+            "long-description": "Install Helix, a post-modern modal text editor written in Rust. Helix provides powerful editing capabilities with built-in features that typically require plugins in other editors: LSP support, DAP debugging protocol, tree-sitter syntax highlighting, and multiple selections. Its modal editing is inspired by Vim and Kakoune, offering intuitive keybindings and visual feedback. Helix works out-of-the-box without configuration while remaining highly capable for advanced users.",
+            "arch-packages": [
+                "helix"
+            ],
+            "spdx-identifiers": "MPL-2.0",
+            "default-value": true
+        },
+        {
+            "name": "install-micro",
+            "dialog-name": "Terminal Text Editor",
+            "short-description": "Install micro editor and set it as default",
+            "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "micro"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-neovim",
+            "dialog-name": "Terminal Text Editor",
+            "short-description": "Install Neovim",
+            "long-description": "Install Neovim, a hyperextensible Vim-based text editor. Neovim modernizes Vim with features like built-in LSP client, treesitter integration for syntax highlighting, Lua scripting API, and asynchronous plugin architecture. It maintains full Vim compatibility while adding a powerful API that enables rich plugin ecosystems. The built-in terminal emulator, floating windows, and extensive customization options make it suitable for creating complete development environments.",
+            "arch-packages": [
+                "neovim",
+                "python-pynvim"
+            ],
+            "spdx-identifiers": "Apache-2.0,LicenseRef-vim",
+            "default-value": false
+        },
+
+        // Terminal File Manager
+        {
+            "name": "install-nnn",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install nnn",
+            "long-description": "Install nnn, a blazing-fast, lightweight file manager with minimal dependencies. It features instant filtering, disk usage analyzer, batch operations, plugin support, and multiple contexts (tabs). The interface is designed for efficiency with single-key navigation and operations. nnn can preview images, PDFs, and videos in terminal, mount remote filesystems, and integrate with your shell for quick directory changes.",
+            "arch-packages": [
+                "nnn",
+                "atool",
+                "libarchive",
+                "trash-cli",
+                "sshfs",
+                "rclone",
+                "fuse2"
+            ],
+            "spdx-identifiers": "BSD-2-Clause",
+            "default-value": true
+        },
+        {
+            // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
+            // to raku, depending on `install-desktop-environment`
+            "name": "install-ranger",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install ranger terminal file manager including optional packages",
+            "long-description": "Install ranger, a terminal file manager, including optional packages. It will be configured\n\n (1) to make use of the kitty terminal to display true graphics,\n (2) to display git information, which is particularly useful for directories, and\n (3) to display hidden items.",
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "arch-packages": [
+                // ranger including its optional dependencies
+                "atool", "elinks", "ffmpegthumbnailer", "highlight", "imagemagick", "libcaca", "mediainfo", "odt2txt", "perl-image-exiftool", "poppler", "python-chardet", "python-pillow", "transmission-cli", "ueberzug", "w3m", "ranger"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-lf",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install lf",
+            "long-description": "Install lf, a terminal file manager inspired by ranger and written in Go. lf provides a minimalist, fast, and cross-platform file management experience with vi-like key bindings. It features asynchronous I/O, built-in file preview, customizable keybindings, and shell command integration. The single binary design ensures quick startup and low memory usage while maintaining powerful functionality through its scripting capabilities.",
+            "arch-packages": [
+                "lf"
+            ],
+            "spdx-identifiers": "MIT",
+            "default-value": false
+        },
+        {
+            "name": "install-mc",
+            "dialog-name": "Terminal File Manager",
+            "short-description": "Install Midnight Commander",
+            "long-description": "Install Midnight Commander (mc), a classic two-panel file manager that emulates Norton Commander. mc provides a full-featured file management interface with built-in viewer/editor, FTP/SFTP client, archive browsing (including RPM/DEB packages), and extensive keyboard shortcuts. Its text-based UI works over SSH connections and includes mouse support, making it ideal for both local and remote system administration. The dual-pane layout enables efficient file operations between directories.",
+            "arch-packages": [
+                "mc",
+                "aspell",
+                "cabextract",
+                "cdparanoia",
+                "cdrkit",
+                "cvs",
+                "gawk",
+                "libisoburn",
+                "mtools",
+                "unace",
+                "rpm-tools"
+            ],
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "default-value": false
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "File System"
+        {
+            "name": "zfs-filesystem",
+            "dialog-name": "File System",
+            "short-description": "ZFS   - Snapshots, Self-Healing Storage & RAID-Z Support",
+            "long-description": "ZFS: Supports atomic snapshots with a pre-configured snapshot solution instead of Timeshift. Designed for high data integrity with automatic self-healing. The installer will switch to the recommended Long-Term Support Kernel automatically, because ZFS requires DKMS modules (see Expert Settings → Kernel Selection menu available for selection later).",
+            "arch-packages": [
+                "zfs-utils"
+            ],
+            "spdx-identifiers": "CDDL",
+            "required-by-chroot": true,
+            // OpenZFS has two compatibility constraints:
+            // (1) Kernel version compatibility. OpenZFS typically supports new kernel versions within days/weeks of release,
+            //     see https://github.com/openzfs/zfs/releases for current status.
+            // (2) DKMS compilation compatibility. While ZFS compiles against standard, lts, and zen kernels, it fails
+            //     against hardened kernels due to broken cross-architecture Kconfig references in the headers package
+            //     (see https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/issues/11 and
+            //     https://aur.archlinux.org/pkgbase/linux-hardened-lts#comment-1028414).
+            // Both constraints can cause installation failures (see runtime check in bind-mount/root/install-and-configure-bootloader.sh)
+            // and system update issues. We restrict ZFS to LTS kernel only for maximum stability.
+            "available": "`install-standard-lts-kernel`",
+            "default-value": "`install-standard-lts-kernel`"
+        },
+        {
+            "name": "btrfs-filesystem",
+            "dialog-name": "File System",
+            "short-description": "Btrfs - Snapshots, Flexible Subvolumes & Online Management",
+            "long-description": "BTRFS: Supports atomic snapshots and ensures data integrity. Ideal for systems using Timeshift for reliable restoration and reducing SSD wear through data compression. Flexible management of subvolumes online without downtime.",
+            "arch-packages": [
+                "btrfs-progs",
+                "compsize"
+            ],
+            "spdx-identifiers": "GPL-2.0-only",
+            "required-by-chroot": true,
+            "default-value": "`NOT install-standard-lts-kernel`"
+        },
+        {
+            "name": "xfs-filesystem",
+            "dialog-name": "File System",
+            "short-description": "XFS   - High-Performance, Scalability & Efficient Metadata",
+            "long-description": "XFS: Optimized for high performance with large files and data sets. Supports a high number of concurrent operations, ideal e.g. for streaming video workloads. Uses Timeshift in rsync mode for snapshot functionality.",
+            "arch-packages": [
+                "xfsprogs"
+            ],
+            "spdx-identifiers": "GPL-2.0-only et al.",
+            "default-value": false
+        },
+        {
+            "name": "ext4-filesystem",
+            "dialog-name": "File System",
+            "short-description": "EXT4  - Reliable, Standard & Proven Stability",
+            "long-description": "EXT4: A widely supported standard file system suitable for general-purpose use. Offers proven stability with Timeshift running in rsync mode for snapshots.",
+            "arch-packages": [
+                "e2fsprogs"
+            ],
+            "spdx-identifiers": "GPL-2.0-only et al.",
+            "default-value": false
+        },
+        
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Kernel Selection"
+        {
+            "name": "install-standard-stable-kernel",
+            "dialog-name": "Kernel Selection",
+            "short-description": "Standard Kernel (Stable)",
+            "long-description": "Standard Kernel (linux) [Stable]: The standard kernel offers balanced performance and stability for a wide range of hardware and use cases. It is maintained as a stable release, receiving bug fixes and security patches regularly to ensure reliability.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                "linux",
+                "linux-headers"
+            ],
+            "default-value": "`b43-required`"
+        },
+        {
+            "name": "install-standard-lts-kernel",
+            "dialog-name": "Kernel Selection",
+            "short-description": "Standard Kernel (LTS)",
+            "long-description": "Standard Kernel (linux-lts) [LTS]: The Long-Term Support kernel provides extended support and stability, making it ideal for users who prioritize reliability and long-term maintenance over the latest features. It is recommended for systems utilizing DKMS modules (e.g., ZFS) to ensure compatibility and reduce maintenance overhead.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                "linux-lts",
+                "linux-lts-headers"
+            ],
+            "available": "`NOT b43-required`",
+            "default-value": "`NOT b43-required`"
+        },
+        {
+            "name": "install-hardened-stable-kernel",
+            "dialog-name": "Kernel Selection",
+            "short-description": "Hardened Kernel (Stable)",
+            "long-description": "Hardened Kernel (linux-hardened) [Stable]: This kernel emphasizes security by applying a set of hardening patches and security-focused compile-time options. It offers enhanced protection against exploits and vulnerabilities but may reduce compatibility with certain software, such as «throttled».",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                "linux-hardened",
+                "linux-hardened-headers"
+            ],
+            "available": "`NOT b43-required`",
+            "default-value": false
+        },
+        {
+            "name": "install-hardened-lts-kernel",
+            "dialog-name": "Kernel Selection",
+            "short-description": "Hardened Kernel (LTS)",
+            "long-description": "Hardened Kernel (linux-hardened-lts) [LTS]: Combining the security enhancements of the Hardened Kernel with long-term support, this kernel is ideal for users seeking both increased security and extended maintenance.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                "linux-hardened-lts",
+                "linux-hardened-lts-headers"
+            ],
+            "available": "`NOT b43-required`",
+            "default-value": false
+        },
+        {
+            "name": "install-zen-kernel",
+            "dialog-name": "Kernel Selection",
+            "short-description": "Zen Kernel (Stable)",
+            "long-description": "Zen Kernel (linux-zen) [Stable]: Tailored for desktop usage, this kernel offers performance enhancements and tweaks like a modified CPU scheduler. Note that there is no LTS version of this kernel. While it may improve desktop performance, frequent updates can require rebuilding DKMS modules more often. It usually works well with the NVIDIA DKMS driver but may not be ideal for systems relying heavily on DKMS modules like «zfs-dkms».",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                "linux-zen",
+                "linux-zen-headers"
+            ],
+            "available": "`NOT b43-required`",
+            "default-value": false
+        },
+        {
+            "name": "install-realtime-lts-kernel",
+            "dialog-name": "Kernel Selection",
+            "short-description": "Realtime Kernel (LTS)",
+            "long-description": "Realtime Kernel (linux-rt-lts) [LTS]: Optimized for applications demanding strict real-time requirements, providing predictable response times with the PREEMPT_RT patch. Ideal for audio/video production, live performance, and industrial control systems.",
+            "spdx-identifiers": "various, incl GPL-1.0-or-later,BSD-3-Clause-Clear",
+            "arch-packages": [
+                "linux-rt-lts",
+                "linux-rt-lts-headers"
+            ],
+            "available": "`NOT b43-required`",
+            "default-value": false
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "General Kernel Configuration"
+        {
+            "name": "kernel-option-sysrq",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Enable Magic SysRq Keys (kernel.sysrq=1)",
+            "long-description": "Enable Magic System Request Keys: Enables the SysRq (commonly «Print Screen») key for emergency recovery actions, such as Alt+SysRq+B to reboot.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": true
+        },
+        {
+            "name": "kernel-option-vfsca",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Reduce background reclaiming of file system cache (vm.vfs_cache_pressure 100 -> 50)",
+            "long-description": "Reduce background reclaiming of file system cache: Retains more file system metadata in memory for faster access, increasing RAM usage.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`total-ram-gib >= 24`"
+        },
+        {
+            "name": "kernel-option-compa",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Minimize background memory compaction (vm.compaction_proactiveness 20/100 → 1/100)",
+            "long-description": "Minimize background memory compaction: Reduces effort spent on memory compaction in the background, which may decrease CPU load at the cost of increased RAM consumption.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`total-ram-gib >= 24`"
+        },
+        {
+            "name": "kernel-option-swapp",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Optimize swap file and ZRAM usage (vm.swappiness)",
+            "long-description": "Optimize swap file and ZRAM usage: If you have left ZRAM enabled (default), this setting changes swappiness from the default of 60 to the recommended value of 180. If you have ZRAM disabled, this setting changes swappiness to 1, which conserves RAM for active applications to improve system responsiveness, but leaves less RAM available for kernel operations such as caching file system metadata and managing network buffers.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`install-zram OR total-ram-gib >= 24`"
+        },
+        {
+            "name": "kernel-option-zswap",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Disable Zswap Cache Layer (zswap.enabled=0)",
+            "long-description": "Disable Zswap Cache Layer: Disables Zswap’s intermediary cache, allowing direct use of swap devices like ZRAM.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`install-zram`"
+        },
+        {
+            "name": "kernel-option-pagec",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Disable Swap Readahead (vm.page-cluster 3 → 0)",
+            "long-description": "Disable Swap Readahead: The system reads only one page at a time from swap, potentially reducing initial latency when accessing swapped-out pages. This is advantageous when using ZRAM, as ZRAM provides fast access to swap space. Reading only the required pages can improve performance without the overhead of prefetching additional pages.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`install-zram`"
+        },
+        {
+            "name": "kernel-option-wmboo",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Disable Extra Memory Reclaim (vm.watermark_boost_factor 15000 → 0)",
+            "long-description": "Disable Extra Memory Reclaim: This reduces reclaim activity during memory fragmentation when high-order memory allocations are less critical. This can optimize memory management for systems using ZRAM. Since ZRAM reduces the need for high-order memory allocations, the extra memory reclaim becomes unnecessary, improving overall performance.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`install-zram`"
+        },
+        {
+            "name": "kernel-option-wmsca",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Maintain free memory (vm.watermark_scale_factor 10/3000 → 125/3000)",
+            "long-description": "Maintain free memory: Make the Kernel Swap Thread more aggressive in maintaining free memory. This helps prevent applications from entering direct memory reclaim, enhancing system responsiveness under memory pressure. This is particularly beneficial for systems with ZRAM, because it allows the system to better utilize ZRAM’s fast swap capabilities by maintaining more free memory and reducing allocation stalls.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`install-zram`"
+        },
+        {
+            "name": "kernel-option-fwdpe",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Order device init & power tasks (fw_devlink=permissive)",
+            "long-description": "Order Device Initialization & Power Tasks: Facilitates the correct sequence of device initialization and power management tasks based on firmware information. This ensures a stable system operation by prioritizing the initialization of supplier devices before consumers and managing power states effectively during suspend/resume cycles.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": true
+        },
+        {
+            "name": "kernel-option-perf1",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Allow normal users to access performance profiling tools (perf_event_paranoid=1)",
+            "long-description": "Allow normal users to access performance profiling tools: This is particularly useful for developers who need to analyze application performance in a more secure way without needing full root privileges.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": true
+        },
+        {
+            "name": "kernel-option-duurn",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Disable unprivileged user namespaces (unprivileged_userns_clone=0)",
+            "long-description": "Disable unprivileged user namespaces: Enhances system security by preventing local privilege escalation attacks through user namespace exploitation. However, this will break application sandboxing tools that rely on unprivileged user namespaces, including Bubblejail, certain containerization tools, and communication software. Consider leaving this disabled if you plan to use these security tools.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT (install-bubblejail OR install-hardened-stable-kernel OR install-hardened-lts-kernel)`",
+            "default-value": false
+        },
+        {
+            "name": "kernel-option-inita",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Automatically fill allocated memory with 0 (init_on_alloc=1)",
+            "long-description": "Fill Allocated Memory with 0: Increases security by zeroing out newly allocated memory.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": true
+        },
+        {
+            "name": "kernel-option-initf",
+            "dialog-name": "General Kernel Configuration",
+            "short-description": "Automatically fill deallocated memory with 0 (init_on_free=1)",
+            "long-description": "Fill Deallocated Memory with 0: Aids in preventing data leakage by clearing freed memory.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": true
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "CPU Vulnerability Mitigation Options".
+        // These correspond to kernel mitigations for which the kernel does not perform the maximum mitigation by default. These are set
+        // by default to True if the CPU has the corresponding vulnerability, see above list "Settings that are determined via `lscpu`".
+        {
+            "name": "kernel-option-spec2",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce Spectre Variant 2 Mitigation (spectre_v2=on)",
+            "long-description": "Enforce Spectre Variant 2 Mitigation: This vulnerability allows attackers to exploit speculative execution to access sensitive data. Enabling this option forces the kernel to apply full mitigations for Spectre Variant 2, potentially enhancing security.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-spectre-v2-vulnerable`"
+        },
+        {
+            "name": "kernel-option-l1tff",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce L1 Terminal Fault Mitigation (l1tf=full,force)",
+            "long-description": "Enforce L1 Terminal Fault Mitigation: Affects Intel CPUs, allowing unauthorized access to data in the Level 1 cache. This option enforces full mitigation, which may involve more aggressive cache flushing.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-l1tf-vulnerable`"
+        },
+        {
+            "name": "kernel-option-mdsfu",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce MDS Mitigation (mds=full,nosmt)",
+            "long-description": "Enforce MDS (Microarchitectural Data Sampling) mitigation: Allows attackers to sample data from CPU buffers. Enabling this enforces full mitigations and may disable Hyperthreading if necessary.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-mds-vulnerable`"
+        },
+        {
+            "name": "kernel-option-tsxaa",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce TSX Async Abort Mitigation (tsx_async_abort=full,nosmt)",
+            "long-description": "Enforce TSX Async Abort Mitigation: Affects CPUs with Transactional Synchronization Extensions (TSX). This option enables full mitigation and may disable Hyperthreading if required.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-taa-vulnerable`"
+        },
+        {
+            "name": "kernel-option-meltd",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce Meltdown Mitigation (l1d_flush=on)",
+            "long-description": "Enforce Meltdown Mitigation: Exploits speculative execution to read kernel memory. Enabling this forces the kernel to flush the Level 1 data cache to mitigate Meltdown.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-meltdown-vulnerable`"
+        },
+        {
+            "name": "kernel-option-mmios",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce MMIO Stale Data Mitigation (mmio_stale_data=full,nosmt)",
+            "long-description": "Enforce MMIO Stale Data Mitigatio: Allows leakage of data from Memory-Mapped I/O. This enforces full mitigations and may disable SMT if needed.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-mmio-stale-data-vulnerable`"
+        },
+        {
+            "name": "kernel-option-retbl",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce Retbleed Mitigation (retbleed=auto,nosmt)",
+            "long-description": "Enforce Retbleed Mitigation: A speculative execution attack that can leak return addresses. This option enables automatic mitigation and may disable SMT.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-retbleed-vulnerable`"
+        },
+        {
+            "name": "kernel-option-srsom",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce SRSO Mitigation (spec_rstack_overflow=ibpb spectre_v2-user=on)",
+            "long-description": "Enforce SRSO Mitigation: Leads to speculative execution attacks via the return stack buffer. Enabling this applies mitigations and may impact performance.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-srso-vulnerable`"
+        },
+        {
+            "name": "kernel-option-gdsfo",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce Gather Data Sampling Mitigation (gather_data_sampling=force)",
+            "long-description": "Enforce Gather Data Sampling Mitigation: Affects AVX instructions. This option forces microcode mitigations or disables AVX if the microcode is unavailable.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-gds-vulnerable`"
+        },
+        {
+            "name": "kernel-option-rfdso",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Enforce RFDS Mitigation (reg_file_data_sampling=on)",
+            "long-description": "Enforce RFDS Mitigation: Allows sampling of data from CPU registers. Enabling this activates mitigations to protect against RFDS.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "available": "`NOT kernel-option-mitof`",
+            "default-value": "`is-rfds-vulnerable`"
+        },
+
+        // The following two are to switch off mitigations
+        {
+            "name": "kernel-option-ibtof",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Disable Intel BTI Mitigation - Security Risk! Undocumented! (ibt=off)",
+            "long-description": "Disable Mitigation for Intel Branch Target Injection: Disables the Intel BTI mitigation to increase system performance. Warning: This exposes the system to certain types of speculative execution attacks like Spectre.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": false
+        },
+        {
+            "name": "kernel-option-mitof",
+            "dialog-name": "CPU Vulnerability Mitigation Options",
+            "short-description": "Disable all Mitigations - Security Risk! (mitigations=off)",
+            "long-description": "Disable all Mitigations: This option differs from unchecking all mitigations in the list: It disables all kernel-based security mitigations against speculative execution vulnerabilities such as Spectre, Meltdown, MDS, and others. This option maximizes system performance by avoiding the overhead of security patches, but it significantly increases the risk of exposure to these vulnerabilities. Use this setting only if you fully understand the implications and are confident that your system is not at risk from these types of attacks.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": false
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Boot Init System"
+        {
+            "name": "use-init-busybox",
+            "dialog-name": "Boot Init System",
+            "short-description": "BusyBox",
+            "long-description": "BusyBox provides a suite of Unix utilities in a single executable. It combines various common commands and system functions into one binary, optimizing the size and complexity of the boot process.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`zfs-filesystem`"
+        },
+        {
+            "name": "use-init-systemd",
+            "dialog-name": "Boot Init System",
+            "short-description": "systemd",
+            "long-description": "systemd integrates several boot and process management functions into one framework. It is designed to handle system initialization, service management, and logging in a unified way, with built-in parallelization and dependency management. systemd offers a modular architecture where different components work together to manage the system’s lifecycle from boot to shutdown.\n\nNote that using systemd with a ZFS root filesystem is presently only possible if the root partition is not encrypted. As a result, Ditana does not currently support the use of systemd with ZFS.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "required-by-chroot": true,
+            // Using systemd init system for ZFS requires https://github.com/dasJ/sd-zfs, but this project does not yet support ZFS encryption (which we configure when encrypt-root-partition is true). We could still support systemd init system for ZFS without encryption, but currently do not.
+            "available": "`NOT zfs-filesystem`",
+            "default-value": "`NOT zfs-filesystem`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Storage & File System Options"
+        {
+            "name": "disable-atimes",
+            "dialog-name": "Storage & File System Options",
+            "short-description": "Disable File Access Time Recording",
+            "long-description": "Disable File Access Time Recording: Enable the «noatime» option when mounting the root file system to prevent the recording of the last access time of files. This configuration offers several benefits:\n\n• Performance Improvement: Reduces the overhead associated with updating access times on each file read operation, leading to faster file system performance.\n• Reduced Wear on Storage Devices: Minimizes write operations, which is particularly advantageous for SSDs by extending their lifespan.\n• Optimized for Btrfs: Enhances snapshot performance by reducing the number of write operations required during snapshot creation and management.\n• Enhanced Security: Prevents exposure of file access patterns, reducing potential information leakage.\n\nWhile «noatime» is beneficial for most users, it can be disabled if specific applications rely on access time information.",
+            "spdx-identifiers": "",
+            "default-value": true
+        },
+        {
+            "name": "install-zram",
+            "dialog-name": "Storage & File System Options",
+            "short-description": "Install ZRAM",
+            "long-description": "Install ZRAM: ZRAM is enabled by default to optimize memory usage, creating a compressed swap space in RAM that reduces wear on storage devices (SSDs and HDDs) and enhances system responsiveness under memory pressure. ZRAM is managed by the zram-generator, which efficiently configures and activates ZRAM without manual setup. Keeping ZRAM enabled balances performance and minimizes storage usage. Only consider disabling ZRAM if you are certain the system will not encounter high memory demand.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "zram-generator"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-ramdisk",
+            "dialog-name": "Storage & File System Options",
+            "short-description": "Install RAM Disk",
+            "long-description": "Make a RAM Disk available: This option creates a dedicated RAM Disk mounted within the user’s runtime directory and symlinked to their home directory, making it easily accessible. Key features include:\n\n• A clean, user-exclusive space for temporary data, free from system files, unlike $XDG_RUNTIME_DIR and /tmp.\n• Accessible only to the user, offering a controlled and secure temporary storage.\n• Set up with the $RAMDISK environment variable for easy reference in the terminal.\n\nIdeal for tasks needing fast, temporary storage, such as video processing or caching, the RAM Disk integrates with the file manager on desktops and clears automatically upon logout.",
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "arch-packages": [
+                "ditana-ramdisk"
+            ],
+            "default-value": true
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Hardware Support Options"
+        {
+            "name": "install-audio",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install Audio support",
+            "long-description": "Install Audio Support: Installs PulseAudio and adds the user «$user-name» to the «audio» group to enable access to audio devices.",
+            "spdx-identifiers": "LGPL-2.1-or-later",
+            "arch-packages": [
+                "pulseaudio"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-bluetooth",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install Bluetooth support",
+            "long-description": "Install Bluetooth Support: Installs the necessary Bluetooth components (protocol stack, management tools, OBEX for file transfer, and mesh services) and enables the Bluetooth service in the system. Bluetooth allows wireless connection to various devices such as keyboards, mice, headsets, smartphones, and other Bluetooth-capable devices. The Bluetooth service will be automatically started at system boot, making Bluetooth devices immediately available. This entry is enabled by default if Bluetooth hardware is detected in the system.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                // see https://wiki.archlinux.org/title/Bluetooth
+                "bluez",
+                "bluez-utils",
+                "bluez-obex",
+                "bluez-mesh"
+            ],
+            "default-value": "`has-bluetooth`"
+        },
+        {
+            "name": "install-nvidia-opensource",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install open-source NVIDIA graphics card driver",
+            "long-description": "Install the open-source NVIDIA graphics card driver: This driver, developed by NVIDIA, integrates closely with the Linux kernel. It makes use of native kernel interfaces, which can lead to better overall system performance and reduced power consumption. As an open-source solution, it also allows for easier debugging and encourages community contributions, resulting in faster bug fixes and feature updates.\n\nDefault Recommendation: For users with a graphics card that is supported by the latest (non-legacy) proprietary NVIDIA driver, this driver is recommended due to its better integration with Linux and the benefits it provides in terms of system stability and kernel compatibility. While the installer currently defaults to the proprietary driver for most NVIDIA cards to follow established conventions and provide a commonly recognised configuration, users are encouraged to consider the open source driver due to its advantages in kernel integration and long-term support.\n\nPlease note that, similar to the proprietary driver, this driver also relies on the proprietary NVIDIA Driver Utilities.\n\nFor more information, visit: https://github.com/NVIDIA/open-gpu-kernel-modules",
+            "spdx-identifiers": "",
+            "license-category": "CLOSED/FOSS",
+            "arch-packages": [
+                "nvidia-open-dkms"
+            ],
+            "required-by-chroot": true,
+            "available": "`nvidia-pci-id`",
+            "default-value": false // this default is set by check-nvidia()
+        },
+        {
+            "name": "install-nvidia-proprietary",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install proprietary NVIDIA graphics card driver",
+            "long-description": "Install the proprietary NVIDIA graphics card driver: This driver, while free of charge, is non-open-source and maintained by NVIDIA. It is known for delivering the highest performance and stability, especially in demanding use cases such as AI training and gaming.\n\nDefault Recommendation: Users who require the highest performance for demanding applications should opt for this driver. For most NVIDIA cards, the installer defaults to this driver to adhere to established conventions and provide a commonly recognized configuration.\n\nFor detailed driver information, please visit: https://www.nvidia.com/en-us/drivers/unix",
+            "license-category": "CLOSED",
+            "spdx-identifiers": "",
+            "arch-packages": [ // this package is set by check-nvidia()
+            ],
+            "required-by-chroot": true,
+            "available": "`nvidia-pci-id`", // this availability is set by function check-nvidia()
+            "default-value": false // this default set by check-nvidia()
+        },
+        {
+            "name": "install-nouveau",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install open-source Nouveau NVIDIA driver",
+            "long-description": "Install the Nouveau open-source NVIDIA graphics card driver: Nouveau is a community-developed open-source driver for NVIDIA graphics cards. It offers the following benefits:\n\n• Support for a wide range of older NVIDIA hardware that may not be fully supported by the other two NVIDIA drivers.\n• Unlike the other two NVIDIA drivers, Nouveau does not depend on any proprietary NVIDIA components, making it the only truly open-source solution currently available.\n\nDefault Recommendation: For very old GPUs (requiring drivers older than version 470), Nouveau is usually the safer choice, as it is generally not recommended to rely on outdated kernel versions or old X-server versions, which may be required to use an old NVIDIA legacy driver.\n\nFor more detailed information, visit: https://nouveau.freedesktop.org",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "xf86-video-nouveau"
+            ],
+            "available": "`nvidia-pci-id`",
+            "default-value": false // this default is set by check-nvidia()
+        },
+        {
+            "name": "install-nvidia-prime",
+            "default-value": "`has-hybrid-nvidia-gpu AND install-desktop-environment AND (install-nvidia-proprietary OR install-nvidia-opensource)`",
+            "arch-packages": [
+                "nvidia-prime"
+            ]
+        },
+        {
+            "name": "install-virtualbox-guest",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install the VirtualBox Guest Additions",
+            "long-description": "Install the VirtualBox Guest Additions: These enhance the integration and performance of Ditana in a VirtualBox environment, including better graphics performance, shared clipboard, drag & drop functionality, and automatic window resizing.\n\nFor more information, visit: https://www.virtualbox.org/manual/ch04.html\n\nPlease note that although the actual package is licensed under the FOSS GPL2, it will automatically install additional components that are closed-source. These are licensed under the VirtualBox Extension Pack Personal Use and Evaluation Licence, see https://www.virtualbox.org/wiki/VirtualBox_PUEL",
+            "license-category": "CLOSED",
+            "spdx-identifiers": "PUEL",
+            "arch-packages": [
+                "virtualbox-guest-iso"
+            ],
+            "available": "`virtualbox`",
+            "default-value": "`virtualbox`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Repository & Package Management Configuration"
+        {
+            "name": "install-pacman-core-tools",
+            "dialog-name": "Repository & Package Management Configuration",
+            "short-description": "Install package management tools",
+            "long-description": "Install core package management tools:\n\n• arch-audit: A security tool that checks installed packages for known vulnerabilities. It uses data from the Arch Security Team, helping to keep your system secure.\n• pacman-contrib: This package includes various useful scripts and tools to enhance the functionality of the pacman package manager. Tools such as pacdiff for managing configuration file changes and checkupdates for checking package updates are included.\n• PacUI: A convenient text-based graphical interface that supports quick browsing of available installation packages (including AUR) and their installation. In addition, pacui provides advanced commands, such as package dependency trees. It also uses fwupd to install firmware updates. For AUR, it supports pikaur, which is the default AUR helper on Ditana.\n• pkgfile: A utility to search for files across all packages in the repositories, not just installed ones. It is particularly useful for identifying which package a specific file belongs to, even if the package is not currently installed on the system.",
+            "spdx-identifiers": "MIT GPL-2.0-or-later GPL-3.0-only LGPL-2.1-or-later",
+            "arch-packages": [
+                "arch-audit",
+                "pacman-contrib", // optional dependency of pikaur
+                "pacui",
+                "fwupd", // optional dependency of pacui: daemon to allow session software to update firmware
+                "pkgfile"
+                ],
+            "default-value": true
+        },
+        {
+            "name": "install-pkgstats",
+            "dialog-name": "Repository & Package Management Configuration",
+            "short-description": "Contribute to Arch statistics",
+            "long-description": "Contribute to the Arch Linux package statistics. «pkgstats» anonymously submits a list of installed packages to the Arch Linux project every week. See https://pkgstats.archlinux.de",
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "arch-packages": [
+                "pkgstats"
+            ],
+            "default-value": "`release-version AND NOT virtual-environment`"
+        },
+        {
+            "name": "enable-multilib",
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "enable-chaotic-aur",
+            "dialog-name": "Repository & Package Management Configuration",
+            "short-description": "Enable autom. building repo \"Chaotic-AUR\"",
+            "long-description": "Enable the automated building repo for AUR packages «Chaotic-AUR»: Chaotic-AUR provides a repository of pre-built packages from the AUR, saving time and computational resources by avoiding manual compilation. This is especially useful for users who frequently install or update AUR packages and prefer immediate access over building from source. Note that the installer will enable this for certain packages, but you can safely disable it.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "required-by-chroot": true,
+            "available": "`enable-multilib`",
+            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"
+        {
+            "name": "enable-network",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Enable network access",
+            "long-description": "Enable network access: Enables basic networking capabilities on your system. This includes configuration of DNSSEC and DNS over TLS for secure, encrypted DNS, fully integrated with systemd-resolved to ensure consistent and reliable name resolution. Additionally, it enables the Network Time Synchronization systemd service.",
+            "spdx-identifiers": "LGPL-2.1-or-later,GPL-2.0-or-later",
+            "arch-packages": [
+                "ditana-network"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-network-tools",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install basic network tools",
+            "long-description": "Install basic network tools:\n • net-tools: Provides commands like netstat and route.\n • nmap: Network exploration and security auditing tool.\n • mtr: Combines the functionality of traceroute and ping.\n • tcpdump: Captures and analyzes network traffic.\n • wget: Network utility to retrieve files from the Web",
+            "spdx-identifiers": "FOSS GPL-2.0-only,GPL3,BSD-3-Clause,Nmap",
+            "arch-packages": [
+                "net-tools",
+                "nmap",
+                "mtr",
+                "tcpdump",
+                "wget"
+            ],
+            "available": "`enable-network`",
+            "default-value": true
+        },
+        {
+            "name": "install-openssh",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install and configure OpenSSH",
+            "long-description": "Install OpenSSH server with public key authentication, and creates an ed25519 SSH key pair for your user «$user-name».",
+            "spdx-identifiers": "BSD-2-Clause,BSD-3-Clause,ISC,MIT",
+            "arch-packages": [
+                "openssh"
+            ],
+            "available": "`enable-network`",
+            "default-value": true
+        },
+        {
+            "name": "install-firewalld",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install and enable firewalld",
+            "long-description": "Install firewalld, a dynamically managed firewall with D-Bus interface. Key features include support for network zones, IPv4/IPv6, runtime/permanent configurations, and a rich language for complex rules. It utilizes nftables, the modern successor to iptables, offering improved performance and flexibility. firewalld allows easy integration for services and applications to modify firewall settings without service restarts. For desktop installations, a graphical configuration tool is included. Ditana repairs the Tray icon for the Wayfire Traybar.",
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "arch-packages": [
+                "firewalld"
+            ],
+            "config-files": ["/etc/xdg/autostart/firewall-applet.desktop"],
+            "available": "`enable-network AND xdg-autostart-is-active`",
+            "default-value": true
+        },
+        {
+            "name": "install-bubblejail",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install Bubblejail",
+            "long-description": "Install Bubblejail, a sandboxing utility that provides application isolation without parallel packaging systems. It implements a resource-oriented permission model, enhanced by seccomp and D-Bus filtering. Key features include:\n • Fine-grained control over application permissions and resource access\n • X11/Wayland display server integration\n • Custom home directory isolation per application\n • User-friendly graphical interface for sandbox configuration",
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "arch-packages": [
+                "bubblejail"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-protonvpn",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install ProtonVPN",
+            "long-description": "Install ProtonVPN, a secure VPN service with strong privacy features and servers in over 110 countries. It offers NetShield Ad-blocker to filter ads, trackers, and malware before they reach your device. Features include high-speed connections via their 10 Gbps network with VPN Accelerator technology, strict no-logs policy backed by Swiss privacy laws, and Stealth protocol for bypassing censorship. An account from https://protonvpn.com is required for full functionality.",
+            "license-category": "CLOSED",
+            "arch-packages": [
+                "proton-vpn-gtk-app"
+            ],
+            "available": "`enable-network AND install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-expressvpn",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install ExpressVPN",
+            "long-description": "Install ExpressVPN, offering a robust VPN service with optional filtering of ads, trackers and malicious sites even before they arrive at your browser. An Activation Code from https://expressvpn.com is required to use ExpressVPN.",
+            "license-category": "CLOSED",
+            "aur-packages": [
+                "expressvpn"
+            ],
+            "available": "`enable-network`",
+            "default-value": false
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Maintenance Tools"
+        {
+            "name": "configure-automatic-snapshots",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Configure Automatic System Snapshots",
+            "long-description": "Configure Automatic System Snapshots\nCreate automatic snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues. Depending on the selected file system, different tools are used to perform these snapshots:\n\n• ext4, xfs, btrfs: Timeshift is utilized to create snapshots. For btrfs, Timeshift performs atomic operations with minimal overhead, while for ext4 and xfs, it uses rsync, typically completing backups in under five seconds.\n• zfs: ZFS snapshots are created instead, providing the same reliable snapshot functionality.\n\nIn the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.",
+            "spdx-identifiers": "GPL-2.0-or-later,MIT",
+            "arch-packages": [
+                ""
+            ],
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "configure-automatic-snapshots-zfs",
+            "arch-packages": [
+                "zfs-autosnap"
+            ],
+            "default-value": "`configure-automatic-snapshots AND zfs-filesystem`"
+        },
+        {
+            "name": "configure-automatic-snapshots-timeshift",
+            "arch-packages": [
+                "timeshift",
+                "timeshift-autosnap"
+            ],
+            "default-value": "`configure-automatic-snapshots AND NOT zfs-filesystem`"
+        },
+        {
+            "name": "install-logrotate",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Install and enable logrotate",
+            "long-description": "Install and enable logrotate:\nLogrotate manages the automatic rotation and compression of various system and application log files across your Linux system. It prevents these logs from consuming excessive disk space by periodically archiving, compressing, or deleting old logs. When enabled, the logrotate.timer service runs this task at scheduled intervals, maintaining a balance between keeping necessary logs for troubleshooting and controlling their growth.",
+            "spdx-identifiers": "GPL",
+            "arch-packages": [
+                "logrotate"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "configure-lingering",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Enable persistent user services",
+            "long-description": "Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks.",
+            "spdx-identifiers": "",
+            "arch-packages": [""],
+            "required-by-chroot": true,
+            "default-value": "true"
+        },
+        {
+            "name": "install-rate-mirrors",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Install rate-mirrors",
+            "long-description": "Install rate-mirrors:\nRate-mirrors optimizes your system’s package downloads by selecting the fastest repository mirrors. While this process is performed during Ditana’s initial installation, re-running it can be beneficial, especially for laptops that change geographic locations or when mirror configurations change. The tool tests mirror speeds based on your current network conditions and location, using data about submarine cable connections and inter-country network topologies. By regularly using rate-mirrors, you ensure your system maintains optimal download speeds for updates and package installations, adapting to changes in your network environment or mirror availability.",
+            "spdx-identifiers": "CC-BY-NC-SA-3.0",
+            "arch-packages": [
+                "rate-mirrors"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "enable-auditd",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Enable the Linux Audit Daemon",
+            "long-description": "Enable the Linux Audit Daemon:\nThe Linux Audit Daemon (auditd) monitors and logs critical system events, enhancing system security and integrity. It captures a wide range of activities, such as file accesses and user actions, making it invaluable for auditing and forensic analysis. Enabling auditd with its default configuration ensures comprehensive logging of system events. You can view summaries of these logs with «sudo aureport», providing essential insights into system behavior and potential security issues.",
+            "spdx-identifiers": "GPL-/LGPL-2.0-or-later",
+            "arch-packages": [
+                "audit"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "disable-core-dumps",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Disable Core Dumps",
+            "long-description": "Disable Core Dumps:\nCore dumps capture the memory state of a program during crashes, which is useful for debugging but may inadvertently expose sensitive information. In Ditana, core dumps are disabled by default, safeguarding system integrity and user privacy. Advanced users can choose to enable core dumps temporarily in shell sessions or for specific systemd services, ensuring a secure default configuration while allowing flexibility for debugging needs.",
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "arch-packages": [
+                "ditana-config-coredumps"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "enable-fstrim",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Weekly discarding of unuseds SSD blocks",
+            "long-description": "TRIM is a command that informs a solid-state drive (SSD) which blocks of data are no longer in use and can be wiped internally. For Linux systems, enabling the fstrim.timer service schedules a weekly TRIM operation on all mounted file systems that support it, optimizing free space management. This helps maintain SSD performance and extends the drive’s longevity by reducing wear during write operations. Unlike continuous TRIM methods, which can slightly degrade performance by issuing TRIM commands at every delete operation, scheduling TRIM operations weekly minimizes the impact on system performance and is less stressful on the SSD. The fstrim.timer is a safe and effective way to ensure your SSD’s health and efficiency. It activates only on partitions that support TRIM, making it a non-invasive and beneficial optimization for your system. This option is only available outside virtualization.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "default-value": "`NOT virtual-environment`",
+            "available": "`NOT virtual-environment`"
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Terminal Tools and Utilities"
+        {
+            "name": "install-syncthing",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install Syncthing file synchronization (headless)",
+            "long-description": "Syncthing is a continuous file synchronization program that synchronizes files between two or more computers in real time, securely and privately. Unlike cloud storage services, your data is never stored on central servers - it's synchronized directly between your devices using encrypted connections. This headless version runs as a background service and can be configured through a web interface at http://localhost:8384. Perfect for servers and headless systems that need file synchronization without a graphical interface.",
+            "arch-packages": [
+                "syncthing"
+            ],
+            "spdx-identifiers": "MPL-2.0",
+            "available": "`NOT install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-kmscon",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install kmscon userspace console emulator",
+            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
+            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
+            "arch-packages": [
+                "kmscon"
+            ],
+            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-cron",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install cron and activate service",
+            "long-description": "Install cron and activate service: cron is a common service that allows for the scheduling of regular jobs directly from the terminal.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "cronie"
+            ],
+            "default-value": "`install-backintime`"
+        },
+        {
+            "name": "install-terminal-utilities",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install essential terminal utilities like grep, rsync, bc...",
+            "long-description": "Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "bat", "bc", "bind", "expect", "git-lfs", "jq", "graphviz", "grep", "htop", "img2pdf", "less", "lsof", "lua", "man-db", "mediainfo", "ncdu", "neovim", "perl-image-exiftool", "ripgrep", "rsync", "shellcheck", "sed", "systemctl-tui", "turbostat"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-archivers",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install various command line archivers like zip, unzip, 7z...",
+            "long-description": "Install various command line archivers: $packages.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "7zip", "arj", "bzip2", "cpio", "gzip", "lhasa", "lrzip", "lz4", "lzip", "lzop", "tar", "unarj", "unrar", "unzip", "xz", "zip", "zstd"
+            ],
+            "default-value": true
+        },
+
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Development Tools and Libraries"
+        {
+            "name": "standardized-locale",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Configure English Locale with Regional Settings",
+            "long-description": "By default, the locale you selected is used for everything, including\n\n • The output of terminal commands\n • The language of the Desktop Environment (if selected to install)\n • The names of the standard folders (generated by xdg-user-dirs-update)\n • Installation of man pages matching your chosen language\n\nBy activating this option, in contrast, an English-centric environment will be maintained while respecting your regional settings (like date and currency formats). This is achieved by setting the following locale categories to C.UTF-8, regardless of the main locale you chose:\n\n• Setting LC_COLLATE to C.UTF-8 ensures consistent sorting order across different languages. Affected C functions include strcoll and wcscoll.\n\n• LC_CTYPE set to C.UTF-8 guarantees consistent character classification and conversion, which is crucial for string manipulation and text processing. Affected C functions include isalpha, isdigit, isspace, toupper, and tolower.\n\n• LC_NUMERIC set to C.UTF-8 ensures numerical data is consistently formatted and parsed, for example, no thousands separator as in en_US.UTF-8 and period (.) as the decimal separator. Affected C functions include atof, strtod, printf, and scanf.\n\n• LC_MESSAGES set to C.UTF-8 provides consistent system messages in English, making it easier for developers to search for solutions to errors online. In addition, names of the XDG standard folders will be in English.\n\nThis standardized approach ensures uniform behavior across various C and C++ library functions, avoiding discrepancies that can arise from differing regional settings. It’s particularly useful for developers or users who prefer a consistent English interface while maintaining their regional preferences for date and currency formats. Both spell checkers will be installed (in case your locale is different from en_US).",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "default-value": false
+        },
+        {
+            "name": "configure-git",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Configure Git with useful global settings",
+            "long-description": "Configure Git with useful global settings: default branch name (main), rebase behavior (false), credential storage (store), file protocol permissions (always) and push.autoSetupRemote (true).",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "install-diffuse",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install Diffuse and configure as git diff/merge tool",
+            "long-description": "Install Diffuse. A sophisticated graphical diff and merge tool. Features include advanced merge functionality, separate display of all versions (base, local, and remote), manual correction of misaligned lines, n-way merging capabilities, syntax highlighting, direct file editing during comparison, and easy block copying between windows.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                "diffuse"
+            ],
+            "required-by-chroot": true,
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-kcharselect",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install KCharSelect character selector",
+            "long-description": "Install KCharSelect, a character selector utility for choosing special characters and Unicode symbols. Particularly useful for developers and writers who need to insert characters that are not available on their keyboard layout. Features include character search by name, Unicode block browsing, and character information display.",
+            "arch-packages": [
+                "kcharselect"
+            ],
+            "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+            "available": "`install-desktop-environment`",
+            "default-value": "`install-desktop-environment`"
+        },
+        {
+            "name": "install-java-jdk",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Java development kit",
+            "long-description": "Install $packages and configure dynamic path variables to the current version.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "jdk-openjdk", "java-runtime-common"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-general-dev",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install general development packages",
+            "long-description": "Install general development packages: $packages.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "ltrace", "binutils", "perf", "patchelf", "strace", "stress-ng", "ditana-update-from-skel"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-pacman-additional-tools",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install Tools for Arch package maintainers",
+            "long-description": "Install Tools for Arch package maintainers:\n• auracle: A flexible client for the Arch User Repository (AUR). It provides advanced features for managing and searching AUR packages (not installation).\n• devtools: Essential tools for building and maintaining official Arch repository packages, ensuring reproducible builds and standardized development workflows.\n• perl-locale-gettext: translation support in makepkg-template",
+            "spdx-identifiers": "GPL GPL-3.0-or-later PerlArtistic MIT",
+            "arch-packages": [
+                "auracle-git",
+                "devtools", // optional dependency of pikaur
+                "perl-locale-gettext" // translation support in makepkg-template
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-cpp-dev",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install C++ development packages",
+            "long-description": "Install C++ development packages: Equips your system with $packages.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "cmake", "meson", "gdb", "lldb", "gcc", "clang", "gtest", "doxygen", "vcpkg", "libtool", "gtk2", "pkgconf"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-cpu-parallel-dev",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install CPU Parallel Programming Frameworks",
+            "long-description": "Install CPU Parallel Programming Frameworks:\n • blas-openblas: a Basic Linear Algebra Subprograms library for matrix operations\n • eigen: Lightweight C++ template library for vector and matrix math\n • openmp: a shared-memory multiprocessing library\n • openmpi: High performance message passing library\n • intel-oneapi-mkl: Intel’s Math Kernel Library\n • ispc: a compiler for high-performance SIMD programming on the CPU",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "blas-openblas", "eigen", "openmp", "openmpi", "intel-oneapi-mkl", "ispc"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-qt5",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install Qt5 development libraries",
+            "long-description": "Install Qt5 development libraries $packages.",
+            "spdx-identifiers": "Qt Dual license",
+            "arch-packages": [
+                "qt5-base", "qt5-declarative", "qt5-svg", "qt5-tools", "qt5-script"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-clion",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install CLion",
+            "long-description": "Install CLion: CLion is a powerful Integrated Development Environment (IDE) for C and C++ development, offering smart code analysis, advanced debugging, and support for CMake and other build systems. To ensure full compatibility, CLion and its specific tool versions (separate from those on your system) are installed. A free 30-day trial is available, and the full version can be purchased at https://www.jetbrains.com/clion.",
+            "license-category": "CLOSED",
+            "spdx-identifiers": "",
+            "aur-packages": [
+                "clion-jre", "clion-cmake", "clion-gdb", "clion-lldb", "clion"
+            ],
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+
+        // Common desktop packages
+
+        // X11 packages
+
+        // XFCE specific packages
+
+        // Wayland packages
+
+        // Wayfire specific packages
+
+        // Settings that correspond to the main installer logic
+        {
+            "name": "keymap-layout",
+            "default-value": ""
+        },
+        {
+            "name": "keymap-variant",
+            "default-value": ""
+        },
+        {
+            "name": "keyboard-rate",
+            "default-value": 50
+        },
+        {
+            "name": "keyboard-delay",
+            "default-value": 250
+        },
+        {
+            "name": "install-disk",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "install-disk-description",
+            "default-value": ""
+        },
+        {
+            "name": "boot-device",
+            "default-value": ""
+        },
+        {
+            // an EFI-Partition that existed prior installation (or the empty string)
+            "name": "current-bootloader-partition",
+            "default-value": ""
+        },
+        {
+            // user confirmed to overwrite the existing current-bootloader-partition
+            "name": "overwrite-efi",
+            "default-value": false
+        },
+        {
+            // either the EFI or the BIOS partition, depending on the system
+            "name": "bootloader-partition",
+            "default-value": ""
+        },
+        {
+            // the partition that will be mounted at /boot
+            "name": "bootimage-partition",
+            "default-value": ""
+        },
+        {
+            "name": "enable-os-prober",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+        {
+            "name": "change-nvme-lba-format",
+            "default-value": false
+        },
+        {
+            "name": "optimal-lba-format-index",
+            "default-value": -1
+        },
+        {
+            "name": "encrypt-root-partition",
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "swap-partition",
+            "default-value": ""
+        },
+        {
+            "name": "timezone",
+            "default-value": ""
+        },
+        {
+            "name": "locale",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "main-locale",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "main-locale-description",
+            "default-value": ""
+        },
+        {
+            "name": "host-name",
+            "default-value": ""
+        },
+        {
+            "name": "user-name",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "user-id",
+            "required-by-chroot": true,
+            "default-value": 1000
+        },
+        {
+            "name": "user-group",
+            "required-by-chroot": true,
+            "default-value": 1000
+        },
+        {
+            "name": "host-dpi",
+            "default-value": ""
+        },
+        {
+            "name": "kernel-options",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "bootloader-parent-disk",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "bootloader-partition-index",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "root-partition",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "terminal-font",
+            "required-by-chroot": true,
+            "default-value": ""
+        },
+        {
+            "name": "install-desktop-environment",
+            "default-value": "`use-env-wayfire OR use-env-xfce`"
+        },
+        {
+            "name": "x11",
+            "default-value": "`use-env-xfce`"
+        },
+        {
+            "name": "wayland",
+            "default-value": "`use-env-wayfire`"
+        },
+        {
+            "name": "wlroots",
+            "default-value": "`use-env-wayfire`",
+            "description": "Indicates wlroots-based compositor environment"
+        },
+        {
+            "name": "xdg-autostart-is-active",
+            "default-value": "`x11 OR customize-wayfire`",
+            "description": "Indicates if desktop entries under /etc/xdg/autostart and \\$XDG_CONFIG_HOME/autostart are executed at login"
+        }
+    ]
+}
+>>>>>>> ec0c5109bfdac9be54bc2ec91f5938b114d6fd94
