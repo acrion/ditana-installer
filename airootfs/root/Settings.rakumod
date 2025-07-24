@@ -120,6 +120,12 @@ class Settings {
             my $name = $setting-data<name>;
             Logging.log("Loading setting $name");
 
+            my $default-value = $setting-data<default-value>;
+            if $default-value.defined && $default-value ~~ Str && ($default-value eq 'true' || $default-value eq 'false') {
+                die "Error in setting '$name': Boolean literals must not be enclosed in quotes in JSON. " ~
+                    "Use plain boolean values: true or false (without quotes). The value was: \"$default-value\"";
+            }
+
             CATCH {
                 when X::TypeCheck && SettingValue ~~ *.expected && Any ~~ *.got {
                     die "Missing initialization of '$name': $_";

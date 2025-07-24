@@ -110,6 +110,14 @@
       "help-note": "If you are unsure, keep the default (Wayfire)."
     },
     {
+      "name": "Desktop Theme Variant Selection",
+      "type": "radiolist",
+      "instruction": "Choose a light or dark theme variant.",
+      "help-intro": "Select whether you prefer a light or a dark user interface. This choice will set the default appearance for applications and the desktop environment.",
+      "help-note": "You can choose a specific theme in a later step. This only sets the general preference.",
+      "available": "`NOT use-env-server`"
+    },
+    {
       "name": "host-dpi",
       "type": "ask-for-setting",
       "validation": "integer",
@@ -171,6 +179,20 @@
           "name": "Desktop Application Choices",
           "type": "categories",
           "categories": [
+            {
+              "name": "Appearance Theme",
+              "type": "radiolist",
+              "instruction": "Select your preferred appearance theme:",
+              "help-intro": "The appearance (GTK) theme defines the look of application windows, buttons, and other graphical elements.",
+              "help-note": "This controls the overall color scheme and style of your desktop applications."
+            },
+            {
+              "name": "Icon Theme",
+              "type": "radiolist",
+              "instruction": "Select your preferred icon theme:",
+              "help-intro": "The icon theme changes the appearance of icons for applications, files, and folders across the system.",
+              "help-note": "This does not affect the look of application windows themselves, only the icons."
+            },
             {
               "name": "Web Browser",
               "type": "radiolist",
@@ -799,6 +821,178 @@
       "required-by-chroot": false,
       "default-value": "`installing-over-ssh`"
     },
+    // Settings that correspond to the dialog "Desktop Theme Variant Selection"
+    {
+      "name": "dark-theme",
+      "dialog-name": "Desktop Theme Variant Selection",
+      "short-description": "Dark Theme",
+      "long-description": "Select a dark user interface, which uses dark backgrounds for windows and controls. This can reduce eye strain in low-light environments.",
+      "spdx-identifiers": "",
+      "required-by-chroot": false,
+      "default-value": true
+    },
+    {
+      "name": "light-theme",
+      "dialog-name": "Desktop Theme Variant Selection",
+      "short-description": "Light Theme",
+      "long-description": "Select a light user interface, which uses light backgrounds for windows and controls. This provides excellent readability in bright environments.",
+      "spdx-identifiers": "",
+      "required-by-chroot": false,
+      "default-value": false
+    },
+    // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Application Choices"
+    // Appearance Theme
+    {
+      "name": "install-dracula-gtk-theme",
+      "dialog-name": "Appearance Theme",
+      "short-description": "Install Dracula theme",
+      "long-description": "Dracula is a popular dark theme known for its consistent, modern appearance across many applications.",
+      "arch-packages": [
+        "dracula-gtk-theme",
+        "ttf-roboto"
+      ],
+      "spdx-identifiers": "GPL-3.0-only",
+      "available": "`install-desktop-environment AND dark-theme`",
+      "default-value": "`install-desktop-environment AND dark-theme`"
+    },
+    {
+      "name": "install-adw-gtk-theme",
+      "dialog-name": "Appearance Theme",
+      "short-description": "Install Adwaita theme (GTK port)",
+      "long-description": "Adw-gtk3 is a theme that ports the modern look of Adwaita for consistent GTK3/4 theming. Professional and clean.",
+      "arch-packages": [
+        "adw-gtk-theme"
+      ],
+      "spdx-identifiers": "LGPL-2.1-only",
+      "available": "`install-desktop-environment`",
+      "default-value": "`install-desktop-environment AND light-theme`"
+    },
+    {
+      "name": "install-pop-gtk-theme",
+      "dialog-name": "Appearance Theme",
+      "short-description": "Install Pop!_OS theme",
+      "long-description": "The official GTK theme from System76's Pop!_OS is very complete and includes supprt for older applications.",
+      "arch-packages": [
+        "pop-gtk-theme",
+        "gtk-engine-murrine",
+        "ttf-fira-sans"
+      ],
+      "spdx-identifiers": "GPL-3.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-materia-gtk-theme",
+      "dialog-name": "Appearance Theme",
+      "short-description": "Install Materia theme",
+      "long-description": "Materia theme is a popular Material Design theme for GTK-based desktops, providing a modern and slick look.",
+      "arch-packages": [
+        "materia-gtk-theme",
+        "gtk-engine-murrine"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-adapta-gtk-theme",
+      "dialog-name": "Appearance Theme",
+      "short-description": "Install Adapta theme",
+      "long-description": "Adapta theme is an adaptive Gtk+ theme based on Material Design Guidelines. It is a light theme with slightly dark/blueish elements.",
+      "arch-packages": [
+        "adapta-gtk-theme",
+        "gtk-engine-murrine",
+        "ttf-roboto"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later",
+      "available": "`install-desktop-environment AND light-theme`",
+      "default-value": false
+    },
+    // Icon Theme
+    {
+      "name": "install-kora-yellow-icon-theme",
+      "dialog-name": "Icon Theme",
+      "short-description": "Install Kora icon theme",
+      "long-description": "Kora is a colorful and vibrant icon theme. The installed 'Yellow' variant uses yellow as the primary color for folder icons, providing a clean and modern look.",
+      "arch-packages": [
+        "kora-yellow-icon-theme"
+      ],
+      "spdx-identifiers": "GPL-3.0-only",
+      "available": "`install-desktop-environment`",
+      "default-value": "`install-desktop-environment AND NOT install-pop-gtk-theme`"
+    },
+    {
+      "name": "install-papirus-icon-theme",
+      "dialog-name": "Icon Theme",
+      "short-description": "Install Papirus icon theme",
+      "long-description": "Papirus is an extremely popular and comprehensive SVG icon theme that follows Material Design guidelines. Works perfectly with light and dark themes.",
+      "arch-packages": [
+        "papirus-icon-theme"
+      ],
+      "spdx-identifiers": "GPL-3.0-only",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-adwaita-icon-theme",
+      "dialog-name": "Icon Theme",
+      "short-description": "Install Adwaita icon theme",
+      "long-description": "Adwaita offers guaranteed complete coverage for all applications and a consistent, professional look.",
+      "arch-packages": [
+        "adwaita-icon-theme"
+      ],
+      "spdx-identifiers": "LGPL-3.0-only",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-pop-icon-theme",
+      "dialog-name": "Icon Theme",
+      "short-description": "Install Pop!_OS icon theme",
+      "long-description": "The official icon theme from System76, designed to perfectly complement the Pop!_OS GTK themes.",
+      "arch-packages": [
+        "pop-icon-theme"
+      ],
+      "spdx-identifiers": "CC-BY-SA-4.0",
+      "available": "`install-desktop-environment`",
+      "default-value": "`install-desktop-environment AND install-pop-gtk-theme`"
+    },
+    {
+      "name": "install-tela-circle-icon-theme-dracula",
+      "dialog-name": "Icon Theme",
+      "short-description": "Install Tela Circle (Dracula) icon theme",
+      "long-description": "Tela Circle (Dracula) is a flat, colorful, circular icon theme. The Dracula variant is specifically colored to match the Dracula GTK theme.",
+      "arch-packages": [
+        "tela-circle-icon-theme-dracula"
+      ],
+      "spdx-identifiers": "GPL-3.0-or-later",
+      "available": "`install-desktop-environment AND dark-theme`",
+      "default-value": false
+    },
+    {
+      "name": "install-tela-circle-icon-theme-blue",
+      "dialog-name": "Icon Theme",
+      "short-description": "Install Tela Circle (Blue) icon theme",
+      "long-description": "Tela Circle (Blue) is a flat, colorful, circular icon theme. The blue variant is a great modern-looking all-rounder for light and dark themes.",
+      "arch-packages": [
+        "tela-circle-icon-theme-blue"
+      ],
+      "spdx-identifiers": "GPL-3.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-obsidian-icon-theme",
+      "dialog-name": "Icon Theme",
+      "short-description": "Install Obsidian icon theme",
+      "long-description": "Obsidian is a long-standing and very complete icon theme with a distinctive, slightly glossy design.",
+      "arch-packages": [
+        "obsidian-icon-theme"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
     // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Application Choices"
     // Web Browser
     {
@@ -1293,8 +1487,8 @@
       "spdx-identifiers": "GPL3",
       "config-files": [
         "/etc/xdg/autostart/variety.desktop"
-      ]
-            "available": "`x11`",
+      ],
+      "available": "`x11`",
       "default-value": "`x11`"
     },
     // Settings that correspond to the dialog "Configuration Categories" -> "Multimedia Applications"
@@ -1871,19 +2065,6 @@
       "default-value": "`install-desktop-environment`"
     },
     {
-      "name": "install-desktop-theme",
-      "dialog-name": "Desktop Infrastructure",
-      "short-description": "Install Dracula theme and Kora icons",
-      "long-description": "Dracula GTK theme and Kora Yellow icon theme for a consistent, modern desktop appearance.",
-      "arch-packages": [
-        "dracula-gtk-theme",
-        "kora-yellow-icon-theme"
-      ],
-      "spdx-identifiers": "GPL-3.0-only",
-      "available": "`install-desktop-environment`",
-      "default-value": "`install-desktop-environment`"
-    },
-    {
       "name": "install-wdisplays-persistent",
       "dialog-name": "Desktop Infrastructure",
       "short-description": "Install persistent Display Config",
@@ -2033,26 +2214,26 @@
     },
     // Terminal Text Editor
     {
-        "name": "install-helix",
-        "dialog-name": "Terminal Text Editor",
-        "short-description": "Install Helix",
-        "long-description": "Install Helix, a post-modern modal text editor written in Rust. Helix provides powerful editing capabilities with built-in features that typically require plugins in other editors: LSP support, DAP debugging protocol, tree-sitter syntax highlighting, and multiple selections. Its modal editing is inspired by Vim and Kakoune, offering intuitive keybindings and visual feedback. Helix works out-of-the-box without configuration while remaining highly capable for advanced users.",
-        "arch-packages": [
-            "helix"
-        ],
-        "spdx-identifiers": "MPL-2.0",
-        "default-value": true
+      "name": "install-helix",
+      "dialog-name": "Terminal Text Editor",
+      "short-description": "Install Helix",
+      "long-description": "Install Helix, a post-modern modal text editor written in Rust. Helix provides powerful editing capabilities with built-in features that typically require plugins in other editors: LSP support, DAP debugging protocol, tree-sitter syntax highlighting, and multiple selections. Its modal editing is inspired by Vim and Kakoune, offering intuitive keybindings and visual feedback. Helix works out-of-the-box without configuration while remaining highly capable for advanced users.",
+      "arch-packages": [
+        "helix"
+      ],
+      "spdx-identifiers": "MPL-2.0",
+      "default-value": true
     },
     {
-        "name": "install-micro",
-        "dialog-name": "Terminal Text Editor",
-        "short-description": "Install micro editor and set it as default",
-        "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
-        "spdx-identifiers": "MIT",
-        "arch-packages": [
-            "micro"
-        ],
-        "default-value": false
+      "name": "install-micro",
+      "dialog-name": "Terminal Text Editor",
+      "short-description": "Install micro editor and set it as default",
+      "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
+      "spdx-identifiers": "MIT",
+      "arch-packages": [
+        "micro"
+      ],
+      "default-value": false
     },
     {
       "name": "install-neovim",
@@ -2815,7 +2996,7 @@
       "long-description": "Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks.",
       "spdx-identifiers": "",
       "required-by-chroot": true,
-      "default-value": "true"
+      "default-value": true
     },
     {
       "name": "install-rate-mirrors",
