@@ -307,7 +307,7 @@ class Settings {
         return $result;
     }
 
-    method get-installation-step(@path, $name) {
+    multi method get-installation-step(@path, $name) {
         my $current = %!installation-steps;
         
         for @path -> $path-segment {
@@ -334,6 +334,41 @@ class Settings {
         }
         
         die "get-installation-step: did not find '$name' in '{@path.gist}'";
+    }
+
+    # Private recursive helper to find an installation step by its name
+    # within a given list of steps, descending into 'categories' if necessary.
+    # @param $name The name of the installation step to find.
+    # @param @steps The list of installation steps to search through.
+    # @return The found installation step hash or Any if not found.
+    method !find-installation-step-recursive($name, @steps) {
+        for @steps -> $step {
+            # Return the step if the name matches
+            return $step if $step<name> eq $name;
+
+            # If the step is a category, search its children recursively
+            if $step<type> eq 'categories' && $step<categories>.defined {
+                my $found = self!find-installation-step-recursive($name, $step<categories>.list);
+                # If found in the recursive call, return it immediately
+                return $found if $found.defined;
+            }
+        }
+        # Return an undefined value if not found in this branch
+        return Any;
+    }
+
+    # Finds an installation step by its name, searching recursively through all
+    # top-level steps and nested categories. This is an exported method for
+    # public use.
+    # @param $name The name of the installation step (e.g., "Boot Init System").
+    # @return The installation step data as a Hash.
+    # @throws Dies with an error if the step is not found.
+    multi method get-installation-step(Str $name) is export {
+        my $found-step = self!find-installation-step-recursive($name, %!installation-steps.values);
+        
+        die "Installation step '$name' not found." unless $found-step.defined;
+        
+        return $found-step;
     }
 
     method modify-installation-step(@path, $name, $attribute, $value) is export {
@@ -482,44 +517,47 @@ class Settings {
     }
 
     method compare(%other) {
-        my $normal-differences = '';
-        my $internal-differences = '';
+        my @differences;
 
         for %!settings.kv -> $name, $setting {
             next unless %other{$name}:exists;
+            die "Internal error: name of setting {$name} is different from its key: '{$setting.name}'" if $name ne $setting.name;
             
             my $other-value = %other{$name}.current-value;
             my $current-value = $setting.current-value;
+            
+            # We only care about actual changes
+            next if $other-value.defined == $current-value.defined && $other-value eq $current-value;
 
-            my $is-internal = !$setting.short-description;
-            my $dialog-description = $setting.dialog-name ?? "{$setting.dialog-name} " !! "";
-            
-            my $difference-line = '';
-            if !$other-value.defined {
-                $difference-line = "{$dialog-description}«{$setting.name}»: undefined --> $current-value\n" if $current-value.defined;
-            }
-            elsif !$current-value.defined {
-                $difference-line = "{$dialog-description}«{$setting.name}»: $other-value --> undefined\n";
-            }
-            elsif $other-value ne $current-value {
-                my $description = $is-internal ?? $setting.name !! $setting.short-description;
-                $difference-line = "{$dialog-description}«{$description}»: $other-value --> $current-value\n";
-            }
-            
-            if $difference-line {
-                if $is-internal {
-                    $internal-differences ~= $difference-line;
-                } else {
-                    $normal-differences ~= $difference-line;
+            @differences.push(%(
+                name => $name,
+                dialog-name => $setting.dialog-name,
+                short-description => $setting.short-description,
+                from => $other-value.defined ?? $other-value.Str !! 'undefined',
+                to => $current-value.defined ?? $current-value.Str !! 'undefined'
+            ));
+        }
+        
+        return @differences;
+    }
+
+    method revert-specific-settings(%backup, @names-to-revert) {
+        die "Invalid backup structure provided for revert" unless %backup<settings>;
+
+        Logging.log("Reverting specific settings: {@names-to-revert.gist}");
+        my $revert-set = @names-to-revert.Set;
+
+        for %!settings.values -> $current-setting {
+            if $current-setting.name (elem) $revert-set {
+                my $original-value = %backup<settings>{$current-setting.name}.current-value;
+                
+                if $current-setting.current-value ne $original-value {
+                    Logging.log("Reverting '{$current-setting.name}' from '{$current-setting.current-value}' to '{$original-value}'");
+                    # Directly assign value, do not trigger dependency resolution
+                    $current-setting.current-value = $original-value;
                 }
             }
         }
-        
-        my $output = '';
-        $output ~= "\nThe following related settings will be updated and can be reviewed or adjusted in the corresponding dialogs:\n\n" ~ $normal-differences if $normal-differences;
-        $output ~= "\n" if $output && $internal-differences;
-        $output ~= "Required System Adjustments:\n\n" ~ $internal-differences if $internal-differences;
-        
-        return $output;
+        Logging.log("Finished reverting specific settings.");
     }
 }

@@ -709,14 +709,16 @@
       "arch-packages": [
         "intel-ucode"
       ],
-      "default-value": "`intel-cpu`"
+      "default-value": "`intel-cpu`",
+      "available": "`intel-cpu`"
     },
     {
       "name": "amd-microcode",
       "arch-packages": [
         "amd-ucode"
       ],
-      "default-value": "`amd-cpu`"
+      "default-value": "`amd-cpu`",
+      "available": "`amd-cpu`"
     },
     {
       "name": "firmware",
@@ -734,28 +736,32 @@
       "arch-packages": [
         "b43-firmware"
       ], // we separate this from the rest of the firmware packages and install it only if it is required, because it requires a specific kernel
-      "default-value": "`b43-required`"
+      "default-value": "`b43-required`",
+      "available": "`b43-required`"
     },
     {
       "name": "install-syslinux",
       "arch-packages": [
         "syslinux"
       ],
-      "default-value": "`zfs-filesystem AND NOT uefi`"
+      "default-value": "`zfs-filesystem AND NOT uefi`",
+      "available": "`zfs-filesystem AND NOT uefi`"
     },
     {
       "name": "install-grub",
       "arch-packages": [
         "grub"
       ],
-      "default-value": "`NOT zfs-filesystem`"
+      "default-value": "`NOT zfs-filesystem`",
+      "available": "`NOT zfs-filesystem`"
     },
     {
       "name": "install-efibootmgr",
       "arch-packages": [
         "efibootmgr"
       ],
-      "default-value": "`uefi`"
+      "default-value": "`uefi`",
+      "available": "`uefi`"
     },
     {
       "name": "ditana-base",
@@ -783,14 +789,16 @@
       "arch-packages": [
         "ditana-mirrorlist"
       ],
-      "default-value": "`release-version`"
+      "default-value": "`release-version`",
+      "available": "`release-version`"
     },
     {
       "name": "ditana-testing-mirrorlist",
       "arch-packages": [
         "ditana-testing-mirrorlist"
       ],
-      "default-value": "`NOT release-version`"
+      "default-value": "`NOT release-version`",
+      "available": "`NOT release-version`"
     },
     // Settings that correspond to the mandatory dialogs prior the dialog "Configuration Categories"
     // Settings that correspond to the dialog "System Environment Selection"
@@ -2952,31 +2960,29 @@
     },
     // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Maintenance Tools"
     {
-      "name": "configure-automatic-snapshots",
-      "dialog-name": "System Maintenance Tools",
-      "short-description": "Configure Automatic System Snapshots",
-      "long-description": "Configure Automatic System Snapshots\nCreate automatic snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues. Depending on the selected file system, different tools are used to perform these snapshots:\n\n• ext4, xfs, btrfs: Timeshift is utilized to create snapshots. For btrfs, Timeshift performs atomic operations with minimal overhead, while for ext4 and xfs, it uses rsync, typically completing backups in under five seconds.\n• zfs: ZFS snapshots are created instead, providing the same reliable snapshot functionality.\n\nIn the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.",
-      "spdx-identifiers": "GPL-2.0-or-later,MIT",
-      "arch-packages": [
-        ""
-      ],
-      "required-by-chroot": true,
-      "default-value": true
-    },
-    {
       "name": "configure-automatic-snapshots-zfs",
+      "dialog-name": "System Maintenance Tools",
+      "short-description": "Configure Automatic System Snapshots (ZFS)",
+      "long-description": "Configure Automatic System Snapshots (ZFS)\nCreate automatic native ZFS snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues.\n\nIn the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.",
+      "spdx-identifiers": "GPL-2.0-or-later,MIT",
       "arch-packages": [
         "zfs-autosnap"
       ],
-      "default-value": "`configure-automatic-snapshots AND zfs-filesystem`"
+      "default-value": "`zfs-filesystem`",
+      "available": "`zfs-filesystem`"
     },
     {
       "name": "configure-automatic-snapshots-timeshift",
+      "dialog-name": "System Maintenance Tools",
+      "short-description": "Configure Automatic System Snapshots (Timeshift)",
+      "long-description": "Configure Automatic System Snapshots (Timeshift)\nCreate automatic snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues. For btrfs, Timeshift performs atomic operations with minimal overhead, while for ext4 and xfs, it uses rsync, typically completing backups in under five seconds.\n\nIn the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.",
+      "spdx-identifiers": "GPL-2.0-or-later,MIT",
       "arch-packages": [
         "timeshift",
         "timeshift-autosnap"
       ],
-      "default-value": "`configure-automatic-snapshots AND NOT zfs-filesystem`"
+      "default-value": "`NOT zfs-filesystem`",
+      "available": "`NOT zfs-filesystem`"
     },
     {
       "name": "install-logrotate",

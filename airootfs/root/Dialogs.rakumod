@@ -218,59 +218,116 @@ sub show-and-log-status($message) is export {
 sub process-and-confirm-setting-changes(%setting-of-number, @checked-items, $dialog-name, $is-radiolist) {
     my $settings = Settings.instance;
     my %backup = $settings.clone();
-    my %backup-for-comparison = $settings.clone()<settings>;
 
-    # Each call to $settings.set causes an update of dependent settings, which may be part of those in the current dialog. To ensure consistent settings, we store the original state of settings and use this information to avoid resetting settings to that state.
-    my %original-states;
-    for %setting-of-number.kv -> $number,$setting {
-        %original-states{$number} = $settings.get($setting.name);
+    my %user-changed-settings;
+    for %setting-of-number.kv -> $number, $setting {
+        %user-changed-settings{$setting.name} = $settings.get($setting.name);
     }
-    Logging.log("------- Original setting states: {%original-states.gist}");
-    
-    Logging.log("------- Setting settings that differ from their original states, because the user either checked or unchecked the setting...");
-    for %setting-of-number.kv -> $number,$setting {
+
+    Logging.log("------- Setting user-initiated changes...");
+    for %setting-of-number.kv -> $number, $setting {
         my $checked = $number ∈ @checked-items;
-
-        if $checked ^^ %original-states{$number} {
-            Logging.log("------- {$number}: {$checked}");
+        if $checked ^^ %user-changed-settings{$setting.name} {
             $settings.set($setting.name, $checked);
-            %backup-for-comparison{$setting.name}.current-value = $checked;
         }
     }
 
-    Logging.log("------- Now re-setting the unchanged settings to make sure dependency resolution is complete...");
-    for %setting-of-number.kv -> $number,$setting {
-        if $settings.is-available($setting.name) {
-            my $checked = $number ∈ @checked-items;
+    Logging.log("------- Re-evaluating unchanged settings for dependency resolution...");
+    for %setting-of-number.kv -> $number, $setting {
+        my $checked = $number ∈ @checked-items;
+        if $checked == %user-changed-settings{$setting.name} {
+            $settings.reset($setting.name, $checked);
+        }
+    }
+    
+    my @all-changes = $settings.compare(%backup<settings>);
 
-            if $checked == %original-states{$number} && $settings.get($setting.name) == $checked {
-                Logging.log("------- {$number}: {$checked}");
-                $settings.reset($setting.name, $checked);
+    my @recommended-changes;
+    my @required-changes;
+
+    for @all-changes -> %change {
+        if %change<dialog-name> ne $dialog-name {
+            if !%change<short-description> or !$settings.is-available(%change<name>) {
+                @required-changes.push(%change);
+            } else {
+                @recommended-changes.push(%change);
             }
-        } else {
-            # Settings that are not available any more (because of above changes) are set to False
-            $settings.set($setting.name, False);
         }
     }
 
-    Logging.log("------- Finished re-setting..");
+    # Step A: Find all dialog names that are radiolists and already contain required changes.
+    my $dialogs-to-promote = @required-changes
+        .map(*<dialog-name>)
+        .grep({ $_ && $settings.get-installation-step($_)<type> eq 'radiolist' })
+        .Set;
 
-    my $comparison = $settings.compare(%backup-for-comparison).subst($dialog-name ~ " ", "", :g);
-    my %wrap-text = calculate-wrapped-lines($comparison.chomp,94);
-    if $comparison {
+    # Step B: Find all recommended changes that belong to one of these dialogs.
+    my @promoted-to-required = @recommended-changes.grep({ %$_.<dialog-name> (elem) $dialogs-to-promote });
+
+    # Step C: If any were found, add them to the required list...
+    if @promoted-to-required {
+        @required-changes.append(@promoted-to-required);
+        # ...and remove them from the recommended list.
+        @recommended-changes = @recommended-changes.grep({ %$_.<dialog-name> ∉ $dialogs-to-promote });
+    }
+    
+    if @recommended-changes or @required-changes {
+        my $dialog-text = "";
+        my @dialog-params;
+        my $dialog-title = 'Settings Impact Overview';
+
+        sub format-change(%change) {
+            my $dialog-prefix = %change<dialog-name> eq $dialog-name || !%change<dialog-name> ?? "" !! "%change<dialog-name> ";
+            my $description = %change<short-description> ?? %change<short-description> !! kebab-to-title(%change<name>);
+            return "{$dialog-prefix}«{$description}»: {%change<from>} --> {%change<to>}\n";
+        }
+        
+        if !@recommended-changes and @required-changes {
+            $dialog-text = "Your selection requires the following system adjustments for stability. These changes are mandatory and cannot be overridden:\n\n";
+            $dialog-text ~= format-change($_) for @required-changes;
+            @dialog-params = '--yes-label', 'Confirm', '--no-label', 'Discard Changes', '--yesno';
+        }
+        elsif @recommended-changes and !@required-changes {
+            $dialog-text = "Based on your selection, the following changes are recommended. You can accept them or keep your previous settings:\n\n";
+            $dialog-text ~= format-change($_) for @recommended-changes;
+            @dialog-params = '--ok-label', 'Accept Recommendations', '--cancel-label', 'Discard All', '--extra-button', '--extra-label', 'Keep Previous Settings', '--yesno';
+        }
+        else {
+            $dialog-text = "Based on your selection, the following changes are recommended:\n\n";
+            $dialog-text ~= format-change($_) for @recommended-changes;
+            $dialog-text ~= "\nAdditionally, the following system adjustments are REQUIRED for stability and cannot be overridden:\n\n";
+            $dialog-text ~= format-change($_) for @required-changes;
+            @dialog-params = '--ok-label', 'Accept All', '--cancel-label', 'Discard Changes', '--extra-button', '--extra-label', 'Override Recommendations', '--yesno';
+        }
+
+        my %wrap-text = calculate-wrapped-lines($dialog-text.chomp, 94);
         my $confirm-result = show-dialog-raw(
-            '--title', 'Settings Impact Overview',
-            '--yes-label', 'Confirm Changes',
-            '--no-label', "Discard Changes",
-            '--yesno',
+            '--title', $dialog-title,
+            |@dialog-params,
             %wrap-text<text>,
-            min(41,%wrap-text<lines>+4),
+            min(41, %wrap-text<lines> + 5),
             98
         );
-
-        if $confirm-result<status> ≠ 0 {
-            $settings.restore(%backup);
-            return False;
+        
+        given $confirm-result<status> {
+            # OK-Button: 'Confirm' / 'Accept Recommendations' / 'Accept All'
+            when 0 {
+                return True;
+            }
+            # Cancel-Button: 'Discard Changes' / 'Discard All'
+            when 1 {
+                $settings.restore(%backup);
+                return False;
+            }
+            when 3 {
+                my @names-to-revert = @recommended-changes.map(*<name>);
+                $settings.revert-specific-settings(%backup, @names-to-revert);
+                return True;
+            }
+            default {
+                $settings.restore(%backup);
+                return False;
+            }
         }
     }
 
