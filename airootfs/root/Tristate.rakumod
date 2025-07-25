@@ -55,6 +55,18 @@ class Tristate {
         return self.and(Tristate.new($other));
     }
     
+    multi method xor(Tristate $other) {
+        if $.value.defined && $other.value.defined {
+            # We avoid ^^, see https://github.com/rakudo/rakudo/issues/5934
+            return Tristate.new($.value != $other.value);
+        }
+        return Tristate.new(Any);
+    }
+
+    multi method xor(Bool:D $other) {
+        return self.xor(Tristate.new($other));
+    }
+
     multi method not() {
         return Tristate.new(Any) unless $.value.defined;
         return Tristate.new(!$.value);
@@ -72,7 +84,9 @@ class Tristate {
         return 'True' if $type === Bool && $.value === True;
         return 'False' if $type === Bool && $.value === False;
         
-        die "Unexpected value type: $type";
+        die "Tristate.Str(): Unexpected value type: $type" if defined($type);
+
+        return '(Undefined)';
     }
 
     method gist() {
@@ -82,15 +96,20 @@ class Tristate {
     multi sub infix:<AND> (Tristate $a, Tristate $b) is equiv(&infix:<&&>) is export { $a.and($b) }
     multi sub infix:<AND>(Tristate $a, Bool $b) is equiv(&infix:<&&>) is export { $a.and($b) }
     multi sub infix:<AND>(Bool $a, Tristate $b) is equiv(&infix:<&&>) is export { $b.and($a) }
-    multi sub infix:<AND>(Bool $a, Bool $b) is equiv(&infix:<&&>) is export { $b.and($a) }
+    multi sub infix:<AND>(Bool $a, Bool $b) is equiv(&infix:<&&>) is export { Tristate.new($b && $a) }
 
     multi sub infix:<OR>(Tristate $a, Tristate $b) is equiv(&infix:<||>) is export { $a.or($b) }
     multi sub infix:<OR>(Tristate $a, Bool $b) is equiv(&infix:<||>) is export { $a.or($b) }
     multi sub infix:<OR>(Bool $a, Tristate $b) is equiv(&infix:<||>) is export { $b.or($a) }
-    multi sub infix:<OR>(Bool $a, Bool $b) is equiv(&infix:<||>) is export { $b.or($a) }
+    multi sub infix:<OR>(Bool $a, Bool $b) is equiv(&infix:<||>) is export { Tristate.new($b || $a) }
+
+    multi sub infix:<XOR> (Tristate $a, Tristate $b) is equiv(&infix:<^^>) is export { $a.xor($b) }
+    multi sub infix:<XOR> (Tristate $a, Bool $b)     is equiv(&infix:<^^>) is export { $a.xor($b) }
+    multi sub infix:<XOR> (Bool $a, Tristate $b)     is equiv(&infix:<^^>) is export { $b.xor($a) }
+    multi sub infix:<XOR> (Bool $a, Bool $b)         is equiv(&infix:<^^>) is export { Tristate.new($b ^^ $a) }
 
     multi sub prefix:<NOT>(Tristate $a) is equiv(&prefix:<!>) is export { $a.not }
-    multi sub prefix:<NOT>(Bool $a) is equiv(&prefix:<!>) is export { $a.not }
+    multi sub prefix:<NOT>(Bool $a) is equiv(&prefix:<!>) is export { Tristate.new(!$a) }
 
     CHECK
         my $t = Tristate.new(True);
@@ -102,11 +121,29 @@ class Tristate {
             [$u AND $f, 'False', 'Any and False'],
             [$t AND $u, '(Any)', 'True and Any'],
             [$u AND $t, '(Any)', 'Any and True'],
+            [$f AND $f, 'False', 'False and False'],
+            [$f AND $t, 'False', 'False and True'],
+            [$t AND $f, 'False', 'True and False'],
+            [$t AND $t, 'True',  'True and True'],
             [$t OR $u,  'True',  'True or Any'],
             [$u OR $t,  'True',  'Any or True'],
             [$f OR $u,  '(Any)', 'False or Any'],
             [$u OR $f,  '(Any)', 'Any or False'],
+            [$f OR $f,  'False', 'False or False'],
+            [$f OR $t,  'True',  'False or True'],
+            [$t OR $f,  'True',  'True or False'],
+            [$t OR $t,  'True',  'True or True'],
+            [$t XOR $u, '(Any)', 'True xor Any'],
+            [$u XOR $t, '(Any)', 'Any xor True'],
+            [$f XOR $u, '(Any)', 'False xor Any'],
+            [$u XOR $f, '(Any)', 'Any xor False'],
+            [$f XOR $f, 'False', 'False xor False'],
+            [$f XOR $t, 'True',  'False xor True'],
+            [$t XOR $f, 'True',  'True xor False'],
+            [$t XOR $t, 'False', 'True xor True'],
             [NOT $u,    '(Any)', 'not Any'],
+            [NOT $f,    'True',  'not False'],
+            [NOT $t,    'False', 'not True'],
             [NOT ($u OR $u OR $t or $u), 'False', 'not (Any or Any or True or Any)']
         );
 
