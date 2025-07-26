@@ -62,13 +62,13 @@ class Settings {
         %!settings = InsertionOrderedHash.new;
         %!installation-steps = InsertionOrderedHash.new;
         $!modified-settings = SetHash.new;
-        my $json = slurp 'settings.json';
+        my $json = slurp 'settings.jsonc';
         my $data = from-json($json, :allow-jsonc);
 
         Logging.log("Loading installation steps...");
 
         if !$data<installation-steps>.defined {
-            die "Missing 'installation-steps' section in settings.json";
+            die "Missing 'installation-steps' section in settings.jsonc";
         }
 
         for $data<installation-steps>.list -> $installation-step-data {
@@ -88,7 +88,7 @@ class Settings {
         Logging.log("Detecting hardware...");
         
         if !$data<settings>.defined {
-            die "Missing 'settings' section in settings.json";
+            die "Missing 'settings' section in settings.jsonc";
         }
         
         for $data<settings>.list -> $setting-data {

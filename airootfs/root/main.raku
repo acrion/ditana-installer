@@ -228,7 +228,7 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 when 'check-nvidia' {
                     $result = check-nvidia($silent-exit-code, False);
                 }
-                # here follows the configuration menu, see settings.json
+                # here follows the configuration menu, see settings.jsonc
                 when 'format-nvme' {
                     format-nvme();
                 }
