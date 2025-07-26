@@ -236,13 +236,6 @@
               "help-note": ""
             },
             {
-              "name": "Terminal Emulator",
-              "type": "radiolist",
-              "instruction": "Select your preferred terminal emulator:",
-              "help-intro": "Choose the terminal that best suits your workflow and feature needs.",
-              "help-note": ""
-            },
-            {
               "name": "Code Editor",
               "type": "radiolist",
               "instruction": "Select your preferred code editor:",
@@ -277,23 +270,16 @@
           "type": "categories",
           "categories": [
             {
-              "name": "Advanced Desktop Applications",
-              "type": "checklist",
-              "instruction": "Choose desktop applications to install:",
-              "help-intro": "Select the graphical applications you want to use on your desktop system.",
-              "help-note": "These applications provide functionality for everyday desktop tasks like browsing, media playback, and system management."
-            },
-            {
-              "name": "Desktop Infrastructure",
-              "type": "checklist",
-              "instruction": "Choose desktop infrastructure components:",
-              "help-intro": "These components provide the underlying functionality for your desktop environment.",
-              "help-note": "Most users should keep the default selections. Only modify these if you have specific requirements."
-            },
-            {
               "name": "Terminal Tool Choices",
               "type": "categories",
               "categories": [
+                {
+                  "name": "Terminal Emulator",
+                  "type": "radiolist",
+                  "instruction": "Select your preferred terminal emulator:",
+                  "help-intro": "A terminal is a developer's most essential tool. The right choice can significantly boost your productivity. The following options cater to different philosophies—from raw speed to powerful, integrated features. Read the descriptions to find the perfect fit for your workflow.",
+                  "help-note": ""
+                },
                 {
                   "name": "Shell",
                   "type": "radiolist",
@@ -316,6 +302,20 @@
                   "help-note": ""
                 }
               ]
+            },
+            {
+              "name": "Advanced Desktop Applications",
+              "type": "checklist",
+              "instruction": "Choose desktop applications to install:",
+              "help-intro": "Select the graphical applications you want to use on your desktop system.",
+              "help-note": "These applications provide functionality for everyday desktop tasks like browsing, media playback, and system management."
+            },
+            {
+              "name": "Desktop Infrastructure",
+              "type": "checklist",
+              "instruction": "Choose desktop infrastructure components:",
+              "help-intro": "These components provide the underlying functionality for your desktop environment.",
+              "help-note": "Most users should keep the default selections. Only modify these if you have specific requirements."
             },
             {
               "name": "File System",
@@ -957,7 +957,7 @@
       "name": "install-pop-icon-theme",
       "dialog-name": "Icon Theme",
       "short-description": "Install Pop!_OS icon theme",
-      "long-description": "The official icon theme from System76, designed to perfectly complement the Pop!_OS GTK themes.",
+      "long-description": "The official icon theme from System76 perfectly complements the Pop!_OS GTK themes.",
       "arch-packages": [
         "pop-icon-theme"
       ],
@@ -1234,79 +1234,6 @@
       "long-description": "GNOME System Monitor provides comprehensive system analysis with tabbed interface for processes, resources, and file systems. It features process tree view showing parent-child relationships, detailed memory maps for each process, historical graphs with configurable time ranges, and network traffic monitoring per interface. The traditional interface follows established monitoring tool conventions.",
       "arch-packages": [
         "gnome-system-monitor"
-      ],
-      "spdx-identifiers": "GPL-2.0-or-later",
-      "available": "`install-desktop-environment`",
-      "default-value": false
-    },
-    // Terminal Emulator
-    {
-      "name": "install-kitty",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install Kitty",
-      "long-description": "Kitty leverages GPU acceleration for smooth scrolling and rendering. It uniquely displays images directly in the terminal, supports font ligatures for programming, allows extensive customization through a Python API, and provides advanced features like Unicode input via ctrl+shift+u. Ditana includes optimized configurations for enhanced productivity.",
-      "arch-packages": [
-        "ditana-config-kitty"
-      ],
-      "spdx-identifiers": "GPL-3.0-only",
-      "available": "`install-desktop-environment`",
-      "default-value": "`install-desktop-environment`"
-    },
-    {
-      "name": "install-tabby",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install Tabby",
-      "long-description": "Tabby integrates terminal emulation with SSH, Telnet, and serial connections in one application. It features split panes in any arrangement, connection profiles with saved credentials, plugin system for extensibility, PowerShell and WSL integration, and automatic session restoration. The web-based technology stack enables consistent experience across platforms.",
-      "arch-packages": [
-        "tabby"
-      ],
-      "spdx-identifiers": "MIT",
-      "available": "`install-desktop-environment`",
-      "default-value": false
-    },
-    {
-      "name": "install-contour",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install Contour",
-      "long-description": "Contour introduces modal editing directly in the terminal with vi-like modes for selection and scrolling. It supports Sixel graphics protocol for inline images, provides vertical markers for quick navigation, includes synchronized rendering to prevent tearing, and features extensive Unicode support including emoji and grapheme clusters.",
-      "arch-packages": [
-        "contour"
-      ],
-      "spdx-identifiers": "Apache-2.0",
-      "available": "`install-desktop-environment`",
-      "default-value": false
-    },
-    {
-      "name": "install-alacritty",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install Alacritty",
-      "long-description": "Alacritty focuses on raw performance through GPU rendering and zero-latency input. It maintains simplicity with no tabs, splits, or GUI configuration – all settings via YAML file. The minimal feature set ensures consistent sub-millisecond response times, making it ideal for users who prioritize speed and use terminal multiplexers.",
-      "arch-packages": [
-        "alacritty"
-      ],
-      "spdx-identifiers": "Apache-2.0,MIT",
-      "available": "`install-desktop-environment`",
-      "default-value": false
-    },
-    {
-      "name": "install-konsole",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install Konsole",
-      "long-description": "Konsole is a versatile terminal emulator supporting tabbed browsing, split views, configurable keyboard shortcuts, profile management, and direct drag-and-drop of files or URLs. It provides powerful search, bookmarking, extensive colour schemes, and advanced session management, making it suitable for demanding terminal workflows.",
-      "arch-packages": [
-        "konsole"
-      ],
-      "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
-      "available": "`install-desktop-environment`",
-      "default-value": false
-    },
-    {
-      "name": "install-xfce4-terminal",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install XFCE Terminal",
-      "long-description": "XFCE Terminal provides a traditional terminal experience with tabs, configurable keyboard shortcuts, and drop-down mode for quick access. It supports background images with transparency, customizable colors per tab, and activity monitoring that highlights tabs with new output. The lightweight design integrates seamlessly with desktop environments.",
-      "arch-packages": [
-        "xfce4-terminal"
       ],
       "spdx-identifiers": "GPL-2.0-or-later",
       "available": "`install-desktop-environment`",
@@ -2168,6 +2095,79 @@
       "default-value": "`wlroots`"
     },
     // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" -> "Terminal Tool Choices"
+    // Terminal Emulator
+    {
+      "name": "install-contour",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install Contour",
+      "long-description": "Contour is a GPU-accelerated terminal designed for a deeply integrated and keyboard-driven workflow, focusing on providing powerful features out-of-the-box. It is an excellent choice for users who value a refined, mouseless experience directly within the terminal itself.\n\n• Vertical Command Markers: Automatically places markers at each command prompt, allowing you to instantly jump between the start of previous command outputs.\n• Highly Configurable Status Line: Display vital information like input mode, time, or custom text in a status line at the top or bottom of the terminal.\n• Structured YAML Configuration: Features a clean, well-documented YAML file that makes even complex configurations easy to manage.\n• Optional Vi-like Modal Editing: Navigate your terminal's scrollback, select, and yank text using familiar Vi keybindings, making text interaction fast and efficient.\n• Synchronized Rendering: Eliminates screen tearing on fast-scrolling output by synchronizing updates with your monitor's refresh rate, ensuring a smooth visual experience.\n• Advanced Debugging & Capture: Offers a unique Trace Mode to interactively debug VT escape sequences and a screenshot pipeline to save or copy the terminal's visual state as an image.",
+      "arch-packages": [
+        "contour"
+      ],
+      "spdx-identifiers": "Apache-2.0",
+      "available": "`install-desktop-environment`",
+      "default-value": "`wayland`"
+    },
+    {
+      "name": "install-kitty",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install Kitty",
+      "long-description": "Kitty is a GPU-accelerated terminal built for users who frequently work on remote systems via SSH and value extensibility. Its standout feature is a suite of 'Kittens' that dramatically improve the remote workflow and allow for powerful scripting.\n\n• Superior SSH Integration: The `kitten ssh` command enhances remote sessions by automatically managing terminal information on servers, ensuring applications like tmux or vim render perfectly without any remote configuration.\n• Remote Control from Local Machine: Use your local Kitty shortcuts to open new windows and tabs directly on the remote machine, making remote and local workflows feel identical.\n• Seamless File Editing: The `kitten edit-file` command allows you to open a file from a remote server directly in your favorite local editor.\n• Extensible via 'Kittens': Leverage a rich ecosystem of small Python scripts (Kittens) to add features like side-by-side diffs, file transfers, and more.\n• Advanced Graphics Protocol: Supports its own high-performance graphics protocol for displaying images, charts, and even videos directly in the terminal.\n• Scriptable Interface: Provides a powerful API to control every aspect of the terminal from scripts, enabling complex, automated workflows.",
+      "arch-packages": [
+        "ditana-config-kitty"
+      ],
+      "spdx-identifiers": "GPL-3.0-only",
+      "available": "`install-desktop-environment`",
+      "default-value": "`x11`"
+    },
+    {
+      "name": "install-tabby",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install Tabby",
+      "long-description": "Tabby is an all-in-one terminal designed to be a central hub for various connection types. It excels as a modern replacement for standard SSH clients and serial port tools, integrating them into a single, cohesive interface.\n\n• Unified Connection Manager: Natively handles SSH, Telnet, and serial connections alongside local shells, with a built-in credentials manager for saved sessions.\n• Highly Extensible via Plugins: Offers a rich plugin ecosystem to add features like saved command history, cloud storage sync, and custom themes.\n• Advanced Pane Splitting: Provides highly flexible pane management, allowing you to arrange and save complex layouts of multiple terminal sessions.\n• Cross-Platform Consistency: Built on web technologies, Tabby delivers a consistent user experience and appearance across Windows, macOS, and Linux.",
+      "arch-packages": [
+        "tabby"
+      ],
+      "spdx-identifiers": "MIT",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-alacritty",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install Alacritty",
+      "long-description": "Alacritty is a terminal emulator with a singular focus: speed and simplicity. It offloads as much work as possible to the GPU to achieve the lowest possible latency, making it the ideal choice for users who prioritize raw performance above all else.\n\n• Uncompromising Performance: GPU-accelerated rendering and a commitment to minimal processing ensure near-instantaneous response times.\n• Deliberately Minimalist: Intentionally omits features like tabs, splits, and GUI-based configuration to avoid overhead and maintain simplicity.\n• Configuration as Code: All settings are managed through a single, straightforward YAML file, facilitating easy versioning and portability.\n• Works with Multiplexers: Designed to be used in tandem with a terminal multiplexer like tmux or Zellij, which manage sessions, splits, and tabs.",
+      "arch-packages": [
+        "alacritty"
+      ],
+      "spdx-identifiers": "Apache-2.0,MIT",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-konsole",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install Konsole",
+      "long-description": "Konsole is a powerful and mature terminal emulator that is deeply integrated into the KDE ecosystem. It offers a rich, traditional feature set suitable for demanding, multi-faceted workflows.\n\n• Deep Desktop Integration: Seamlessly integrates with the Dolphin file manager and other KDE applications, enabling features like drag-and-drop of file paths.\n• Rich Feature Set: Provides a complete experience with tabs, flexible pane splitting, configurable keyboard shortcuts, and extensive color scheme support.\n• Powerful Profile Management: Create and switch between multiple profiles, each with its own appearance, command, and behavior settings.\n• Activity Monitoring: Can monitor tabs for activity or silence, providing visual notifications when long-running commands complete.",
+      "arch-packages": [
+        "konsole"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-xfce4-terminal",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install XFCE Terminal",
+      "long-description": "XFCE Terminal is a lightweight and reliable terminal emulator that adheres to a traditional desktop experience. It an excellent choice for users seeking a fast, no-frills terminal with essential features.\n\n• Lightweight and Fast: Designed with minimal dependencies and low resource usage, making it exceptionally responsive even on older hardware.\n• Drop-Down Mode: Features a 'Quake-style' drop-down mode that allows the terminal to be quickly shown or hidden with a single keystroke.\n• Simple and Intuitive: Provides a straightforward user experience with easy-to-configure preferences for tabs, colors, and shortcuts.\n• Background Transparency: Supports true background transparency for seamless integration with your desktop wallpaper and other applications.",
+      "arch-packages": [
+        "xfce4-terminal"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
     // Shell
     {
       "name": "install-zsh",
