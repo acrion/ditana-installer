@@ -67,7 +67,10 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) {
                 my $selected-dialog-name = kebab-to-title($selected-dialog<name>);
                 given $selected-dialog<type> {
                     when 'categories' {
-                        return process-categories($selected-dialog, $current-dialog-name, $selected-dialog-name)==0xff ?? 3 !! 0;
+                        if process-categories($selected-dialog, $current-dialog-name, $selected-dialog-name) == 0 {
+                            return 0;
+                        }
+                        # User selected 'Back' button or pressed Escape
                     }
                     when 'checklist'|'radiolist' {
                         if Settings.instance.get('tmux') {

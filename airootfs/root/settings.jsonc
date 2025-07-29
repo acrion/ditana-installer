@@ -304,6 +304,13 @@
               ]
             },
             {
+              "name": "Terminal Tools and Utilities",
+              "type": "checklist",
+              "instruction": "Choose terminal options:",
+              "help-intro": "",
+              "help-note": ""
+            },
+            {
               "name": "Advanced Desktop Applications",
               "type": "checklist",
               "instruction": "Choose desktop applications to install:",
@@ -390,10 +397,10 @@
               "help-note": ""
             },
             {
-              "name": "Terminal Tools and Utilities",
-              "type": "checklist",
-              "instruction": "Choose terminal options:",
-              "help-intro": "",
+              "name": "Diff and Merge Tools",
+              "type": "radiolist",
+              "instruction": "Select your preferred GUI diff and merge tool:",
+              "help-intro": "A visual diff tool is invaluable for comparing files, managing code changes, and resolving merge conflicts. The options below range from simple, fast comparison tools to powerful applications with advanced 3-way merge capabilities. They can be configured to integrate seamlessly with Git.",
               "help-note": ""
             },
             {
@@ -1055,6 +1062,22 @@
     },
     // File Manager
     {
+      "name": "install-thunar",
+      "dialog-name": "File Manager",
+      "short-description": "Install Thunar",
+      "long-description": "Thunar focuses on fast startup times and responsive file operations. It provides bulk renaming with pattern support, custom actions for context menus, removable media handling, and a clean interface that displays only essential elements. The modular design allows extending functionality through plugins while maintaining speed.",
+      "arch-packages": [
+        "thunar",
+        "thunar-volman",
+        "tumbler",
+        "thunar-archive-plugin",
+        "thunar-media-tags-plugin"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-only",
+      "available": "`install-desktop-environment`",
+      "default-value": "`install-desktop-environment`"
+    },
+    {
       "name": "install-dolphin",
       "dialog-name": "File Manager",
       "short-description": "Install Dolphin",
@@ -1077,21 +1100,20 @@
       ],
       "spdx-identifiers": "LGPL-2.0-or-later",
       "available": "`install-desktop-environment`",
-      "default-value": "`install-desktop-environment`"
+      "default-value": false
     },
     {
-      "name": "install-thunar",
+      "name": "install-krusader",
       "dialog-name": "File Manager",
-      "short-description": "Install Thunar",
-      "long-description": "Thunar focuses on fast startup times and responsive file operations. It provides bulk renaming with pattern support, custom actions for context menus, removable media handling, and a clean interface that displays only essential elements. The modular design allows extending functionality through plugins while maintaining speed.",
+      "short-description": "Install Krusader",
+      "long-description": "Krusader is an advanced twin-panel file manager inspired by classic 'commander-style' interfaces. It is heavily oriented towards keyboard control for maximum efficiency and offers extensive functionality, including built-in archive management, remote connections via FTP/SFTP, directory synchronization, file content comparison, and a powerful batch renaming tool. It features an integrated viewer/editor, an embedded terminal, and a highly customizable interface with support for profiles.",
       "arch-packages": [
-        "thunar",
-        "thunar-volman",
-        "tumbler",
-        "thunar-archive-plugin",
-        "thunar-media-tags-plugin"
+        "krusader",
+        "keditbookmarks",
+        "kde-cli-tools",
+        "ktexteditor"
       ],
-      "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.1-only",
+      "spdx-identifiers": "GPL-2.0-or-later",
       "available": "`install-desktop-environment`",
       "default-value": false
     },
@@ -2210,7 +2232,7 @@
     {
       "name": "install-bash-enhanced",
       "dialog-name": "Shell",
-      "short-description": "Configure bash as the main Shell",
+      "short-description": "Configure bash as the main shell",
       "long-description": "This selection configures bash as the main shell. The other choices in this category also install bash, but configure a different shell as the main shell.",
       "arch-packages": [
         "bash-completion",
@@ -2225,7 +2247,7 @@
       "name": "install-helix",
       "dialog-name": "Terminal Text Editor",
       "short-description": "Install Helix",
-      "long-description": "Install Helix, a post-modern modal text editor written in Rust. Helix provides powerful editing capabilities with built-in features that typically require plugins in other editors: LSP support, DAP debugging protocol, tree-sitter syntax highlighting, and multiple selections. Its modal editing is inspired by Vim and Kakoune, offering intuitive keybindings and visual feedback. Helix works out-of-the-box without configuration while remaining highly capable for advanced users.",
+      "long-description": "Helix is a post-modern modal text editor written in Rust. It provides powerful editing capabilities with built-in features that typically require plugins in other editors: LSP support, DAP debugging protocol, tree-sitter syntax highlighting, and multiple selections. Its modal editing is inspired by Vim and Kakoune, offering intuitive keybindings and visual feedback. Helix works out-of-the-box without configuration while remaining highly capable for advanced users.",
       "arch-packages": [
         "helix"
       ],
@@ -2235,8 +2257,8 @@
     {
       "name": "install-micro",
       "dialog-name": "Terminal Text Editor",
-      "short-description": "Install micro editor and set it as default",
-      "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
+      "short-description": "Install micro editor",
+      "long-description": "micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
       "spdx-identifiers": "MIT",
       "arch-packages": [
         "micro"
@@ -2247,7 +2269,7 @@
       "name": "install-neovim",
       "dialog-name": "Terminal Text Editor",
       "short-description": "Install Neovim",
-      "long-description": "Install Neovim, a hyperextensible Vim-based text editor. Neovim modernizes Vim with features like built-in LSP client, treesitter integration for syntax highlighting, Lua scripting API, and asynchronous plugin architecture. It maintains full Vim compatibility while adding a powerful API that enables rich plugin ecosystems. The built-in terminal emulator, floating windows, and extensive customization options make it suitable for creating complete development environments.",
+      "long-description": "Neovim ia hyperextensible Vim-based text editor. It modernizes Vim with features like built-in LSP client, treesitter integration for syntax highlighting, Lua scripting API, and asynchronous plugin architecture. It maintains full Vim compatibility while adding a powerful API that enables rich plugin ecosystems. The built-in terminal emulator, floating windows, and extensive customization options make it suitable for creating complete development environments.",
       "arch-packages": [
         "neovim",
         "python-pynvim"
@@ -2257,10 +2279,27 @@
     },
     // Terminal File Manager
     {
+      "name": "install-yazi",
+      "dialog-name": "Terminal File Manager",
+      "short-description": "Install yazi",
+      "long-description": "Yazi is a blazing-fast terminal file manager written in Rust, leveraging asynchronous I/O for exceptional performance. It offers a modern user experience with features like built-in support for various image protocols, asynchronous task management, and scrollable previews for videos or PDFs. yazi is highly customizable through TOML/Lua and includes a plugin system. Proper display of icons requires a Nerd Font.",
+      "spdx-identifiers": "MIT",
+      "arch-packages": [
+        "yazi",
+        "ffmpeg",
+        "poppler",
+        "fzf",
+        "zoxide",
+        "resvg",
+        "chafa"
+      ],
+      "default-value": true
+    },
+    {
       "name": "install-nnn",
       "dialog-name": "Terminal File Manager",
       "short-description": "Install nnn",
-      "long-description": "Install nnn, a blazing-fast, lightweight file manager with minimal dependencies. It features instant filtering, disk usage analyzer, batch operations, plugin support, and multiple contexts (tabs). The interface is designed for efficiency with single-key navigation and operations. nnn can preview images, PDFs, and videos in terminal, mount remote filesystems, and integrate with your shell for quick directory changes.",
+      "long-description": "nnn is a blazing-fast, lightweight file manager with minimal dependencies. It features instant filtering, disk usage analyzer, batch operations, plugin support, and multiple contexts (tabs). The interface is designed for efficiency with single-key navigation and operations. nnn can preview images, PDFs, and videos in terminal, mount remote filesystems, and integrate with your shell for quick directory changes.",
       "arch-packages": [
         "nnn",
         "atool",
@@ -2271,18 +2310,15 @@
         "fuse2"
       ],
       "spdx-identifiers": "BSD-2-Clause",
-      "default-value": true
+      "default-value": false
     },
     {
-      // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
-      // to raku, depending on `install-desktop-environment`
       "name": "install-ranger",
       "dialog-name": "Terminal File Manager",
       "short-description": "Install ranger terminal file manager including optional packages",
-      "long-description": "Install ranger, a terminal file manager, including optional packages. It will be configured\n\n (1) to make use of the kitty terminal to display true graphics,\n (2) to display git information, which is particularly useful for directories, and\n (3) to display hidden items.",
+      "long-description": "ranger is a terminal file manager, including optional packages.",
       "spdx-identifiers": "GPL-3.0-or-later",
       "arch-packages": [
-        // ranger including its optional dependencies
         "atool",
         "elinks",
         "ffmpegthumbnailer",
@@ -2306,7 +2342,7 @@
       "name": "install-lf",
       "dialog-name": "Terminal File Manager",
       "short-description": "Install lf",
-      "long-description": "Install lf, a terminal file manager inspired by ranger and written in Go. lf provides a minimalist, fast, and cross-platform file management experience with vi-like key bindings. It features asynchronous I/O, built-in file preview, customizable keybindings, and shell command integration. The single binary design ensures quick startup and low memory usage while maintaining powerful functionality through its scripting capabilities.",
+      "long-description": "lf is a terminal file manager inspired by ranger and written in Go. It provides a minimalist, fast, and cross-platform file management experience with vi-like key bindings. It features asynchronous I/O, built-in file preview, customizable keybindings, and shell command integration. The single binary design ensures quick startup and low memory usage while maintaining powerful functionality through its scripting capabilities.",
       "arch-packages": [
         "lf"
       ],
@@ -2332,6 +2368,17 @@
         "rpm-tools"
       ],
       "spdx-identifiers": "GPL-3.0-or-later",
+      "default-value": false
+    },
+    {
+      "name": "install-superfile",
+      "dialog-name": "Terminal File Manager",
+      "short-description": "Install superfile",
+      "long-description": "Superfile is a modern terminal file manager written in Go with a strong focus on a visually appealing and user-friendly TUI. Built with the Bubble Tea framework, it provides a polished, multi-panel layout. superfile is highly customizable, allowing users to tweak everything from hotkeys to themes. It supports file previews, VIM-like navigation, and aims to be an aesthetically pleasing yet powerful alternative to traditional terminal file managers.",
+      "spdx-identifiers": "MIT",
+      "arch-packages": [
+        "superfile"
+      ],
       "default-value": false
     },
     // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "File System"
@@ -3096,11 +3143,13 @@
         "bc",
         "bind",
         "expect",
+        "fd",
         "git-lfs",
         "jq",
         "graphviz",
         "grep",
         "htop",
+        "imagemagick",
         "img2pdf",
         "less",
         "lsof",
@@ -3146,6 +3195,68 @@
       ],
       "default-value": true
     },
+    // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Diff and Merge Tools"
+    {
+      "name": "install-diffuse",
+      "dialog-name": "Diff and Merge Tools",
+      "short-description": "Install Diffuse",
+      "long-description": "Diffuse is a sophisticated graphical diff and merge tool. It features advanced merge functionality, a clear display of all file versions (base, local, and remote), manual correction of misaligned lines, n-way merging capabilities, syntax highlighting, direct file editing during comparison, and easy block copying between windows.",
+      "spdx-identifiers": "GPL-2.0-only",
+      "arch-packages": [
+        "diffuse"
+      ],
+      "required-by-chroot": true,
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-xxdiff",
+      "dialog-name": "Diff and Merge Tools",
+      "short-description": "Install xxdiff",
+      "long-description": "xxdiff is a graphical file and directory comparison and merge tool known for its speed and flexible layout options. It is a good choice for users who value performance and a high degree of customization in their diffing tool.\n\n• Horizontal Diff View: Offers a unique horizontal diff layout in addition to the standard vertical side-by-side view.\n• Multi-File Comparison: Capable of comparing two or three files simultaneously.\n• External Editor Integration: Allows you to open files for editing in your preferred external text editor directly from the diff view.\n• Scriptable and Customizable: Provides extensive command-line options and resource file settings for deep customization of its behavior and appearance.",
+      "arch-packages": [
+        "xxdiff"
+      ],
+      "spdx-identifiers": "GPL-2.0-only",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-meld",
+      "dialog-name": "Diff and Merge Tools",
+      "short-description": "Install Meld",
+      "long-description": "Meld is a visual diff and merge tool that helps you compare files, directories, and version-controlled projects. It provides two- and three-way comparison of both files and directories and supports many popular version control systems.\n\n• Three-Way Comparison: Effortlessly compare and merge three files, clearly identifying the base, local, and remote versions.\n• Directory Comparison: Launch comparisons directly between two or three directories to see all differing files at a glance.\n• Simple and Intuitive UI: Features a clean, straightforward GTK-based interface that makes it easy to spot differences and merge changes.\n• In-place Editing: Edit files directly from the comparison view, with changes instantly reflected in the diff.",
+      "arch-packages": [
+        "meld"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-kdiff3",
+      "dialog-name": "Diff and Merge Tools",
+      "short-description": "Install KDiff3",
+      "long-description": "KDiff3 is a file and directory diff and merge tool from the KDE project. It excels at complex, three-way merge operations and offers granular control over the merging process.\n\n• Advanced 3-Way Merging: Provides a robust interface for comparing and resolving conflicts between three files, showing a dedicated merge result window.\n• Directory Comparison and Merging: Recursively compare and merge entire directory trees.\n• Automatic Merge Capability: Features an 'auto-merge' function that can resolve non-conflicting changes automatically, saving significant time.\n• Fine-grained Control: Offers detailed options for whitespace handling, line-ending normalization, and pre-processing commands.\n• Editor with Manual Alignment: Allows you to manually align lines that the diff algorithm may have mismatched.",
+      "arch-packages": [
+        "kdiff3"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-kompare",
+      "dialog-name": "Diff and Merge Tools",
+      "short-description": "Install Kompare",
+      "long-description": "Kompare is a graphical front-end for the standard `diff` utility, designed for the KDE desktop environment. It simplifies the process of viewing differences between files and creating patches.\n\n• Simple Diff Viewing: Provides a straightforward, two-pane view to compare source and destination files, clearly highlighting added, removed, and changed lines.\n• Patch Creation and Application: Can be used to create patch files from differences and apply existing patches to source files.\n• Deep KDE Integration: Works seamlessly within the KDE ecosystem, often used to view changes in version-controlled files through Dolphin or KDevelop.\n• Interactive Difference Navigation: Easily jump between differing sections of the files.",
+      "arch-packages": [
+        "kompare"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
     // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Development Tools and Libraries"
     {
       "name": "standardized-locale",
@@ -3169,19 +3280,6 @@
       ],
       "required-by-chroot": true,
       "default-value": true
-    },
-    {
-      "name": "install-diffuse",
-      "dialog-name": "Development Tools and Libraries",
-      "short-description": "Install Diffuse and configure as git diff/merge tool",
-      "long-description": "Install Diffuse. A sophisticated graphical diff and merge tool. Features include advanced merge functionality, separate display of all versions (base, local, and remote), manual correction of misaligned lines, n-way merging capabilities, syntax highlighting, direct file editing during comparison, and easy block copying between windows.",
-      "spdx-identifiers": "GPL-2.0-only",
-      "arch-packages": [
-        "diffuse"
-      ],
-      "required-by-chroot": true,
-      "available": "`install-desktop-environment`",
-      "default-value": false
     },
     {
       "name": "install-kcharselect",
