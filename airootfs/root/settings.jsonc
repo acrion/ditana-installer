@@ -1881,6 +1881,7 @@
       "long-description": "Essential X11 tools: $packages.",
       "arch-packages": [
         "xclip",
+        "xsel",
         "xorg-xev",
         "xorg-xkill",
         "xorg-xrandr",
