@@ -27,18 +27,15 @@ index c3b62ca..5fb48b6 100644
  dmraid
  dnsmasq
 diff --git a/pacman.conf b/pacman.conf
-index cb2a418..1b240a5 100644
+index 2430519..aaef980 100644
 --- a/pacman.conf
 +++ b/pacman.conf
-@@ -95,7 +95,7 @@ Include = /etc/pacman.d/mirrorlist
- Include = /etc/pacman.d/chaotic-mirrorlist
-
+@@ -96,3 +96,3 @@ Include = /etc/pacman.d/mirrorlist
  [ditana]
 -Include = /etc/pacman.d/ditana-mirrorlist
 +Include = /etc/pacman.d/ditana-testing-mirrorlist
 
- # An example of a custom package repository.  See the pacman manpage for
- # tips on creating your own repositories.
+
 diff --git a/profiledef.sh b/profiledef.sh
 index d80b2f9..19695e7 100644
 --- a/profiledef.sh
