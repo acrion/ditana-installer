@@ -3211,18 +3211,6 @@
       "default-value": false
     },
     {
-      "name": "install-xxdiff",
-      "dialog-name": "Diff and Merge Tools",
-      "short-description": "Install xxdiff",
-      "long-description": "xxdiff is a graphical file and directory comparison and merge tool known for its speed and flexible layout options. It is a good choice for users who value performance and a high degree of customization in their diffing tool.\n\n• Horizontal Diff View: Offers a unique horizontal diff layout in addition to the standard vertical side-by-side view.\n• Multi-File Comparison: Capable of comparing two or three files simultaneously.\n• External Editor Integration: Allows you to open files for editing in your preferred external text editor directly from the diff view.\n• Scriptable and Customizable: Provides extensive command-line options and resource file settings for deep customization of its behavior and appearance.",
-      "arch-packages": [
-        "xxdiff"
-      ],
-      "spdx-identifiers": "GPL-2.0-only",
-      "available": "`install-desktop-environment`",
-      "default-value": false
-    },
-    {
       "name": "install-meld",
       "dialog-name": "Diff and Merge Tools",
       "short-description": "Install Meld",
