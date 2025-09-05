@@ -201,18 +201,6 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 when 'test-keymap' {
                     $result = test-keymap();
                 }
-                when 'select-disk' {
-                    $result = select-disk();
-                }
-                when 'check_efi' {
-                    $result = check_efi($silent-exit-code);
-                }
-                when 'confirm-nvme-format' {
-                    $result = confirm-nvme-format($silent-exit-code);
-                }
-                when 'select-swap-size' {
-                    $result = select-swap-size();
-                }
                 when 'choose-region-or-timezone' {
                     $result = choose-region-or-timezone();
                 }
@@ -225,8 +213,29 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 when 'choose-sub-locale' {
                     $result = choose-sub-locale();
                 }
+                when 'select-disk' {
+                    $result = select-disk();
+                }
+                when 'check_efi' {
+                    $result = check_efi($silent-exit-code);
+                }
+                when 'confirm-nvme-format' {
+                    $result = confirm-nvme-format($silent-exit-code);
+                }
+                when 'select-swap-size' {
+                    $result = select-swap-size();
+                }
                 when 'add-repos-and-sync' {
                     add-repos-and-sync();
+                }
+                when 'update-keyring' {
+                    update-keyring();
+                }
+                when 'update-mirrorlist' {
+                    update-mirrorlist();
+                }
+                when 'rate-mirrors' {
+                    rate-mirrors();
                 }
                 when 'check-nvidia' {
                     $result = check-nvidia($silent-exit-code, False);
@@ -249,9 +258,6 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 }
                 when 'enable-swap-partition' {
                     enable-swap-partition();
-                }
-                when 'rate-mirrors' {
-                    rate-mirrors();
                 }
                 when 'set-host-dpi' {
                     set-host-dpi();
