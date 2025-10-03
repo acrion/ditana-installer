@@ -2120,6 +2120,22 @@
     // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" -> "Terminal Tool Choices"
     // Terminal Emulator
     {
+      "name": "install-kitty",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install Kitty",
+      "long-description": "Kitty is a GPU-accelerated terminal built for users who frequently work on remote systems via SSH and value extensibility. Its standout feature is a suite of 'Kittens' that dramatically improve the remote workflow and allow for powerful scripting.\n\n• Superior SSH Integration: The `kitten ssh` command enhances remote sessions by automatically managing terminal information on servers, ensuring applications like tmux or vim render perfectly without any remote configuration.\n• Remote Control from Local Machine: Use your local Kitty shortcuts to open new windows and tabs directly on the remote machine, making remote and local workflows feel identical.\n• Seamless File Editing: The `kitten edit-file` command allows you to open a file from a remote server directly in your favorite local editor.\n• Extensible via 'Kittens': Leverage a rich ecosystem of small Python scripts (Kittens) to add features like side-by-side diffs, file transfers, and more.\n• Advanced Graphics Protocol: Supports its own high-performance graphics protocol for displaying images, charts, and even videos directly in the terminal.\n• Scriptable Interface: Provides a powerful API to control every aspect of the terminal from scripts, enabling complex, automated workflows.",
+      "arch-packages": [
+        "kitty"
+      ],
+      "config-files": [
+        "/etc/xdg/kitty/kitty.conf",
+        "/etc/share/pixmaps/ditana-logo-tiny.png"
+      ],
+      "spdx-identifiers": "GPL-3.0-only",
+      "available": "`install-desktop-environment`",
+      "default-value": true
+    },
+    {
       "name": "install-contour",
       "dialog-name": "Terminal Emulator",
       "short-description": "Install Contour",
@@ -2129,19 +2145,7 @@
       ],
       "spdx-identifiers": "Apache-2.0",
       "available": "`install-desktop-environment`",
-      "default-value": "`wayland`"
-    },
-    {
-      "name": "install-kitty",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install Kitty",
-      "long-description": "Kitty is a GPU-accelerated terminal built for users who frequently work on remote systems via SSH and value extensibility. Its standout feature is a suite of 'Kittens' that dramatically improve the remote workflow and allow for powerful scripting.\n\n• Superior SSH Integration: The `kitten ssh` command enhances remote sessions by automatically managing terminal information on servers, ensuring applications like tmux or vim render perfectly without any remote configuration.\n• Remote Control from Local Machine: Use your local Kitty shortcuts to open new windows and tabs directly on the remote machine, making remote and local workflows feel identical.\n• Seamless File Editing: The `kitten edit-file` command allows you to open a file from a remote server directly in your favorite local editor.\n• Extensible via 'Kittens': Leverage a rich ecosystem of small Python scripts (Kittens) to add features like side-by-side diffs, file transfers, and more.\n• Advanced Graphics Protocol: Supports its own high-performance graphics protocol for displaying images, charts, and even videos directly in the terminal.\n• Scriptable Interface: Provides a powerful API to control every aspect of the terminal from scripts, enabling complex, automated workflows.",
-      "arch-packages": [
-        "ditana-config-kitty"
-      ],
-      "spdx-identifiers": "GPL-3.0-only",
-      "available": "`install-desktop-environment`",
-      "default-value": "`x11`"
+      "default-value": false
     },
     {
       "name": "install-tabby",
