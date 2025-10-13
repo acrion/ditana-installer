@@ -1164,22 +1164,34 @@
     },
     // Document Viewer
     {
+      "name": "install-evince",
+      "dialog-name": "Document Viewer",
+      "short-description": "Install Evince",
+      "long-description": "Evince is a clean and lightweight document viewer with simple interface, fast navigation and plugin-based format support. Through its GTK/CUPS integration, it provides printer-specific options in the print dialog, making it particularly reliable for printing documents.",
+      "arch-packages": [
+        "evince"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later",
+      "available": "`install-desktop-environment`",
+      "default-value": "`install-desktop-environment`"
+    },
+    {
       "name": "install-okular",
       "dialog-name": "Document Viewer",
       "short-description": "Install Okular",
-      "long-description": "Okular is a comprehensive viewer supporting PDFs and many other formats, offering advanced annotation, document navigation, form filling, and presentation mode, suited for professional use.",
+      "long-description": "Okular is a comprehensive viewer supporting PDFs and many other formats, offering advanced annotation, document navigation, form filling, and presentation mode, suited for professional use. As a Qt-based application, its print dialog presents a more generic, cross-platform interface.",
       "arch-packages": [
         "okular"
       ],
       "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
       "available": "`install-desktop-environment`",
-      "default-value": "`install-desktop-environment`"
+      "default-value": false
     },
     {
       "name": "install-papers",
       "dialog-name": "Document Viewer",
       "short-description": "Install Papers",
-      "long-description": "Papers is a modern document viewer focused on smooth PDF reading, gesture navigation, and distraction-free interface. As a feature-rich Evince fork, it provides advanced Wayland support, improved touch controls, and active development.",
+      "long-description": "Papers is a modern Evince fork focused on smooth PDF reading, gesture navigation, and distraction-free interface.",
       "arch-packages": [
         "papers"
       ],
@@ -1196,19 +1208,7 @@
         "xreader"
       ],
       "spdx-identifiers": "GPL-2.0-or-later",
-      "available": "`install-desktop-environment AND x11`",
-      "default-value": false
-    },
-    {
-      "name": "install-evince",
-      "dialog-name": "Document Viewer",
-      "short-description": "Install Evince",
-      "long-description": "Evince is a clean and lightweight document viewer with simple interface, fast navigation and plugin-based format support.",
-      "arch-packages": [
-        "evince"
-      ],
-      "spdx-identifiers": "GPL-2.0-or-later",
-      "available": "`install-desktop-environment`",
+      "available": "`install-desktop-environment AND x11`", // under Wayland, xreader has issues with window positioning
       "default-value": false
     },
     // Image Viewer
