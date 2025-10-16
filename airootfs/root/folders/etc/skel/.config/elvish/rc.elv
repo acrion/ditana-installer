@@ -93,6 +93,17 @@ fn addpkg {|@args| $installer -Syu $@args }
 
 fn rmpkg {|@args| $installer -Rsu $@args }
 
+if ?($installer -Qi opam 2>/dev/null >/dev/null) {
+  # TODO: Remove this workaround once opam adds native support for Elvish shell.
+  # See: https://github.com/ocaml/opam/issues/3270
+  #
+  # The following command initializes the opam environment for the Elvish shell.
+  # It leverages the `csh` output from `opam env`, which is syntactically close
+  # to what Elvish requires. The primary difference is the command for setting
+  # environment variables, so we replace `setenv` with `set-env`.
+  opam env --shell csh | each {|line| eval (str:replace setenv set-env $line) }
+}
+
 # Execute system info script if it exists
 if (has-external print-system-infos) {
   print-system-infos
