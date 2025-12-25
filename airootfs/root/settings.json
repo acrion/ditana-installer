@@ -1874,7 +1874,7 @@
             "long-description": "Install C++ development packages: Equips your system with $packages.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "cmake", "meson", "gdb", "lldb", "gcc", "clang", "gtest", "doxygen", "vcpkg", "libtool", "gtk2", "pkgconf"
+                "cmake", "meson", "gdb", "lldb", "gcc", "clang", "gtest", "doxygen", "vcpkg", "libtool", "pkgconf"
             ],
             "default-value": false
         },
