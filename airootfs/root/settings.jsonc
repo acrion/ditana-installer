@@ -2884,6 +2884,7 @@
       "spdx-identifiers": "MIT GPL-2.0-or-later GPL-3.0-only LGPL-2.1-or-later",
       "arch-packages": [
         "arch-audit",
+        // TODO: installation of pacman-contrib must trigger command: systemctl enable --now paccache.timer
         "pacman-contrib", // optional dependency of pikaur
         "pacui",
         "fwupd", // optional dependency of pacui: daemon to allow session software to update firmware
