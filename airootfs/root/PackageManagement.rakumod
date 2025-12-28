@@ -78,6 +78,44 @@ sub update-mirrorlist is export {
     }
 }
 
+sub adjust-mtu-if-needed() is export {
+    return unless Settings.instance.get('real-install');
+
+    show-dialog-raw('--infobox', "Checking network configuration...", 4, 65);
+
+    my $ip-route-output = run-and-log('ip', '-j', 'route', 'get', '8.8.8.8');
+    my $ip-route = from-json($ip-route-output);
+    my $interface = $ip-route[0]<dev> // '';
+
+    return unless $interface.chars > 0;
+
+    my $proc = run('curl', '-s', '--connect-timeout', '10', '--fail', 'https://archlinux.org/mirrors/status/json/', :out(False), :err(False));
+    my $curl-test = $proc.exitcode;
+
+    if $curl-test != 0 {
+        Logging.log("Curl failed - adjusting MTU on $interface to 1400");
+        run-and-log('ip', 'link', 'set', 'dev', $interface, 'mtu', '1400');
+
+        my $max-tries = 10;
+        my $success = False;
+        for 1..$max-tries {
+            sleep 1;
+            my $retry-proc = run('curl', '-s', '--connect-timeout', '10', '--fail', 'https://archlinux.org/mirrors/status/json/', :out(False), :err(False));
+            if $retry-proc.exitcode == 0 {
+                Logging.log("Curl now works after MTU adjustment (try $_)");
+                $success = True;
+                last;
+            }
+            Logging.log("Curl retry failed (try $_) - waiting...");
+        }
+        unless $success {
+            Logging.log("Warning: Curl still fails after $max-tries tries - proceeding anyway");
+        }
+    } else {
+        Logging.log("Curl works - no MTU adjustment needed");
+    }
+}
+
 sub rate-mirrors() is export {
     show-dialog-raw('--infobox', "Checking server speeds...", 4, 65);
     run-and-log "rate-mirrors", "--allow-root", "--save=/etc/pacman.d/mirrorlist", "arch"

@@ -195,15 +195,18 @@ else # GRUB (used for all non-zfs file systems)
     echo -e "\033[32m--- Installing and configuring GRUB ---\033[0m"
     s6 --task-run sparrow/tasks/grub@"path=/etc/default/grub,kernel_options=$KERNEL_OPTIONS,encrypt_root_partition=$ENCRYPT_ROOT_PARTITION,enable_os_prober=$ENABLE_OS_PROBER"
     if [[ -d /sys/firmware/efi ]]; then
-        grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Ditana
+      echo -e "\033[32m--- Installing and configuring GRUB (UEFI) ---\033[0m"
+      
+      grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Ditana
 
-        # Ensure compatibility with non-standard UEFI implementations
-        mkdir -p /boot/efi/EFI/BOOT
-        cp /boot/efi/EFI/Ditana/grubx64.efi /boot/efi/EFI/BOOT/BOOTx64.EFI
-        cp /boot/efi/EFI/Ditana/grubx64.efi /boot/efi/shellx64.efi
-        grub-mkstandalone -O x86_64-efi -o /boot/efi/EFI/BOOT/BOOTx64.EFI "boot/grub/grub.cfg=/boot/grub/grub.cfg"
+      mkdir -p /boot/efi/EFI/BOOT
+      grub-mkstandalone -O x86_64-efi -o /boot/efi/EFI/BOOT/BOOTX64.EFI "boot/grub/grub.cfg=/boot/grub/grub.cfg"
+      
+      # Ensure compatibility with non-standard UEFI implementations
+      cp /boot/efi/EFI/BOOT/BOOTX64.EFI /boot/efi/shellx64.efi
 
-        efibootmgr --create --disk "/dev/$INSTALL_DISK" --part 1 --label "Ditana GNU/Linux" --loader /EFI/Ditana/grubx64.efi
+      
+      efibootmgr --create --disk "/dev/$INSTALL_DISK" --part 1 --label "Ditana GNU/Linux" --loader /EFI/Ditana/grubx64.efi
     else
         grub-install --target=i386-pc "/dev/$INSTALL_DISK"
     fi

@@ -143,6 +143,11 @@
             "available": "`real-install`"
         },
         {
+            "name": "adjust-mtu-if-needed",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
             "name": "update-keyring",
             "type": "procedure",
             "available": "`real-install`"
@@ -936,7 +941,7 @@
             "name": "install-codegpt",
             "dialog-name": "AI Tools and Libraries",
             "short-description": "Install codegpt",
-            "long-description": "Install codegpt to write git commit messages or do a code review for you using ChatGPT. For this, you need to copy your OpenAI API Key from https://platform.openai.com/api-keys to ~/.shell.d/openai.sh. Note that the configuration will be changed to use gpt-4o-mini instead of gpt-3.5-turbo, which OpenAI claims is cheaper, more capable, and just as fast.",
+            "long-description": "Install codegpt to write git commit messages or do a code review for you using ChatGPT. For this, you need to copy your OpenAI API Key from https://platform.openai.com/api-keys to ~/.shell.d/openai.sh",
             "aur-packages": [
                 "codegpt-bin"
             ],
@@ -1712,18 +1717,18 @@
             "required-by-chroot": true,
             "default-value": true
         },
-        {
-            "name": "install-kmscon",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install kmscon userspace console emulator",
-            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
-            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
-            "arch-packages": [
-                "kmscon"
-            ],
-            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
-            "default-value": "`install-desktop-environment`"
-        },
+//        {
+//            "name": "install-kmscon",
+//            "dialog-name": "Terminal Tools and Utilities",
+//            "short-description": "Install kmscon userspace console emulator",
+//            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
+//            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
+//            "arch-packages": [
+//                "kmscon"
+//            ],
+//            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
+//            "default-value": "`install-desktop-environment`"
+//        },
         {
             "name": "install-cron",
             "dialog-name": "Terminal Tools and Utilities",
