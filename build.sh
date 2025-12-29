@@ -197,6 +197,23 @@ echo "TMP_ISO:         '$TMP_ISO'"
 # continue to use the user’s keyring and associated permissions.
 if [[ -n "$selected_key" ]]; then
     sudo -E mkarchiso -v -C pacman.conf -L "$LABEL" -w "$TMP_ISO" -P "$selected_signer" -G "$selected_signer" -g "$selected_key" .
+    sudo chown -R "$USER:$USER" out/
+    pushd out
+    ISO_FILE=$(ls ./*.iso)
+
+    # Terminate any running keyboxd process to prevent conflicts with root-level GPG operations in mkarchiso.
+    # The keyboxd daemon is part of the GnuPG package and is started automatically by GPG whenever the keybox database is accessed.
+    # Currently, a root-owned keyboxd process is running, because we accessed it via mkarchiso. It holds locks or permissions that interfere
+    # with below user-level operation, leading to conflicts, e.g. `gpg: Note: database_open xy waiting for lock (held by xy) ...`
+   sudo pkill keyboxd
+
+    gpg --default-key "$selected_key" --detach-sign --output "${ISO_FILE}.sig" "$ISO_FILE"
+    sha256sum "$ISO_FILE" > "${ISO_FILE}.sha256"
+
+    gpg --verify "${ISO_FILE}.sig" "$ISO_FILE"
+    sha256sum -c "${ISO_FILE}.sha256"
+
+    popd
 else
     sudo -E mkarchiso -v -C pacman.conf -L "$LABEL" -w "$TMP_ISO" .
 fi
