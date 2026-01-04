@@ -69,11 +69,11 @@ sub curate-chroot-files() is export {
         '/mnt/etc/systemd/zram-generator.conf'.IO.spurt("[zram0]\n");
     }
 
-    if $s.get("install-kmscon") {
-        '/mnt/etc/kmscon'.IO.mkdir;
-        '/mnt/etc/kmscon/kmscon.conf'.IO.spurt("font-name=JetBrainsMono Nerd Font\n"); # font is installed by package ditana-config-xfce
-        '/mnt/etc/kmscon/kmscon.conf'.spurt("no-drm\n", :append) if $s.get('nvidia-pci-id');
-    }
+    #if $s.get("install-kmscon") {
+    #    '/mnt/etc/kmscon'.IO.mkdir;
+    #    '/mnt/etc/kmscon/kmscon.conf'.IO.spurt("font-name=JetBrainsMono Nerd Font\n"); # font is installed by package ditana-config-xfce
+    #    '/mnt/etc/kmscon/kmscon.conf'.spurt("no-drm\n", :append) if $s.get('nvidia-pci-id');
+    #}
 
     unless $s.get("install-variety") {
         '/mnt/etc/skel/.config/variety/variety.conf'.IO.unlink;
@@ -88,7 +88,7 @@ sub curate-chroot-files() is export {
         my $openai-api-file = '/mnt/etc/skel/.shell.d/openai.sh'.IO;
         $openai-api-file.spurt("# To use e. g. codegpt, you need to copy your OpenAI API key from
 # https://platform.openai.com/api-keys
-# to here.
+# to here. You may want to change the model, e.g. `codegpt config set openai.model gpt-4o-mini`
 #export OPENAI_API_KEY=
 ");
         $openai-api-file.chmod(0o700)
@@ -204,12 +204,12 @@ sub generate-chroot-script() is export {
         add-chrooted-step("systemctl enable systemd-resolved");
     }
 
-    if $s.get("install-kmscon") {
-        for 2..5 -> $tty {
-            add-chrooted-step("systemctl disable getty\@tty{$tty}.service");
-            add-chrooted-step("systemctl enable kmsconvt\@tty{$tty}.service");
-        }
-    }
+#    if $s.get("install-kmscon") {
+#        for 2..5 -> $tty {
+#            add-chrooted-step("systemctl disable getty\@tty{$tty}.service");
+#            add-chrooted-step("systemctl enable kmsconvt\@tty{$tty}.service");
+#        }
+#    }
 
     if $s.get("install-bluetooth") {
         add-chrooted-step("systemctl enable bluetooth"); # https://wiki.archlinux.org/title/Bluetooth
@@ -217,15 +217,6 @@ sub generate-chroot-script() is export {
 
     add-chrooted-step(q{echo -e "\033[32m--- Generating locales ---\033[0m"});
     add-chrooted-step(q{locale-gen}); # https://wiki.archlinux.org/title/Installation_guide#Localization
-
-    if $s.get("install-codegpt") {
-        # Change default model from gpt-3.5-turbo to gpt-4o-mini.
-        # According to https://platform.openai.com/docs/models/gpt-3-5-turbo:
-        # "As of July 2024, gpt-4o-mini should be used in place of gpt-3.5-turbo, as it is cheaper, more
-        # capable, multimodal, and just as fast. gpt-3.5-turbo is still available for use in the API."
-
-        add-chrooted-step("su - {$s.get('user-name')} -c 'codegpt config set openai.model gpt-4o-mini'")
-    }
 
     if $s.get("install-desktop-environment") {
         add-chrooted-step(q{fc-cache -fv});

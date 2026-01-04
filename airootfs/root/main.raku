@@ -228,6 +228,9 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 when 'add-repos-and-sync' {
                     add-repos-and-sync();
                 }
+                when 'adjust-mtu-if-needed' {
+                    adjust-mtu-if-needed();
+                }
                 when 'update-keyring' {
                     update-keyring();
                 }
