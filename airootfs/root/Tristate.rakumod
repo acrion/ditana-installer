@@ -84,9 +84,7 @@ class Tristate {
         return 'True' if $type === Bool && $.value === True;
         return 'False' if $type === Bool && $.value === False;
         
-        die "Tristate.Str(): Unexpected value type: $type" if defined($type);
-
-        return '(Undefined)';
+        die "Tristate.Str(): Unexpected value type: $type";
     }
 
     method gist() {
