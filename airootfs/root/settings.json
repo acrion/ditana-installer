@@ -1509,16 +1509,20 @@
         },
         {
             "name": "enable-chaotic-aur",
-            "dialog-name": "Repository & Package Management Configuration",
-            "short-description": "Enable autom. building repo \"Chaotic-AUR\"",
-            "long-description": "Enable the automated building repo for AUR packages «Chaotic-AUR»: Chaotic-AUR provides a repository of pre-built packages from the AUR, saving time and computational resources by avoiding manual compilation. This is especially useful for users who frequently install or update AUR packages and prefer immediate access over building from source. Note that the installer will enable this for certain packages, but you can safely disable it.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                ""
-            ],
+            //"dialog-name": "Repository & Package Management Configuration",
+            //"short-description": "Enable autom. building repo \"Chaotic-AUR\"",
+            //"long-description": "Enable the automated building repo for AUR packages «Chaotic-AUR»: Chaotic-AUR provides a repository of pre-built packages from the AUR, saving time and computational resources by avoiding manual compilation. This is especially useful for users who frequently install or update AUR packages and prefer immediate access over building from source. Note that the installer will enable this for certain packages, but you can safely disable it.",
+            //"spdx-identifiers": "",
+            //"arch-packages": [
+            //    ""
+            //],
             "required-by-chroot": true,
-            "available": "`enable-multilib`",
-            "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
+            //"available": "`enable-multilib`",
+            // Temporary solution: Due to build issues of AUR package librewolf, we rely on chaotic-aur
+            // for desktop installations (i.e. package ditana-config-xfce).
+            // Future Ditana releases will offer browser selection (and ditana-config-xfce will be deprecated).
+            "default-value": "`install-desktop-environment`"
+            //"default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
         },
 
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"

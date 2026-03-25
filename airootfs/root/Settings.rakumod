@@ -66,8 +66,15 @@ class Settings {
         my $data = from-json($json, :allow-jsonc);
 
         Logging.log("Loading installation steps...");
-        
+
+        if !$data<installation-steps>.defined {
+            die "Missing 'installation-steps' section in settings.json";
+        }
+
         for $data<installation-steps>.list -> $installation-step-data {
+            if !$installation-step-data<name>.defined {
+                die "Installation step without 'name' field found";
+            }
             my $name = $installation-step-data<name>;
             %!installation-steps{$name} = $installation-step-data;
             Logging.log("Loaded installation step $name");
@@ -80,8 +87,15 @@ class Settings {
         
         Logging.log("Detecting hardware...");
         
+        if !$data<settings>.defined {
+            die "Missing 'settings' section in settings.json";
+        }
+        
         for $data<settings>.list -> $setting-data {
             if $setting-data<detect>.defined {
+                if !$setting-data<name>.defined {
+                    die "Setting with 'detect' field but without 'name' found";
+                }
                 my $name=$setting-data<name>;
                 Logging.log("$name: $setting-data<detect>");
                 my $detection-code=$setting-data<detect>;
@@ -100,7 +114,9 @@ class Settings {
             if $setting-data<detect>.defined {
                 next
             }
-
+            if !$setting-data<name>.defined {
+                die "Setting without 'name' field found";
+            }
             my $name = $setting-data<name>;
             Logging.log("Loading setting $name");
 
@@ -336,11 +352,24 @@ class Settings {
         my $indent = ' ' x ($!evaluated-expressions.elems * 2);
         
         if $!evaluated-expressions{$code-including-backticks} {
+            Logging.log("$indent  Circular dependency detected for: $code-including-backticks");
             return Any;
         }
         $!evaluated-expressions.set($code-including-backticks);
 
         my $code = $code-including-backticks.substr(1, *-1); # remove backticks
+        
+        # Check for common configuration errors
+        if $code eq 'true' || $code eq 'false' {
+            die "Error in '$name-of-setting': Boolean literals 'true' or 'false' must not be enclosed in backticks. " ~
+                "Use plain boolean values in JSON: true or false (without quotes or backticks).";
+        }
+        
+        if $code ~~ /^\d+$/ {
+            die "Error in '$name-of-setting': Numeric literals must not be enclosed in backticks. " ~
+                "Use plain numeric values in JSON: $code (without quotes or backticks).";
+        }
+        
         my @variables = $code.match(/<[a..z A..Z _]><[a..z A..Z 0..9 \-_]>*/, :g)
                             .grep(* !~~ any('OR', 'AND', 'NOT'))
                             .map(*.Str);
@@ -351,23 +380,26 @@ class Settings {
         for @variables -> $var {
             my $val = %!settings{$var};
             if !$val {
-                Logging.log("$indent  Dependent variable $var does not exist.");
-                return Any;
+                die "Error in '$name-of-setting': Referenced variable '$var' does not exist. " ~
+                    "Check for typos in: $code";
             } elsif $val.defined {
                 my $value;
                 if $val.current-value.defined {
                     $value = $val.current-value;
                     if $value ~~ Str {
                         $value = $value.so;
-                        Logging.log("Detected type string of value of $var");
+                        Logging.log("$indent  Detected type string of value of $var");
                     }
-                    Logging.log("current value of $var is defined: {$val.current-value} ($value)");
+                    Logging.log("$indent  current value of $var is defined: {$val.current-value} ($value)");
                 } elsif $val.default-value ~~ Str && self!is-code($val.default-value) {
-                    Logging.log("current value of $var is undefined, doing recursive call");
+                    Logging.log("$indent  current value of $var is undefined, doing recursive call");
                     $value = self!evaluate-logical-dependency-internal($var, $val.default-value);
                     if $value.defined {
+                        Logging.log("$indent  Recursive evaluation of $var returned: $value");
                         $!modified-settings.set($var);
                         %!settings{$var}.current-value = $value
+                    } else {
+                        Logging.log("$indent  Recursive evaluation of $var returned undefined");
                     }
                 }
 
@@ -430,8 +462,15 @@ class Settings {
     }
 
     method restore(%backup) {
+        if !%backup<settings>.defined || !%backup<order>.defined {
+            die "Invalid backup structure: missing 'settings' or 'order' key";
+        }
+        
         %!settings = InsertionOrderedHash.new;
         for @(%backup<order>) -> $key {
+            if !%backup<settings>{$key}.defined {
+                die "Backup corrupted: setting '$key' in order list but not in settings";
+            }
             %!settings{$key} = %backup<settings>{$key};
         }
     }

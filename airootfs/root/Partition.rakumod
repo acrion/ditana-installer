@@ -294,6 +294,7 @@ sub partition-drive() is export {
     
     if $s.get('zfs-filesystem') {
         Logging.echo("Removing any existing ZFS pools, as ZFS can persist even after repartitioning and cause conflicts with the current installation:");
+        run-and-echo('modprobe', 'zfs');
         Logging.echo(run("zpool", "labelclear", "-f", "/dev/$install-disk", :merge).out.slurp);
     }
     

@@ -12,9 +12,14 @@ for @mandotary-parameters -> $i {
     say q[note: check mandotary hooks parameter %p%].subst("%p%",$i);
     say q[regexp: <?wb> %p% <?wb> ].subst("%p%",$i);
 }
+
+if not config()<use-init-systemd> {
+    say q[note: check that sd-vconsole is absent for BusyBox init];
+    say q[!regexp: <?wb> sd\-vconsole <?wb>];
+}
+
 say "end:";
 CODE
-
 
 generator: <<CODE
 !raku
