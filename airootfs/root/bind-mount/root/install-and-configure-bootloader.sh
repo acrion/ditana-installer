@@ -126,8 +126,19 @@ EOF
                    --part "${BOOTLOADER_PARTITION_INDEX}" \
                    --label "Ditana Boot Menu" \
                    --loader "\\EFI\\zbm\\${UEFI_IMAGE}" \
-                   --timeout 20 \
                    --unicode
+
+        # Set boot menu timeout separately. Some firmware implementations lock
+        # the Timeout EFI variable at runtime (SetVariable returns EFI_WRITE_PROTECTED),
+        # which the kernel reports as "Read-only file system". The system boots
+        # fine with the firmware's default timeout in that case.
+        efibootmgr --timeout 20 || echo -e "\033[33m--- Warning: Could not set EFI boot timeout (firmware may lock this variable) ---\033[0m"
+
+        # Install as fallback boot path for firmware compatibility. Some UEFI
+        # implementations remove custom boot entries on reboot. The fallback
+        # path /EFI/BOOT/BOOTX64.EFI is always recognized by compliant firmware.
+        mkdir -p /boot/efi/EFI/BOOT
+        cp "/boot/efi/EFI/zbm/${UEFI_IMAGE}" /boot/efi/EFI/BOOT/BOOTX64.EFI
     else # BIOS systems
         mkdir -p "/boot/syslinux"
         cp /usr/lib/syslinux/bios/*.c32 "/boot/syslinux"

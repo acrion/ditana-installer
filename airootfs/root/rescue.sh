@@ -111,6 +111,20 @@ if [[ ! -d /mnt/root ]]; then
     exit 1
 fi
 
+# Mount boot partition if present (non-ZFS systems use a separate boot partition)
+BOOT_PARTITION=$(blkid -L "ditana-boot" 2>/dev/null || true)
+if [[ -n "$BOOT_PARTITION" ]]; then
+    mkdir -p /mnt/boot
+    mount "$BOOT_PARTITION" /mnt/boot
+fi
+
+# Mount EFI partition if present
+EFI_PARTITION=$(blkid -L "ditana-efi" 2>/dev/null || true)
+if [[ -n "$EFI_PARTITION" ]]; then
+    mkdir -p /mnt/boot/efi
+    mount "$EFI_PARTITION" /mnt/boot/efi
+fi
+
 echo -e "\033[32m--- Mounting succeeded, entering chroot ---\033[0m"
 touch /mnt/root/rescue-chroot.sh
 mount --bind /root/rescue-chroot.sh /mnt/root/rescue-chroot.sh

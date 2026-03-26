@@ -129,6 +129,11 @@ if not task_var("use_init_systemd") {
    @hooks = @hooks.map({ $_ eq "systemd" ?? "udev" !! $_  });
 }
 
+# remove sd-vconsole if not using systemd init (sd-vconsole requires add_systemd_unit)
+if not task_var("use_init_systemd") {
+   @hooks = @hooks.grep({ $_ ne "sd-vconsole" });
+}
+
 # add keymap hook after keyboard hook
 if task_var("encrypt_root_partition") and not task_var("use_init_systemd") {
    my @new;
@@ -172,7 +177,7 @@ if task_var("encrypt_root_partition") and
          push @new, "filesystems";
          next;
       } 
-      next if $i eq "filesystems";
+      next if $i eq "encrypt";
       push @new, $i;
    }
    @hooks = @new;
@@ -205,7 +210,7 @@ if task_var("use_init_systemd") and
          push @new, "sd-vconsole";
          next;
       } 
-      next if $i eq "keyboard";
+      next if $i eq "sd-vconsole";
       push @new, $i;
    }
    @hooks = @new;
@@ -223,7 +228,7 @@ if task_var("use_init_systemd") and
          push @new, "filesystems";
          next;
       } 
-      next if $i eq "filesystems";
+      next if $i eq "sd-encrypt";
       push @new, $i;
    }
    @hooks = @new;
