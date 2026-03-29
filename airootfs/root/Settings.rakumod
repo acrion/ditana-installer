@@ -151,6 +151,33 @@ class Settings {
         return self.instance.installation-steps.values;
     }
 
+    method get-bootstrap-packages() {
+        my constant @bootstrap-names =
+        < intel-microcode amd-microcode firmware
+        ditana-base ditana-mirrorlist ditana-testing-mirrorlist
+        install-syslinux install-grub install-efibootmgr >;
+
+        my Str @packages;
+
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.arch-packages && $setting.arch-packages[0];
+
+            my $is-bootstrap = $setting.name ∈ @bootstrap-names
+            || $setting.dialog-name eq "Kernel Selection";
+
+            next unless $is-bootstrap;
+
+            for @($setting.arch-packages[0]) -> $package {
+                if $package && $package.Str {
+                    @packages.push($package.Str);
+                }
+            }
+        }
+
+        return @packages;
+    }
+
     method get-installed-native-packages() {
         my Str @packages;
 
@@ -425,7 +452,7 @@ class Settings {
         $evaluated = $evaluated.subst("Tristate.new(False)", "False", :g);
         Logging.log("$indent  $name-of-setting = $evaluated = $result");
         return $result
-    }    
+    }
 
     method get-dialog($dialog-name) {
         %!settings.pairs.map(*.value).grep({ 
