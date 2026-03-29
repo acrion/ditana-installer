@@ -1263,14 +1263,14 @@
     },
     // Code Editor
     {
-      "name": "install-kate",
+      "name": "install-zed",
       "dialog-name": "Code Editor",
-      "short-description": "Install Kate",
-      "long-description": "Kate is an advanced text editor offering powerful multi-document editing, split views, extensive syntax highlighting, code folding, and integrated support for Language Server Protocols (LSP) for various programming languages. It features a highly customisable interface, robust plugin system, and a built-in terminal for efficient workflows.",
+      "short-description": "Install Zed code editor",
+      "long-description": "Install Zed, a high-performance, multiplayer code editor from the creators of Atom and Tree-sitter. Features GPU-accelerated rendering, built-in language server support, real-time collaboration, and Tree-sitter based syntax highlighting. Optimized for speed and designed for modern development workflows.",
+      "spdx-identifiers": "GPL-3.0-or-later,AGPL-3.0-or-later,Apache-2.0",
       "arch-packages": [
-        "kate"
+        "zed"
       ],
-      "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
       "available": "`install-desktop-environment`",
       "default-value": false
     },
@@ -1283,6 +1283,18 @@
       "arch-packages": [
         "ditana-config-vscode"
       ],
+      "available": "`install-desktop-environment`",
+      "default-value": false
+    },
+    {
+      "name": "install-kate",
+      "dialog-name": "Code Editor",
+      "short-description": "Install Kate",
+      "long-description": "Kate is an advanced text editor offering powerful multi-document editing, split views, extensive syntax highlighting, code folding, and integrated support for Language Server Protocols (LSP) for various programming languages. It features a highly customisable interface, robust plugin system, and a built-in terminal for efficient workflows.",
+      "arch-packages": [
+        "kate"
+      ],
+      "spdx-identifiers": "GPL-2.0-or-later,LGPL-2.0-or-later",
       "available": "`install-desktop-environment`",
       "default-value": false
     },
@@ -2125,15 +2137,30 @@
       "short-description": "Install Kitty",
       "long-description": "Kitty is a GPU-accelerated terminal built for users who frequently work on remote systems via SSH and value extensibility. Its standout feature is a suite of 'Kittens' that dramatically improve the remote workflow and allow for powerful scripting.\n\n• Superior SSH Integration: The `kitten ssh` command enhances remote sessions by automatically managing terminal information on servers, ensuring applications like tmux or vim render perfectly without any remote configuration.\n• Remote Control from Local Machine: Use your local Kitty shortcuts to open new windows and tabs directly on the remote machine, making remote and local workflows feel identical.\n• Seamless File Editing: The `kitten edit-file` command allows you to open a file from a remote server directly in your favorite local editor.\n• Extensible via 'Kittens': Leverage a rich ecosystem of small Python scripts (Kittens) to add features like side-by-side diffs, file transfers, and more.\n• Advanced Graphics Protocol: Supports its own high-performance graphics protocol for displaying images, charts, and even videos directly in the terminal.\n• Scriptable Interface: Provides a powerful API to control every aspect of the terminal from scripts, enabling complex, automated workflows.",
       "arch-packages": [
-        "kitty"
+        "kitty",
+        "imagemagick",
+        "python-pygments",
+        "libcanberra"
       ],
       "config-files": [
         "/etc/xdg/kitty/kitty.conf",
-        "/etc/share/pixmaps/ditana-logo-tiny.png"
+        "/usr/share/pixmaps/ditana-logo-tiny.png"
       ],
       "spdx-identifiers": "GPL-3.0-only",
       "available": "`install-desktop-environment`",
       "default-value": true
+    },
+    {
+      "name": "install-alacritty",
+      "dialog-name": "Terminal Emulator",
+      "short-description": "Install Alacritty",
+      "long-description": "Alacritty is a terminal emulator with a singular focus: speed and simplicity. It offloads as much work as possible to the GPU to achieve the lowest possible latency, making it the ideal choice for users who prioritize raw performance above all else.\n\n• Uncompromising Performance: GPU-accelerated rendering and a commitment to minimal processing ensure near-instantaneous response times.\n• Deliberately Minimalist: Intentionally omits features like tabs, splits, and GUI-based configuration to avoid overhead and maintain simplicity.\n• Configuration as Code: All settings are managed through a single, straightforward YAML file, facilitating easy versioning and portability.\n• Works with Multiplexers: Designed to be used in tandem with a terminal multiplexer like tmux or Zellij, which manage sessions, splits, and tabs.",
+      "arch-packages": [
+        "alacritty"
+      ],
+      "spdx-identifiers": "Apache-2.0,MIT",
+      "available": "`install-desktop-environment`",
+      "default-value": false
     },
     {
       "name": "install-contour",
@@ -2156,18 +2183,6 @@
         "tabby"
       ],
       "spdx-identifiers": "MIT",
-      "available": "`install-desktop-environment`",
-      "default-value": false
-    },
-    {
-      "name": "install-alacritty",
-      "dialog-name": "Terminal Emulator",
-      "short-description": "Install Alacritty",
-      "long-description": "Alacritty is a terminal emulator with a singular focus: speed and simplicity. It offloads as much work as possible to the GPU to achieve the lowest possible latency, making it the ideal choice for users who prioritize raw performance above all else.\n\n• Uncompromising Performance: GPU-accelerated rendering and a commitment to minimal processing ensure near-instantaneous response times.\n• Deliberately Minimalist: Intentionally omits features like tabs, splits, and GUI-based configuration to avoid overhead and maintain simplicity.\n• Configuration as Code: All settings are managed through a single, straightforward YAML file, facilitating easy versioning and portability.\n• Works with Multiplexers: Designed to be used in tandem with a terminal multiplexer like tmux or Zellij, which manage sessions, splits, and tabs.",
-      "arch-packages": [
-        "alacritty"
-      ],
-      "spdx-identifiers": "Apache-2.0,MIT",
       "available": "`install-desktop-environment`",
       "default-value": false
     },
@@ -2207,6 +2222,18 @@
       ],
       "required-by-chroot": true,
       "default-value": true
+    },
+    {
+      "name": "install-elvish",
+      "dialog-name": "Shell",
+      "short-description": "Install Elvish shell",
+      "long-description": "Install Elvish, an expressive programming language and a versatile interactive shell. Elvish features a powerful pipelines system that can carry structured data (not just text), a built-in file manager (navigation mode), persistent shared command history across sessions, and a real programming language with namespaces, exception handling, and closures. Its syntax is familiar yet expressive, and it provides rich interactive features like syntax highlighting and sophisticated tab completion out of the box.",
+      "arch-packages": [
+        "elvish"
+      ],
+      "spdx-identifiers": "BSD-2-Clause",
+      "required-by-chroot": true,
+      "default-value": false
     },
     {
       "name": "install-nushell",
@@ -2258,6 +2285,17 @@
       ],
       "spdx-identifiers": "MPL-2.0",
       "default-value": true
+    },
+    {
+      "name": "install-emacs",
+      "dialog-name": "Terminal Text Editor",
+      "short-description": "Install Emacs",
+      "long-description": "GNU Emacs is a powerful, extensible, self-documenting text editor with a long history. Far more than a text editor, Emacs provides a complete environment with built-in support for programming in dozens of languages, a package manager, Org mode for notes and project planning, integrated shell and terminal emulator, version control integration, and a powerful Lisp-based extension language (Emacs Lisp) that makes virtually every aspect customizable. Popular configurations like Doom Emacs and Spacemacs offer curated, modern setups with modal editing (Evil mode) and pre-configured packages for a streamlined experience.",
+      "arch-packages": [
+        "emacs-nox"
+      ],
+      "spdx-identifiers": "GPL-3.0-or-later",
+      "default-value": false
     },
     {
       "name": "install-micro",
@@ -2797,7 +2835,8 @@
       "long-description": "Install Audio Support: Installs PulseAudio and adds the user «$user-name» to the «audio» group to enable access to audio devices.",
       "spdx-identifiers": "LGPL-2.1-or-later",
       "arch-packages": [
-        "pulseaudio"
+        "pipewire-alsa",
+        "pipewire-pulse"
       ],
       "default-value": true
     },
@@ -2919,7 +2958,7 @@
       ],
       "required-by-chroot": true,
       "available": "`enable-multilib`",
-      "default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
+      "default-value": "`install-nomachine OR install-spotify OR install-expressvpn`"
     },
     // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"
     {
@@ -3380,23 +3419,6 @@
         "qt5-tools",
         "qt5-script"
       ],
-      "default-value": false
-    },
-    {
-      "name": "install-clion",
-      "dialog-name": "Development Tools and Libraries",
-      "short-description": "Install CLion",
-      "long-description": "Install CLion: CLion is a powerful Integrated Development Environment (IDE) for C and C++ development, offering smart code analysis, advanced debugging, and support for CMake and other build systems. To ensure full compatibility, CLion and its specific tool versions (separate from those on your system) are installed. A free 30-day trial is available, and the full version can be purchased at https://www.jetbrains.com/clion.",
-      "license-category": "CLOSED",
-      "spdx-identifiers": "",
-      "aur-packages": [
-        "clion-jre",
-        "clion-cmake",
-        "clion-gdb",
-        "clion-lldb",
-        "clion"
-      ],
-      "available": "`install-desktop-environment`",
       "default-value": false
     },
     // Common desktop packages
