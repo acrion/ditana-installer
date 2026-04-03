@@ -452,6 +452,10 @@
             "detect": "qx{lsusb}.lines.grep(*.contains(/:i bluetooth/)).so || qx{lspci}.lines.grep(*.contains(/:i bluetooth/)).so || 'sys/class/bluetooth'.IO.e"
         },
         {
+            "name": "amd-gpu-pci-id",
+            "detect": "qx{lspci -nn}.lines.grep(/:i 'vga' .* 'amd'/).&{ $_ ?? .first.match(/\\w+':' (\\w+) ']'/).[0].Str !! '' }"
+        },
+        {
             "name": "nvidia-pci-id",
             "detect": "qx{lspci -nn}.lines.grep(/:i 'vga'.*'nvidia'/).&{ $_ ?? .first.match(/\\w+':' (\\w+) ']'/).[0].Str !! '' }"
         },
@@ -902,27 +906,41 @@
             "default-value": "`avx2-available AND total-ram-gib>=12`"
         },
         {
-            "name": "install-koboldcpp",
+            "name": "install-ollama",
             "dialog-name": "AI Tools and Libraries",
-            "short-description": "Install KoboldCpp Local AI API",
-            "long-description": "Install KoboldCpp: Provide a powerful local AI API on your computer with the pre-configured Gemma language model. KoboldCpp runs seamlessly as a systemd service, ensuring that applications like Ditana Assistant have constant access to advanced language capabilities such as text generation and code completion. By handling all AI processing locally, KoboldCpp ensures your privacy and data security without relying on external services. Additionally, you can interact directly with KoboldCpp through your web browser if desired. Enjoy the benefits of a robust AI backend integrated into your Ditana system.",
+            "short-description": "Install Ollama Local AI",
+            "long-description": "Install Ollama: Provide a local AI runtime on your computer with the pre-configured phi4-mini language model. Ollama runs as a systemd service, ensuring that applications like Ditana Assistant and Logseq have constant access to advanced language capabilities such as text generation and code completion. By handling all AI processing locally, Ollama ensures your privacy and data security without relying on external services. You can also interact directly with Ollama through the command line or integrate it with other tools. Enjoy the benefits of a robust AI backend integrated into your Ditana system.",
             "arch-packages": [
-                "ditana-koboldcpp"
+                "ollama"
             ],
-            "spdx-identifiers": "AGPL-3.0-only",
-            "available":     "`avx2-available AND total-ram-gib>=3`",
+            "spdx-identifiers": "MIT",
+            "available":     "`total-ram-gib>=3`",
             "default-value": "`avx2-available AND total-ram-gib>=12`"
+        },
+        {
+            "name": "install-ollama-cuda",
+            "arch-packages": [
+                "ollama-cuda"
+            ],
+            "default-value": "`install-ollama AND nvidia-pci-id AND (install-nvidia-opensource OR install-nvidia-proprietary)`"
+        },
+        {
+            "name": "install-ollama-rocm",
+            "arch-packages": [
+                "ollama-rocm"
+            ],
+            "default-value": "`install-ollama AND amd-gpu-pci-id`"
         },
         {
             "name": "install-logseq",
             "dialog-name": "AI Tools and Libraries",
             "short-description": "Install Logseq",
-            "long-description": "Logseq: More than just a note-taking app, Logseq serves as a comprehensive platform for organizing thoughts, managing tasks, and building knowledge databases. In Ditana, Logseq is specially configured to leverage the local AI powered by KoboldCpp. This integration enables AI-assisted note-taking, content generation, and knowledge management, all while maintaining privacy and security. Ideal for anyone looking to enhance their intellectual workflow with the power of AI, without compromising on data privacy.",
+            "long-description": "Logseq: More than just a note-taking app, Logseq serves as a comprehensive platform for organizing thoughts, managing tasks, and building knowledge databases. In Ditana, Logseq is specially configured to leverage the local AI powered by Ollama. This integration enables AI-assisted note-taking, content generation, and knowledge management, all while maintaining privacy and security. Ideal for anyone looking to enhance their intellectual workflow with the power of AI, without compromising on data privacy.",
             "arch-packages": [
                 "ditana-config-logseq"
             ],
             "spdx-identifiers": "AGPL-3.0-or-later",
-            "available":     "`install-desktop-environment AND avx2-available AND total-ram-gib>=3 AND install-koboldcpp`",
+            "available":     "`install-desktop-environment AND total-ram-gib>=3 AND install-ollama`",
             "default-value": "`install-desktop-environment AND avx2-available AND total-ram-gib>=12`"
         },
         {
