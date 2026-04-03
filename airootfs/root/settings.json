@@ -1418,8 +1418,8 @@
         {
             "name": "install-nvidia-opensource",
             "dialog-name": "Hardware Support Options",
-            "short-description": "Install open-source NVIDIA graphics card driver",
-            "long-description": "Install the open-source NVIDIA graphics card driver: This driver, developed by NVIDIA, integrates closely with the Linux kernel. It makes use of native kernel interfaces, which can lead to better overall system performance and reduced power consumption. As an open-source solution, it also allows for easier debugging and encourages community contributions, resulting in faster bug fixes and feature updates.\n\nDefault Recommendation: For users with a graphics card that is supported by the latest (non-legacy) proprietary NVIDIA driver, this driver is recommended due to its better integration with Linux and the benefits it provides in terms of system stability and kernel compatibility. While the installer currently defaults to the proprietary driver for most NVIDIA cards to follow established conventions and provide a commonly recognised configuration, users are encouraged to consider the open source driver due to its advantages in kernel integration and long-term support.\n\nPlease note that, similar to the proprietary driver, this driver also relies on the proprietary NVIDIA Driver Utilities.\n\nFor more information, visit: https://github.com/NVIDIA/open-gpu-kernel-modules",
+            "short-description": "Install open-source NVIDIA kernel modules",
+            "long-description": "Install the open-source NVIDIA kernel modules (nvidia-open-dkms): These kernel modules, developed by NVIDIA and published as open source, are now the default NVIDIA driver in Arch Linux since driver version 590 (December 2025). They integrate natively with the Linux kernel, resulting in better system stability, improved power management, and full Wayland support.\n\nThis driver supports Turing (RTX 20xx, GTX 16xx) and newer GPUs.\n\nFor older GPUs (Maxwell, Pascal, Volta, Kepler), the open-source kernel modules are NOT available. These GPUs require a legacy proprietary driver or the Nouveau driver.\n\nNote: Like the proprietary driver, the open kernel modules still rely on the proprietary NVIDIA userspace utilities (nvidia-utils).\n\nFor more information, visit: https://github.com/NVIDIA/open-gpu-kernel-modules",
             "spdx-identifiers": "",
             "license-category": "CLOSED/FOSS",
             "arch-packages": [
@@ -1432,8 +1432,8 @@
         {
             "name": "install-nvidia-proprietary",
             "dialog-name": "Hardware Support Options",
-            "short-description": "Install proprietary NVIDIA graphics card driver",
-            "long-description": "Install the proprietary NVIDIA graphics card driver: This driver, while free of charge, is non-open-source and maintained by NVIDIA. It is known for delivering the highest performance and stability, especially in demanding use cases such as AI training and gaming.\n\nDefault Recommendation: Users who require the highest performance for demanding applications should opt for this driver. For most NVIDIA cards, the installer defaults to this driver to adhere to established conventions and provide a commonly recognized configuration.\n\nFor detailed driver information, please visit: https://www.nvidia.com/en-us/drivers/unix",
+            "short-description": "Install proprietary NVIDIA legacy driver",
+            "long-description": "Install the proprietary NVIDIA legacy driver: This driver provides support for older NVIDIA GPUs that are not compatible with the open-source NVIDIA kernel modules. Since driver version 590 (December 2025), the main Arch Linux NVIDIA packages have switched to open kernel modules, which only support Turing and newer GPUs.\n\nFor Maxwell (GTX 900), Pascal (GTX 10xx), and Volta GPUs, the nvidia-580xx-dkms legacy driver is required. This driver will receive security updates through October 2028.\n\nFor Kepler (GTX 600/700) GPUs, the nvidia-470xx-dkms legacy driver is required. Note that this driver is no longer receiving updates.\n\nThe specific legacy driver package for your GPU is determined automatically by the installer.\n\nFor detailed driver information, please visit: https://www.nvidia.com/en-us/drivers/unix",
             "license-category": "CLOSED",
             "spdx-identifiers": "",
             "arch-packages": [ // this package is set by check-nvidia()
@@ -1446,7 +1446,7 @@
             "name": "install-nouveau",
             "dialog-name": "Hardware Support Options",
             "short-description": "Install open-source Nouveau NVIDIA driver",
-            "long-description": "Install the Nouveau open-source NVIDIA graphics card driver: Nouveau is a community-developed open-source driver for NVIDIA graphics cards. It offers the following benefits:\n\n• Support for a wide range of older NVIDIA hardware that may not be fully supported by the other two NVIDIA drivers.\n• Unlike the other two NVIDIA drivers, Nouveau does not depend on any proprietary NVIDIA components, making it the only truly open-source solution currently available.\n\nDefault Recommendation: For very old GPUs (requiring drivers older than version 470), Nouveau is usually the safer choice, as it is generally not recommended to rely on outdated kernel versions or old X-server versions, which may be required to use an old NVIDIA legacy driver.\n\nFor more detailed information, visit: https://nouveau.freedesktop.org",
+            "long-description": "Install the Nouveau open-source NVIDIA graphics card driver: Nouveau is a community-developed, fully open-source driver for NVIDIA graphics cards. It offers the following benefits:\n\n• Broad support for older NVIDIA hardware, including GPUs not supported by NVIDIA's own drivers.\n• Unlike NVIDIA's open kernel modules and the proprietary legacy drivers, Nouveau does not depend on any proprietary NVIDIA components, making it the only truly open-source NVIDIA driver.\n• For first-generation Maxwell GPUs (GTX 750 series), Nouveau provides good support including GPU re-clocking.\n\nLimitations:\n• For GPUs from GTX 900 series onwards, signed firmware requirements limit Nouveau's power management and performance capabilities.\n• Modern Nouveau development focuses on GPUs with the NVIDIA GPU System Processor (GSP), i.e., GTX 1600/RTX 2000 and newer, via the upcoming NOVA driver.\n\nDefault Recommendation: Nouveau is recommended for very old GPUs (requiring drivers older than version 470), where running outdated proprietary drivers would pose compatibility or security risks.\n\nFor more detailed information, visit: https://nouveau.freedesktop.org",
             "spdx-identifiers": "MIT",
             "arch-packages": [
                 "xf86-video-nouveau"
@@ -1458,7 +1458,8 @@
             "name": "install-nvidia-prime",
             "default-value": "`has-hybrid-nvidia-gpu AND install-desktop-environment AND (install-nvidia-proprietary OR install-nvidia-opensource)`",
             "arch-packages": [
-                "nvidia-prime"
+                "nvidia-prime",
+                "switcheroo-control"
             ]
         },
         {

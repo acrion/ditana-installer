@@ -278,6 +278,10 @@ sub generate-chroot-script() is export {
         add-chrooted-step("su - {$s.get('user-name')} -c 'chmod 600 ~/.ssh/authorized_keys'");
     }
 
+    if $s.get("install-nvidia-prime") {
+        add-chrooted-step(q{systemctl enable switcheroo-control});
+    }
+
     if $s.get("install-terminal-utilities") {
         add-chrooted-step("su - {$s.get('user-name')} -c 'git lfs install'");
     }

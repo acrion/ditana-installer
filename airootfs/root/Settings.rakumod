@@ -398,7 +398,7 @@ class Settings {
         }
         
         my @variables = $code.match(/<[a..z A..Z _]><[a..z A..Z 0..9 \-_]>*/, :g)
-                            .grep(* !~~ any('OR', 'AND', 'NOT'))
+                            .grep(* !~~ any('OR', 'AND', 'NOT', 'True', 'False'))
                             .map(*.Str);
         
         Logging.log("$indent  $name-of-setting = $code (found variables: {@variables})");

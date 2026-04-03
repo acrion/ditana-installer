@@ -93,6 +93,9 @@ list_special_packages() {
 raku -e "use v6.d; use lib 'airootfs/root'; use NvidiaParser; download-and-test-nvidia-page"
 mv /tmp/nvidia_legacy_gpu_page.html airootfs/root/cached_legacy_gpu_page.html
 
+raku -e "use v6.d; use lib 'airootfs/root'; use NvidiaParser; download-and-test-nvidia-open-page"
+mv /tmp/nvidia_open_gpu_page.txt airootfs/root/cached_open_gpu_page.txt
+
 # Export the GPG key to be used as a fallback during installation in case keyserver.ubuntu.com is down
 sudo pacman-key --export 3056513887B78AEB | tee airootfs/root/bind-mount/root/chaotic-aur-key.asc >/dev/null
 
