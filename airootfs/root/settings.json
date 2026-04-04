@@ -1411,10 +1411,13 @@
             "name": "install-audio",
             "dialog-name": "Hardware Support Options",
             "short-description": "Install Audio support",
-            "long-description": "Install Audio Support: Installs PulseAudio and adds the user «$user-name» to the «audio» group to enable access to audio devices.",
-            "spdx-identifiers": "LGPL-2.1-or-later",
+            "long-description": "Install Audio Support: Installs PipeWire with PulseAudio and ALSA compatibility layers, and adds the user «$user-name» to the «audio» group to enable access to audio devices.",
+            "spdx-identifiers": "MIT LGPL-2.1-or-later",
             "arch-packages": [
-                "pulseaudio"
+                "pipewire",
+                "pipewire-alsa",
+                "pipewire-pulse",
+                "wireplumber"
             ],
             "default-value": true
         },
