@@ -131,9 +131,10 @@ ff02::2    ip6-allrouters
     if $s.get("install-ollama") {
         add-chrooted-step(q{echo -e "\033[32m--- Configuring Ollama ---\033[0m"});
         add-chrooted-step(q{systemctl enable ollama});
-        # Pull the default model. Ollama needs to be running for this, but systemd
-        # is not available inside arch-chroot, so we start ollama serve temporarily.
-        add-chrooted-step(q{ollama serve > /dev/null 2>&1 &});
+        # Start ollama serve as the ollama user with the same environment as the
+        # systemd unit, so the model is stored in /var/lib/ollama where the service
+        # expects it at runtime.
+        add-chrooted-step(q{runuser -u ollama -- env HOME=/var/lib/ollama OLLAMA_MODELS=/var/lib/ollama ollama serve > /dev/null 2>&1 &});
         add-chrooted-step(q{OLLAMA_PID=$!});
         add-chrooted-step(q{echo "Waiting for Ollama to start..."});
         add-chrooted-step(q{for i in $(seq 1 30); do ollama list > /dev/null 2>&1 && break; sleep 1; done});
