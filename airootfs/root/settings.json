@@ -343,6 +343,16 @@
             "available": "`real-install`"
         },
         {
+            "name": "copy-console-keyboard-configuration",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
+            "name": "configure-terminal-font",
+            "type": "procedure",
+            "available": "`real-install AND virtual-terminal AND NOT installing-over-ssh`"
+        },
+        {
             "name": "pacstrap",
             "type": "procedure",
             "available": "`real-install`"
@@ -360,19 +370,9 @@
             "available": "`real-install`"
         },
         {
-            "name": "copy-console-keyboard-configuration",
-            "type": "procedure",
-            "available": "`real-install`"
-        },
-        {
             "name": "copy-xorg-keyboard-configuration",
             "type": "procedure",
             "available": "`real-install AND install-desktop-environment`"
-        },
-        {
-            "name": "configure-terminal-font",
-            "type": "procedure",
-            "available": "`real-install AND virtual-terminal AND NOT installing-over-ssh`"
         },
         {
             "name": "create-xfce-keyboard-xml",
@@ -819,15 +819,14 @@
 
         // Settings that correspond to the dialog "Configuration Categories" -> "Multimedia Applications"
         {
-            "name": "install-unigine",
+            "name": "install-phoronix",
             "dialog-name": "Multimedia Applications",
-            "short-description": "Install Unigine graphics benchmark",
-            "long-description": "Install UNIGINE Superposition, an extreme performance and stability test for PC hardware (video card, power supply, cooling system).",
-            "aur-packages": [
-                "unigine-superposition"
+            "short-description": "Install Phoronix Test Suite",
+            "long-description": "Install the Phoronix Test Suite, the most comprehensive benchmarking platform for Linux. Example: To run the UNIGINE Superposition GPU benchmark, use 'phoronix-test-suite install unigine-super' followed by 'phoronix-test-suite run unigine-super'.",
+            "arch-packages": [
+                "phoronix-test-suite"
             ],
-            "license-category": "CLOSED",
-            "spdx-identifiers": "UNIGINE Engine",
+            "spdx-identifiers": "GPL-3.0-or-later",
             "available": "`install-desktop-environment`",
             "default-value": false
         },
