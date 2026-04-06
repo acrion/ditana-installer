@@ -224,13 +224,6 @@ sub generate-chroot-script() is export {
 
     my $s = Settings.instance;
 
-    if $s.get("zfs-filesystem") {
-        add-chrooted-step(q{echo -e "\033[32mZFS Dataset status inside arch-chroot:\033[0m"});
-        add-chrooted-step(q{zfs get mounted,mountpoint,canmount ditana-root/ROOT/default ditana-root/HOME/default});
-        add-chrooted-step(q{echo -e "\033[32mCurrent ZFS mounts inside arch-chroot:\033[0m"});
-        add-chrooted-step(q{mount | grep zfs})
-    }
-
     add-chrooted-step(q{echo -e "\033[32m--- Configuring time ---\033[0m"});
     add-chrooted-step("ln -sf '/usr/share/zoneinfo/{$s.get('timezone')}' /etc/localtime");
     add-chrooted-step("hwclock --systohc"); # generate /etc/adjtime

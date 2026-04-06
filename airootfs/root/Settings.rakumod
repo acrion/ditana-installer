@@ -155,7 +155,7 @@ class Settings {
         my constant @bootstrap-names =
         < intel-microcode amd-microcode firmware
         ditana-base ditana-mirrorlist ditana-testing-mirrorlist
-        install-syslinux install-grub install-efibootmgr >;
+        install-syslinux install-grub install-efibootmgr install-zram >;
 
         my Str @packages;
 
@@ -164,7 +164,9 @@ class Settings {
             next unless $setting.arch-packages && $setting.arch-packages[0];
 
             my $is-bootstrap = $setting.name ∈ @bootstrap-names
-            || $setting.dialog-name eq "Kernel Selection";
+            || $setting.dialog-name eq "Kernel Selection"
+            || $setting.dialog-name eq "File System";
+            || $setting.dialog-name eq "Boot Init System";
 
             next unless $is-bootstrap;
 

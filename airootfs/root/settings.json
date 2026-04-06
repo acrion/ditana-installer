@@ -16,7 +16,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
-
 {
     "installation-steps": [
         {
@@ -170,8 +169,7 @@
         {
             "name": "Configuration Categories",
             "type": "categories",
-            "categories":
-            [
+            "categories": [
                 {
                     "name": "Desktop Applications",
                     "type": "checklist",
@@ -196,8 +194,7 @@
                 {
                     "name": "Expert Settings",
                     "type": "categories",
-                    "categories":
-                    [
+                    "categories": [
                         {
                             "name": "File System",
                             "type": "radiolist",
@@ -567,7 +564,6 @@
             "name": "tmux",
             "detect": "%*ENV<TMUX>.so"
         },
-
         // Non-configurable settings that define the installation of packages determined by
         // default values, which are derived from the installation logic.
         {
@@ -591,12 +587,15 @@
                 "linux-firmware",
                 "linux-firmware-marvell",
                 "sof-firmware",
-                "wireless-regdb" ],
+                "wireless-regdb"
+            ],
             "default-value": true
         },
         {
             "name": "b43-firmware",
-            "arch-packages": [ "b43-firmware" ], // we separate this from the rest of the firmware packages and install it only if it is required, because it requires a specific kernel
+            "arch-packages": [
+                "b43-firmware"
+            ], // we separate this from the rest of the firmware packages and install it only if it is required, because it requires a specific kernel
             "default-value": "`b43-required`"
         },
         {
@@ -623,21 +622,21 @@
         {
             "name": "ditana-base",
             "arch-packages": [
-                "base",               // Minimal package set to define a basic Arch Linux installation.
-                "base-devel",         // Provides various essential tools like sudo. Optional dependency of pacman, required to use makepkg.
-                "dialog",             // Utilized in chroot-install.sh to prompt for the user password.
+                "base", // Minimal package set to define a basic Arch Linux installation.
+                "base-devel", // Provides various essential tools like sudo. Optional dependency of pacman, required to use makepkg.
+                "dialog", // Utilized in chroot-install.sh to prompt for the user password.
                 "ditana-config-bash", // Ditana bash configuration.
-                "ditana-filesystem",  // Base Ditana GNU/Linux files, based on the original 'filesystem' package from Arch Linux.
-                "glibc-locales",      // Required for localized output and locale-dependent functions in various applications (even for users who choose en_US.UTF-8 for LC_MESSAGES).
-                "libpwquality",       // Provides pwscore which we use in chroot-install.sh to validate user passwort quality
-                "lsb-release",        // Provides the lsb_release command, as referenced at https://refspecs.linuxfoundation.org/lsb.shtml.
-                "os-prober",          // See https://wiki.archlinux.org/title/GRUB/Detecting_other_operating_systems
-                "pikaur",             // Ditana’s chosen AUR helper for enhanced security
-                "python-defusedxml",  // Enables pikaur to safeguard against XML-related vulnerabilities.
-                "python-pysocks",     // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
-                "rakudo-bin",         // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
-                "terminus-font",      // The terminal font that will be configured.
-                "util-linux"          // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
+                "ditana-filesystem", // Base Ditana GNU/Linux files, based on the original 'filesystem' package from Arch Linux.
+                "glibc-locales", // Required for localized output and locale-dependent functions in various applications (even for users who choose en_US.UTF-8 for LC_MESSAGES).
+                "libpwquality", // Provides pwscore which we use in chroot-install.sh to validate user passwort quality
+                "lsb-release", // Provides the lsb_release command, as referenced at https://refspecs.linuxfoundation.org/lsb.shtml.
+                "os-prober", // See https://wiki.archlinux.org/title/GRUB/Detecting_other_operating_systems
+                "pikaur", // Ditana’s chosen AUR helper for enhanced security
+                "python-defusedxml", // Enables pikaur to safeguard against XML-related vulnerabilities.
+                "python-pysocks", // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
+                "rakudo-bin", // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
+                "terminus-font", // The terminal font that will be configured.
+                "util-linux" // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
             ],
             "default-value": true
         },
@@ -655,9 +654,7 @@
             ],
             "default-value": "`NOT release-version`"
         },
-
         // Settings that correspond to the mandatory dialogs prior the dialog "Configuration Categories"
-
         // Dialog "Install Desktop Environment?"
         {
             "name": "install-desktop-environment",
@@ -668,7 +665,6 @@
             ],
             "default-value": "`NOT installing-over-ssh`"
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Applications"
         {
             "name": "install-libreoffice",
@@ -816,7 +812,6 @@
             "available": "`install-desktop-environment`",
             "default-value": "`install-desktop-environment`"
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Multimedia Applications"
         {
             "name": "install-phoronix",
@@ -891,7 +886,6 @@
             "available": "`install-desktop-environment`",
             "default-value": "`install-desktop-environment`"
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "AI Tools and Libraries"
         {
             "name": "install-ditana-assistant",
@@ -951,7 +945,7 @@
                 "stable-diffusion-ui"
             ],
             "spdx-identifiers": "easydiffusion",
-            "available":     "`install-desktop-environment AND avx2-available AND total-ram-gib>=6`",
+            "available": "`install-desktop-environment AND avx2-available AND total-ram-gib>=6`",
             "default-value": false
         },
         {
@@ -983,7 +977,7 @@
             ],
             "license-category": "CLOSED/FOSS",
             "spdx-identifiers": "CUDA,BSD,Apache-2.0,MIT,BSD-3-Clause,MPICH",
-            "available":     "`avx2-available`",
+            "available": "`avx2-available`",
             "default-value": false
         },
         {
@@ -994,7 +988,6 @@
             ],
             "default-value": "`install-gpu-libraries AND nvidia-pci-id`"
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "File System"
         {
             "name": "zfs-filesystem",
@@ -1053,7 +1046,6 @@
             "spdx-identifiers": "GPL-2.0-only et al.",
             "default-value": false
         },
-        
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Kernel Selection"
         {
             "name": "install-standard-stable-kernel",
@@ -1132,7 +1124,6 @@
             "available": "`NOT b43-required`",
             "default-value": false
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "General Kernel Configuration"
         {
             "name": "kernel-option-sysrq",
@@ -1239,7 +1230,6 @@
             "spdx-identifiers": "GPL-2.0-only",
             "default-value": true
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "CPU Vulnerability Mitigation Options".
         // These correspond to kernel mitigations for which the kernel does not perform the maximum mitigation by default. These are set
         // by default to True if the CPU has the corresponding vulnerability, see above list "Settings that are determined via `lscpu`".
@@ -1333,7 +1323,6 @@
             "available": "`NOT kernel-option-mitof`",
             "default-value": "`is-rfds-vulnerable`"
         },
-
         // The following two are to switch off mitigations
         {
             "name": "kernel-option-ibtof",
@@ -1351,7 +1340,6 @@
             "spdx-identifiers": "GPL-2.0-only",
             "default-value": false
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Boot Init System"
         {
             "name": "use-init-busybox",
@@ -1372,7 +1360,6 @@
             "available": "`NOT zfs-filesystem`",
             "default-value": "`NOT zfs-filesystem`"
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Storage & File System Options"
         {
             "name": "disable-atimes",
@@ -1404,7 +1391,6 @@
             ],
             "default-value": true
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Hardware Support Options"
         {
             "name": "install-audio",
@@ -1495,7 +1481,6 @@
             "available": "`virtualbox`",
             "default-value": "`virtualbox`"
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Repository & Package Management Configuration"
         {
             "name": "install-pacman-core-tools",
@@ -1509,7 +1494,7 @@
                 "pacseek",
                 "fwupd", // daemon to allow session software to update firmware
                 "pkgfile"
-                ],
+            ],
             "default-value": true
         },
         {
@@ -1545,7 +1530,6 @@
             "default-value": "`install-desktop-environment`"
             //"default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"
         {
             "name": "enable-network",
@@ -1633,7 +1617,6 @@
             "available": "`enable-network`",
             "default-value": false
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Maintenance Tools"
         {
             "name": "configure-automatic-snapshots",
@@ -1679,7 +1662,9 @@
             "short-description": "Enable persistent user services",
             "long-description": "Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks.",
             "spdx-identifiers": "",
-            "arch-packages": [""],
+            "arch-packages": [
+                ""
+            ],
             "required-by-chroot": true,
             "default-value": "true"
         },
@@ -1728,7 +1713,6 @@
             "default-value": "`NOT virtual-environment`",
             "available": "`NOT virtual-environment`"
         },
-        
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Terminal Tools and Utilities"
         {
             "name": "install-zsh",
@@ -1742,18 +1726,18 @@
             "required-by-chroot": true,
             "default-value": true
         },
-//        {
-//            "name": "install-kmscon",
-//            "dialog-name": "Terminal Tools and Utilities",
-//            "short-description": "Install kmscon userspace console emulator",
-//            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
-//            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
-//            "arch-packages": [
-//                "kmscon"
-//            ],
-//            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
-//            "default-value": "`install-desktop-environment`"
-//        },
+        //        {
+        //            "name": "install-kmscon",
+        //            "dialog-name": "Terminal Tools and Utilities",
+        //            "short-description": "Install kmscon userspace console emulator",
+        //            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
+        //            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
+        //            "arch-packages": [
+        //                "kmscon"
+        //            ],
+        //            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
+        //            "default-value": "`install-desktop-environment`"
+        //        },
         {
             "name": "install-cron",
             "dialog-name": "Terminal Tools and Utilities",
@@ -1797,7 +1781,22 @@
             "spdx-identifiers": "GPL-3.0-or-later",
             "arch-packages": [
                 // ranger including its optional dependencies
-                "atool", "elinks", "ffmpegthumbnailer", "highlight", "imagemagick", "libcaca", "mediainfo", "odt2txt", "perl-image-exiftool", "poppler", "python-chardet", "python-pillow", "transmission-cli", "ueberzug", "w3m", "ranger"
+                "atool",
+                "elinks",
+                "ffmpegthumbnailer",
+                "highlight",
+                "imagemagick",
+                "libcaca",
+                "mediainfo",
+                "odt2txt",
+                "perl-image-exiftool",
+                "poppler",
+                "python-chardet",
+                "python-pillow",
+                "transmission-cli",
+                "ueberzug",
+                "w3m",
+                "ranger"
             ],
             "default-value": true
         },
@@ -1808,11 +1807,26 @@
             "long-description": "Install various command line archivers: $packages.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "7zip", "arj", "bzip2", "cpio", "gzip", "lhasa", "lrzip", "lz4", "lzip", "lzop", "tar", "unarj", "unrar", "unzip", "xz", "zip", "zstd"
+                "7zip",
+                "arj",
+                "bzip2",
+                "cpio",
+                "gzip",
+                "lhasa",
+                "lrzip",
+                "lz4",
+                "lzip",
+                "lzop",
+                "tar",
+                "unarj",
+                "unrar",
+                "unzip",
+                "xz",
+                "zip",
+                "zstd"
             ],
             "default-value": true
         },
-
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Development Tools and Libraries"
         {
             "name": "standardized-locale",
@@ -1869,7 +1883,8 @@
             "long-description": "Install $packages and configure dynamic path variables to the current version.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "jdk-openjdk", "java-runtime-common"
+                "jdk-openjdk",
+                "java-runtime-common"
             ],
             "default-value": true
         },
@@ -1880,7 +1895,13 @@
             "long-description": "Install general development packages: $packages.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "ltrace", "binutils", "perf", "patchelf", "strace", "stress-ng", "ditana-update-from-skel"
+                "ltrace",
+                "binutils",
+                "perf",
+                "patchelf",
+                "strace",
+                "stress-ng",
+                "ditana-update-from-skel"
             ],
             "default-value": false
         },
@@ -1904,7 +1925,17 @@
             "long-description": "Install C++ development packages: Equips your system with $packages.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "cmake", "meson", "gdb", "lldb", "gcc", "clang", "gtest", "doxygen", "vcpkg", "libtool", "pkgconf"
+                "cmake",
+                "meson",
+                "gdb",
+                "lldb",
+                "gcc",
+                "clang",
+                "gtest",
+                "doxygen",
+                "vcpkg",
+                "libtool",
+                "pkgconf"
             ],
             "default-value": false
         },
@@ -1915,7 +1946,12 @@
             "long-description": "Install CPU Parallel Programming Frameworks:\n • blas-openblas: a Basic Linear Algebra Subprograms library for matrix operations\n • eigen: Lightweight C++ template library for vector and matrix math\n • openmp: a shared-memory multiprocessing library\n • openmpi: High performance message passing library\n • intel-oneapi-mkl: Intel’s Math Kernel Library\n • ispc: a compiler for high-performance SIMD programming on the CPU",
             "spdx-identifiers": "",
             "arch-packages": [
-                "blas-openblas", "eigen", "openmp", "openmpi", "intel-oneapi-mkl", "ispc"
+                "blas-openblas",
+                "eigen",
+                "openmp",
+                "openmpi",
+                "intel-oneapi-mkl",
+                "ispc"
             ],
             "default-value": false
         },
@@ -1926,7 +1962,11 @@
             "long-description": "Install Qt5 development libraries $packages.",
             "spdx-identifiers": "Qt Dual license",
             "arch-packages": [
-                "qt5-base", "qt5-declarative", "qt5-svg", "qt5-tools", "qt5-script"
+                "qt5-base",
+                "qt5-declarative",
+                "qt5-svg",
+                "qt5-tools",
+                "qt5-script"
             ],
             "default-value": false
         },
@@ -1938,12 +1978,15 @@
             "license-category": "CLOSED",
             "spdx-identifiers": "",
             "aur-packages": [
-                "clion-jre", "clion-cmake", "clion-gdb", "clion-lldb", "clion"
+                "clion-jre",
+                "clion-cmake",
+                "clion-gdb",
+                "clion-lldb",
+                "clion"
             ],
             "available": "`install-desktop-environment`",
             "default-value": false
         },
-
         // Settings that correspond to the main installer logic
         {
             "name": "keymap-layout",
