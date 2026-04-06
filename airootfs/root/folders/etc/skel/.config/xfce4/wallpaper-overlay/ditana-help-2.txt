@@ -1,0 +1,50 @@
+=== Regarding this Cheat Sheet ===
+
+- To modify this cheat sheet or make your own, edit the
+  files in directory ~/.config/xfce-wallpaper-overlay/
+  Each file represents one column.
+- To remove the cheat sheet overlay, uninstall package
+  xfce-wallpaper-overlay, login again and change the
+  wallpaper, e.g. by selecting 'Next' in Variety.
+
+=== Main Panel ===
+
+Ctrl+Left Click — Drag icon to reorder
+Middle Click — Launch new instance of app
+
+=== Window Manager ===
+
+Alt+Left click — Move window
+Alt+Right click near edge — Resize window
+Alt+F3 — Open Application Finder
+Alt+F10 — Toggle window maximize
+Alt+F12 — Toggle window always on top
+Alt+Tab — Switch between active windows
+Alt+Mouse Wheel — Zoom desktop
+
+Ctrl+Alt+D — Toggle show desktop
+Ctrl+Alt+L — Lock screen
+Ctrl+W — Close current tab
+Ctrl+Q, Alt+F4 — Close application
+Print — Capture screenshot
+
+=== Workspaces ===
+
+Ctrl+PageUp — Switch to previous workspace
+Ctrl+PageDown — Switch to next workspace
+Ctrl+Alt+PageUp — Move window to previous workspace
+Ctrl+Alt+PageDown — Move window to next workspace
+Alt+F6 — Toggle stick window to all workspaces
+
+=== Application Shortcuts ===
+
+Super+Space — Open file search tool
+Super+E — Launch Thunar file manager
+Ctrl+Alt+Escape — Select window to force close
+Alt+PageUp — Increase Sound Volume
+Alt+PageDown — Decrease Sound Volume
+
+=== Logseq ===
+
+Ctrl+J — AI: Process the current text block & append response
+Ctrl+G — AI: Choose a command that processes the text block

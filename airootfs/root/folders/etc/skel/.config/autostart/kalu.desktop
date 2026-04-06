@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Kalu
+Comment=Check for updates for Arch Linux and AUR
+Exec=/bin/bash -c "command -v kalu && exec kalu"
+Icon=system-software-update
+Terminal=false
+Categories=System;Utility;
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+RunHook=0

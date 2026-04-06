@@ -40,6 +40,11 @@ class Setting {
     has Array @.aur-packages = [];
     has SettingValue $.default-value is rw;
     has SettingValue $.current-value is rw;
+    has Array @.files = [];
+    has Array @.chroot-script = [];
+    has Array @.root-script = [];
+    has Array @.session-setup = [];
+    has Array @.autostart = [];  # list of [onlyshowin, script-path] pairs
 }
 
 class Settings {
@@ -165,7 +170,7 @@ class Settings {
 
             my $is-bootstrap = $setting.name ∈ @bootstrap-names
             || $setting.dialog-name eq "Kernel Selection"
-            || $setting.dialog-name eq "File System";
+            || $setting.dialog-name eq "File System"
             || $setting.dialog-name eq "Boot Init System";
 
             next unless $is-bootstrap;
@@ -227,6 +232,81 @@ class Settings {
         return @result;
     }
     
+    method get-files-for-enabled-settings() {
+        my Str @files;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.files && $setting.files[0];
+            for @($setting.files[0]) -> $file {
+                @files.push($file.Str) if $file;
+            }
+        }
+        return @files;
+    }
+
+    method !resolve-script-line(Str $line --> Str) {
+        if self!is-code($line) {
+            my $code = $line.substr(1, *-1);
+            CATCH {
+                die "Error evaluating chroot/root-script line: `$code`\n$_";
+            }
+            return EVAL('qq«' ~ $code ~ '»');
+        }
+        return $line;
+    }
+
+    method get-chroot-script-steps() {
+        my Str @steps;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.chroot-script && $setting.chroot-script[0];
+            @steps.push('echo -e "\033[32m--- Chroot steps for ' ~ $setting.name ~ ' ---\033[0m"');
+            for @($setting.chroot-script[0]) -> $line {
+                next unless $line;
+                @steps.push(self!resolve-script-line($line.Str));
+            }
+        }
+        return @steps;
+    }
+
+    method get-root-script-steps() {
+        my Str @steps;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.root-script && $setting.root-script[0];
+            @steps.push('echo "--- Root script steps for ' ~ $setting.name ~ ' ---"');
+            for @($setting.root-script[0]) -> $line {
+                next unless $line;
+                @steps.push(self!resolve-script-line($line.Str));
+            }
+        }
+        return @steps;
+    }
+
+    method get-session-setup-scripts() {
+        my Str @scripts;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.session-setup && $setting.session-setup[0];
+            for @($setting.session-setup[0]) -> $script {
+                @scripts.push($script.Str) if $script;
+            }
+        }
+        return @scripts;
+    }
+
+    method get-autostart-entries() {
+        my @entries;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.autostart && $setting.autostart[0];
+            for @($setting.autostart[0]) -> $entry {
+                @entries.push($entry);
+            }
+        }
+        return @entries;
+    }
+
     method get($name) {
         die "Unknown setting: $name" unless %!settings{$name}:exists;
         return %!settings{$name}.current-value;
@@ -544,5 +624,16 @@ class Settings {
         $output ~= "Required System Adjustments:\n\n" ~ $internal-differences if $internal-differences;
         
         return $output;
+    }
+
+    method substitute-setting-refs(Str $line --> Str) is export {
+        my $result = $line;
+        my @matches = $result.match(/\$\{(<[a..zA..Z0..9\-]>+)\}/, :g);
+        for @matches -> $match {
+            my $name = $match[0].Str;
+            my $value = self.get($name);
+            $result = $result.subst('${' ~ $name ~ '}', $value.defined ?? $value.Str !! '', :g);
+        }
+        return $result;
     }
 }

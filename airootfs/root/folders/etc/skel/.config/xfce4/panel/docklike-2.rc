@@ -1,0 +1,5 @@
+[user]
+onlyDisplayVisible=true
+onlyDisplayScreen=false
+middleButtonBehavior=1
+pinned=thunar;kitty;xfce-settings-manager;org.gnome.SystemMonitor;org.xfce.Catfish;

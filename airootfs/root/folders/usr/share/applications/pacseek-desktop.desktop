@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Add/Remove Software
+GenericName=Package Manager
+Comment=Manage packages with pacseek
+TryExec=xdg-terminal-exec
+StartupNotify=true
+Exec=xdg-terminal-exec -e pacseek
+Icon=system-software-install
+Categories=System;Utility;

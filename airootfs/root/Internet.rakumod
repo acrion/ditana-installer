@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Chroot;
 use Dialogs;
 use Logging;
 use RunAndLog;
@@ -224,6 +225,13 @@ sub establish-internet-connection() is export {
                                 my $wifi-script = 'folders/usr/share/ditana/initialize-wifi.sh'.IO;
                                 $wifi-script.spurt("nmcli dev wifi connect '$ssid' password '$ssid-passphrase'\n");
                                 $wifi-script.IO.chmod(0o700);
+
+                                add-root-script-step(q:to/END/.chomp);
+echo "Initializing Wi-Fi..."
+/usr/share/ditana/initialize-wifi.sh
+echo "Successfully initialized Wi-Fi, deleting file that contained the Wi-Fi password."
+shred -u /usr/share/ditana/initialize-wifi.sh
+END
                                 last;
                             }
                         }

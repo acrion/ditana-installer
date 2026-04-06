@@ -22,8 +22,14 @@ use Logging;
 use RunAndLog;
 use Settings;
 
+my Str @additional-root-script-steps;
+
+sub add-root-script-step(Str $line) is export {
+    @additional-root-script-steps.push($line);
+}
+
 sub add-chrooted-step(Str $commands) is export {
-    "bind-mount/root/installation-steps.sh".IO.spurt($commands.chomp ~ "\n\n", :append);
+    "bind-mount/root/installation-steps.sh".IO.spurt($commands.chomp ~ "\n", :append);
 }
 
 sub create-hostid() is export {
@@ -42,8 +48,22 @@ sub copy-files-into-chroot-before-pacstrap() is export {
 }
 
 sub copy-files-into-chroot-after-pacstrap() is export {
-    run-and-echo("chown", "-R", "root:root", "%*ENV<HOME>/folders");
-    run-and-echo("rsync", "--recursive", "--times", "--no-perms", "--executability", "--verbose", "%*ENV<HOME>/folders/", "/mnt/")
+    my $s = Settings.instance;
+    my @files = $s.get-files-for-enabled-settings;
+
+    for @files -> $file {
+        my $src = "%*ENV<HOME>/folders{$file}";
+        my $dest = "/mnt{$file}";
+
+        if $src.IO.e {
+            my $dest-dir = $dest.IO.dirname;
+            run-and-echo("mkdir", "-p", $dest-dir) unless $dest-dir.IO.d;
+            run-and-echo("cp", "--preserve=mode,timestamps", $src, $dest);
+            Logging.log("Copied $src to $dest");
+        } else {
+            Logging.log("WARNING: File $src does not exist, skipping");
+        }
+    }
 }
 
 sub add-version() is export {
@@ -59,48 +79,10 @@ sub curate-chroot-files() is export {
     my $s = Settings.instance;
 
     '/etc/pacman.d/mirrorlist'.IO.copy('/mnt/etc/pacman.d/mirrorlist');
-
     '/mnt/etc/skel/.local/bin'.IO.mkdir;
 
     # https://wiki.archlinux.org/title/Installation_guide#Network_configuration
     '/mnt/etc/hostname'.IO.spurt($s.get('host-name') ~ "\n");
-
-    if $s.get("install-zram") {
-        '/mnt/etc/systemd/zram-generator.conf'.IO.spurt("[zram0]\n");
-    }
-
-    #if $s.get("install-kmscon") {
-    #    '/mnt/etc/kmscon'.IO.mkdir;
-    #    '/mnt/etc/kmscon/kmscon.conf'.IO.spurt("font-name=JetBrainsMono Nerd Font\n"); # font is installed by package ditana-config-xfce
-    #    '/mnt/etc/kmscon/kmscon.conf'.spurt("no-drm\n", :append) if $s.get('nvidia-pci-id');
-    #}
-
-    unless $s.get("install-variety") {
-        '/mnt/etc/skel/.config/variety/variety.conf'.IO.unlink;
-        '/mnt/etc/skel/.config/autostart/variety.desktop'.IO.unlink;
-    }
-
-    unless $s.get("install-stable-diffusion") {
-        '/mnt/usr/share/applications/stable-diffusion.desktop'.IO.unlink;
-    }
-
-    if $s.get("install-codegpt") {
-        my $openai-api-file = '/mnt/etc/skel/.shell.d/openai.sh'.IO;
-        $openai-api-file.spurt("# To use e. g. codegpt, you need to copy your OpenAI API key from
-# https://platform.openai.com/api-keys
-# to here. You may want to change the model, e.g. `codegpt config set openai.model gpt-4o-mini`
-#export OPENAI_API_KEY=
-");
-        $openai-api-file.chmod(0o700)
-    }
-
-    if $s.get("install-terminal-utilities") {
-        '/mnt/etc/skel/.config/bat'.IO.mkdir;
-        '/mnt/etc/skel/.config/bat/config'.IO.spurt("--paging=never
---wrap=never
---style=snip
-")
-    }
 
     if $s.get("enable-network") {
         '/mnt/etc/hosts'.IO.spurt("# Static table lookup for hostnames.
@@ -112,36 +94,6 @@ ff02::1    ip6-allnodes
 ff02::2    ip6-allrouters
 127.0.1.1  {$s.get('host-name')}.localdomain {$s.get('host-name')}");
         '/mnt/etc/hosts'.IO.chmod(0o644)
-    }
-
-    if $s.get("install-nvidia-prime") {
-        # NOTE: NVIDIA Prime GPU Offloading Configuration Limitations
-        #
-        # While we install NVIDIA Prime support, there is currently no universal solution
-        # to automatically enable GPU offloading for OpenGL applications. Users need to
-        # manually invoke applications with the following environment variables:
-        #
-        # __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia <application>
-        #
-        # Setting these variables globally via /etc/profile.d is not viable as it breaks
-        # XFCE’s window manager (xfwm4) rendering. Alternative approaches like systemd
-        # services or application profiles have their own limitations.
-    }
-    
-    if $s.get("install-ollama") {
-        add-chrooted-step(q{echo -e "\033[32m--- Configuring Ollama ---\033[0m"});
-        add-chrooted-step(q{systemctl enable ollama});
-        # Start ollama serve as the ollama user with the same environment as the
-        # systemd unit, so the model is stored in /var/lib/ollama where the service
-        # expects it at runtime.
-        add-chrooted-step(q{runuser -u ollama -- env HOME=/var/lib/ollama OLLAMA_MODELS=/var/lib/ollama ollama serve > /dev/null 2>&1 &});
-        add-chrooted-step(q{OLLAMA_PID=$!});
-        add-chrooted-step(q{echo "Waiting for Ollama to start..."});
-        add-chrooted-step(q{for i in $(seq 1 30); do ollama list > /dev/null 2>&1 && break; sleep 1; done});
-        add-chrooted-step(q{echo -e "\033[32m--- Pulling phi4-mini model ---\033[0m"});
-        add-chrooted-step(q{ollama pull phi4-mini});
-        add-chrooted-step(q{kill $OLLAMA_PID 2>/dev/null || true});
-        add-chrooted-step(q{wait $OLLAMA_PID 2>/dev/null || true});
     }
 }
 
@@ -218,83 +170,162 @@ sub generate-aur-package-installation-script() is export {
 }
 
 sub generate-chroot-script() is export {
-    # Please note that the purpose of this function partly overlaps with that of the static script `bind-mount/chroot-install.sh`.
-    # In general, more complex things that are required in the chroot environment should rather be coded in `bind-mount/chroot-install.sh`.
-    # This function contains short steps based on simple case distinctions.
-
+    "bind-mount/root/installation-steps.sh".IO.spurt("");  # clear file
     my $s = Settings.instance;
 
+    # Check if a package is available natively or in the AUR
+    # This function is used as an alternative to pikaur -Si, which requires systemd (unavailable in chroot)
+    add-chrooted-step(q:to/FUNC/.chomp);
+    is_package_available() {
+        local package_name="$1"
+        if pacman -Si "$package_name" &>/dev/null; then
+            echo -e "\033[32m--- ${package_name}: Available as native package ---\033[0m"
+            return 0
+        fi
+        local aur_api_url="https://aur.archlinux.org/rpc/"
+        local query_params="v=5&type=info&arg[]=${package_name}"
+        if curl -s "${aur_api_url}?${query_params}" | jq -e '.resultcount > 0' >/dev/null; then
+            echo -e "\033[32m--- ${package_name}: Available in AUR ---\033[0m"
+            return 0
+        else
+            echo -e "\033[33m--- ${package_name}: Not available ---\033[0m"
+            return 1
+        fi
+    }
+    FUNC
+
+    # Unconditional time configuration
     add-chrooted-step(q{echo -e "\033[32m--- Configuring time ---\033[0m"});
     add-chrooted-step("ln -sf '/usr/share/zoneinfo/{$s.get('timezone')}' /etc/localtime");
-    add-chrooted-step("hwclock --systohc"); # generate /etc/adjtime
+    add-chrooted-step("hwclock --systohc");
 
-    if $s.get("enable-network") {
-        add-chrooted-step("systemctl enable systemd-timesyncd"); # https://wiki.archlinux.org/title/Systemd-timesyncd#Enable_and_start
-        add-chrooted-step("systemctl enable NetworkManager");
-        add-chrooted-step("systemctl enable systemd-resolved");
-    }
-
-#    if $s.get("install-kmscon") {
-#        for 2..5 -> $tty {
-#            add-chrooted-step("systemctl disable getty\@tty{$tty}.service");
-#            add-chrooted-step("systemctl enable kmsconvt\@tty{$tty}.service");
-#        }
-#    }
-
-    if $s.get("install-bluetooth") {
-        add-chrooted-step("systemctl enable bluetooth"); # https://wiki.archlinux.org/title/Bluetooth
-    }
-
+    # Locale generation
     add-chrooted-step(q{echo -e "\033[32m--- Generating locales ---\033[0m"});
-    add-chrooted-step(q{locale-gen}); # https://wiki.archlinux.org/title/Installation_guide#Localization
+    add-chrooted-step(q{locale-gen});
 
-    if $s.get("install-desktop-environment") {
-        add-chrooted-step(q{fc-cache -fv});
-    }
-
-    if $s.get("install-audio") {
-        add-chrooted-step("usermod -aG audio {$s.get('user-name')}")
-    }
-    
-    if $s.get("install-cron") {
-        add-chrooted-step(q{systemctl enable cronie});
-    }
-    
-    if $s.get("enable-auditd") {
-        add-chrooted-step(q{systemctl enable auditd});
+    # Append all chroot-script entries from enabled settings
+    for $s.get-chroot-script-steps -> $step {
+        add-chrooted-step($step);
     }
 
-    if $s.get("install-pacman-core-tools") {
-        add-chrooted-step(q{systemctl enable pkgfiled});
-    }
-
-    if $s.get("enable-fstrim") {
-        add-chrooted-step(q{systemctl enable fstrim.timer});
-    }
-
-    if $s.get("install-logrotate") {
-        add-chrooted-step(q{systemctl enable logrotate.timer});
-    }
-
-    if $s.get("install-firewalld") {
-        add-chrooted-step(q{systemctl enable firewalld});
-    }
-
-    if $s.get("install-openssh") {
-        add-chrooted-step(q{systemctl enable sshd});
-        add-chrooted-step("su - {$s.get('user-name')} -c 'ssh-keygen -t ed25519 -N \"\" -f ~/.ssh/id_ed25519 -q'");
-        add-chrooted-step("su - {$s.get('user-name')} -c 'touch ~/.ssh/authorized_keys'");
-        add-chrooted-step("su - {$s.get('user-name')} -c 'chmod 600 ~/.ssh/authorized_keys'");
-    }
-
-    if $s.get("install-nvidia-prime") {
-        add-chrooted-step(q{systemctl enable switcheroo-control});
-    }
-
-    if $s.get("install-terminal-utilities") {
-        add-chrooted-step("su - {$s.get('user-name')} -c 'git lfs install'");
-    }
-
-    # see folders/etc/systemd/system/ditana-initialize-system.service and folders/usr/share/ditana/initialize-system-as-root.sh
+    # see folders/etc/systemd/system/ditana-initialize-system.service
     add-chrooted-step(q{systemctl enable ditana-initialize-system.service});
+}
+
+sub generate-root-script() is export {
+    my $s = Settings.instance;
+    my $script-path = '/mnt/usr/share/ditana/initialize-system-as-root.sh';
+
+    my $header = q:to/END/;
+    # This script is executed as a one-time service after the initial installation of the Ditana GNU/Linux distribution.
+    # It is generated by the Ditana installer. See ditana-initialize-system.service.
+
+    {
+    END
+
+    my $footer = q:to/END/;
+    } 2>&1 | tee -a /var/log/install_ditana.log
+    END
+
+    my @steps = $s.get-root-script-steps;
+    @steps.append(@additional-root-script-steps);
+
+    my $body = @steps.join("\n");
+
+    $script-path.IO.dirname.IO.mkdir;
+    $script-path.IO.spurt($header ~ $body ~ "\n" ~ $footer);
+    $script-path.IO.chmod(0o755);
+    Logging.log("Generated $script-path with {@steps.elems} steps");
+}
+
+sub generate-session-setup() is export {
+    my $s = Settings.instance;
+    my @scripts = $s.get-session-setup-scripts;
+
+    # Generate /usr/share/ditana/session-setup.sh which sources all registered scripts
+    my $setup-script-path = '/mnt/usr/share/ditana/session-setup.sh';
+    my $setup-content = "#!/bin/bash\n";
+    $setup-content ~= "# Generated by Ditana installer — sources session-setup scripts before the DE starts.\n\n";
+
+    for @scripts -> $script {
+        $setup-content ~= "[ -x \"$script\" ] && . \"$script\"\n";
+    }
+
+    $setup-script-path.IO.dirname.IO.mkdir;
+    $setup-script-path.IO.spurt($setup-content);
+    $setup-script-path.IO.chmod(0o755);
+
+    # Generate /usr/share/ditana/session-wrapper
+    my $wrapper-path = '/mnt/usr/share/ditana/session-wrapper';
+    my $wrapper-content = q:to/END/;
+    #!/bin/bash
+    # Ditana session wrapper — executed by LightDM before the desktop environment starts.
+    # XDG_SESSION_DESKTOP and XDG_SESSION_TYPE are set by LightDM at this point.
+
+    [ -x /usr/share/ditana/session-setup.sh ] && . /usr/share/ditana/session-setup.sh
+
+    exec /etc/lightdm/Xsession "$@"
+    END
+
+    $wrapper-path.IO.spurt($wrapper-content);
+    $wrapper-path.IO.chmod(0o755);
+
+    Logging.log("Generated session-wrapper with {@scripts.elems} session-setup scripts");
+}
+
+sub generate-autostart-entries() is export {
+    my $s = Settings.instance;
+    my @entries = $s.get-autostart-entries;
+    my $autostart-dir = '/mnt/etc/xdg/autostart';
+
+    run-and-echo("mkdir", "-p", $autostart-dir) unless $autostart-dir.IO.d;
+
+    for @entries -> $entry {
+        my ($only-show-in, $script-path) = @($entry);
+        my $basename = $script-path.IO.basename.subst(/\.sh$/, '');
+        my $desktop-path = "$autostart-dir/ditana-{$basename}.desktop";
+
+        my $content = "[Desktop Entry]\n";
+        $content ~= "Type=Application\n";
+        $content ~= "Exec=/bin/bash -c '$script-path'\n";
+        $content ~= "Hidden=false\n";
+        $content ~= "NoDisplay=true\n";
+        $content ~= "X-GNOME-Autostart-enabled=true\n";
+        $content ~= "Name=Ditana {$basename}\n";
+        if $only-show-in && $only-show-in.chars > 0 {
+            $content ~= "OnlyShowIn={$only-show-in}\n";
+        }
+        $content ~= "Terminal=false\n";
+
+        $desktop-path.IO.spurt($content);
+        Logging.log("Generated autostart entry: $desktop-path");
+    }
+}
+
+sub patch-lightdm-conf() is export {
+    my $conf = '/mnt/etc/lightdm/lightdm.conf';
+    if $conf.IO.e {
+        my $content = $conf.IO.slurp;
+
+        # Set session-wrapper
+        $content = $content.subst(
+            /^^ '#'? \s* 'session-wrapper=' .* $$/,
+            'session-wrapper=/usr/share/ditana/session-wrapper',
+            :g
+        );
+
+        # Set greeter
+        if $content !~~ /'greeter-session=lightdm-slick-greeter'/ {
+            $content = $content.subst(
+                /^^ '#'? \s* 'greeter-session=' .* $$/,
+                'greeter-session=lightdm-slick-greeter',
+                :g
+            );
+        }
+
+        $conf.IO.spurt($content);
+        Logging.log("Patched $conf with session-wrapper and greeter");
+    } else {
+        Logging.log("WARNING: $conf does not exist");
+    }
 }

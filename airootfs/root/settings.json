@@ -397,12 +397,37 @@
             "available": "`real-install`"
         },
         {
+            "name": "create-mimeapps-list",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
             "name": "generate-aur-package-installation-script",
             "type": "procedure"
         },
         {
             "name": "generate-chroot-script",
             "type": "procedure"
+        },
+        {
+            "name": "generate-root-script",
+            "type": "procedure",
+            "available": "`real-install`"
+        },
+        {
+            "name": "generate-session-setup",
+            "type": "procedure",
+            "available": "`real-install AND install-desktop-environment`"
+        },
+        {
+            "name": "generate-autostart-entries",
+            "type": "procedure",
+            "available": "`real-install AND install-desktop-environment`"
+        },
+        {
+            "name": "patch-lightdm-conf",
+            "type": "procedure",
+            "available": "`real-install AND install-desktop-environment`"
         },
         {
             "name": "generate-chroot-settings-file",
@@ -638,6 +663,11 @@
                 "terminus-font", // The terminal font that will be configured.
                 "util-linux" // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
             ],
+            "files": [
+                "/etc/lsb-release",
+                "/etc/systemd/system/ditana-initialize-system.service",
+                "/usr/share/ditana/create-debug-user.sh"
+            ],
             "default-value": true
         },
         {
@@ -660,8 +690,196 @@
             "name": "install-desktop-environment",
             "short-description": "Install Desktop Environment?",
             "arch-packages": [
-                "ditana-config-xfce",
+                // === group xfce4 without xfce4-terminal ===
+                "exo",
+                "garcon",
+                "thunar",
+                "thunar-volman",
+                "tumbler",
+                "xfce4-appfinder",
+                "xfce4-panel",
+                "xfce4-power-manager",
+                "xfce4-session",
+                "xfce4-settings",
+                "xfconf",
+                "xfdesktop",
+                "xfwm4",
+                "xfwm4-themes",
+                // === XDG terminal exec ===
+                "xdg-terminal-exec-git",
+                // === XDG utilities ===
+                "xdg-user-dirs",
+                "xdg-utils",
+                // === XFCE plugins ===
+                "xfce4-screenshooter",
+                "xfce4-screensaver",
+                "xfce4-notifyd",
+                // === LightDM and X11 ===
+                "lightdm",
+                "xclip",
+                "xorg-xev",
+                "xorg-xkill",
+                "xorg-xrandr",
+                "lxsession",
+                "lightdm-settings",
+                "xorg-xhost",
+                // === XFCE fixes ===
+                "mugshot",
+                "gnome-keyring",
+                // === Fonts ===
+                "noto-fonts",
+                "noto-fonts-cjk",
+                "noto-fonts-extra",
+                "noto-fonts-emoji",
+                // === Key management ===
+                "seahorse",
+                // === Tumbler plugin dependencies ===
+                "libgepub",
+                "libopenraw",
+                "libgsf",
+                // === XDG Desktop Portal ===
+                "xdg-desktop-portal-gtk",
+                // === Theming ===
+                "dracula-gtk-theme",
+                "kora-yellow-icon-theme",
+                "ttf-jetbrains-mono-nerd",
+                // === Display config observer ===
+                "xfce-display-config-observer",
+                // === System monitor ===
+                "gnome-system-monitor",
+                // === System load indicator ===
+                "ditana-print-system-load",
+                // === Script dependencies ===
+                "xmlstarlet",
+                "bc",
+                "zenity",
+                // === Thunar optional dependencies ===
+                "catfish",
+                "gvfs",
+                "thunar-archive-plugin",
+                "thunar-media-tags-plugin",
+                // === Panel plugins ===
+                "xfce4-docklike-plugin",
+                "xfce4-genmon-plugin",
+                "xfce4-notes-plugin",
+                "xfce4-weather-plugin",
+                "xfce4-whiskermenu-plugin",
+                "xfce4-xkb-plugin",
+                // === Audio (panel) ===
+                "xfce4-pulseaudio-plugin",
+                "pavucontrol",
+                // === Bluetooth (GUI) ===
+                "blueman",
+                // === Network tray ===
+                "network-manager-applet",
+                // === Terminal ===
+                "ditana-config-kitty",
+                // === Media ===
+                "ristretto",
+                "vlc",
+                // === PDF viewer ===
+                "xreader",
+                // === Security updates indicator ===
+                "arch-audit-gtk",
+                // === Browser ===
+                "librewolf",
+                "speech-dispatcher",
+                // === GPU diagnostics ===
+                "mesa-utils",
+                "libva-utils",
+                "intel-gpu-tools",
+                // === Disk management ===
+                "gnome-disk-utility",
+                // === Printing ===
+                "system-config-printer",
+                // === Archive manager ===
+                "engrampa",
+                // === On-screen keyboard ===
+                "onboard",
+                // === Update notifier ===
+                "kalu",
+                // === Color picker ===
+                "gpick",
+                // === PCI info (for install scripts) ===
+                "pciutils",
+                // === Wallpaper overlay ===
                 "xfce-wallpaper-overlay"
+            ],
+            "files": [
+                // === Fontconfig ===
+                "/etc/skel/.config/fontconfig/fonts.conf",
+                // === XFCE configuration ===
+                "/etc/skel/.config/xfce4/helpers.rc",
+                "/etc/skel/.config/xfce4/panel/docklike-2.rc",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-terminal.xml",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml",
+                "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml",
+                "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-1.txt",
+                "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-2.txt",
+                "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-3.txt",
+                "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-4.txt",
+                // === Ditana first-login trigger ===
+                "/etc/skel/.config/ditana/trigger-first-login",
+                // === Thunar custom actions ===
+                "/etc/skel/.config/Thunar/uca.xml",
+                // === Kalu customization ===
+                "/etc/skel/.config/autostart/kalu.desktop",
+                "/etc/skel/.config/kalu/kalu.conf",
+                // === Desktop shortcuts ===
+                "/etc/skel/Desktop/Donate to Ditana.desktop",
+                "/etc/skel/Desktop/Best Practices.desktop",
+                // === LibreWolf config ===
+                "/etc/skel/.librewolf/librewolf.overrides.cfg",
+                "/etc/skel/.local/share/xfce4/helpers/librewolf.desktop",
+                // === XDG dirs init script ===
+                "/etc/X11/xinit/xinitrc.d/55-ditana-xdg-dirs.sh",
+                // === LightDM greeter config ===
+                "/etc/lightdm/slick-greeter.conf",
+                // === XDG terminal list ===
+                "/etc/xdg/xdg-terminals.list",
+                // === Ditana helper scripts ===
+                "/usr/share/ditana/open-disk-manager.sh",
+                "/usr/share/ditana/copy-path-to-clipboard.sh",
+                "/usr/share/ditana/pre-xfce-first-login.sh",
+                "/usr/share/ditana/xfce-first-login.sh",
+                // === Pacseek launcher ===
+                "/usr/share/applications/pacseek-desktop.desktop",
+                // === Wallpapers and logos ===
+                "/usr/share/backgrounds/xfce/ditana-wallpaper.jpg",
+                "/usr/share/backgrounds/xfce/ditana-blue.png",
+                "/usr/share/pixmaps/ditana-logo-small.png",
+                "/usr/share/pixmaps/ditana-shakehands.png"
+            ],
+            "chroot-script": [
+                "systemctl enable lightdm.service",
+                "fc-cache -fv",
+                "cat <<'DITANA_ENV' >> /etc/environment",
+                "# https://wiki.archlinux.org/title/HiDPI#Qt_5",
+                "# https://doc.qt.io/qt-5/highdpi.html",
+                "QT_AUTO_SCREEN_SCALE_FACTOR=1",
+                "QT_ENABLE_HIGHDPI_SCALING=1",
+                "",
+                "# Fallback for apps not picking up the theme via gsettings (e.g. pamac, nautilus under XFCE)",
+                "GTK_THEME=Dracula",
+                "DITANA_ENV",
+                "if [ -f /usr/lib/librewolf/distribution/policies.json ]; then",
+                "    sed -i 's/\"Default\": *\"[^\"]*\"/\"Default\": \"StartPage\"/g' /usr/lib/librewolf/distribution/policies.json",
+                "    sed -i '/\"Remove\": \\[/,/\\]/{ /\"Google\",/d }' /usr/lib/librewolf/distribution/policies.json",
+                "fi"
+            ],
+            "session-setup": [
+                "/usr/share/ditana/pre-xfce-first-login.sh"
+            ],
+            "autostart": [
+                [
+                    "XFCE;",
+                    "/usr/share/ditana/xfce-first-login.sh"
+                ]
             ],
             "default-value": "`NOT installing-over-ssh`"
         },
@@ -671,10 +889,22 @@
             "dialog-name": "Desktop Applications",
             "short-description": "Install Libre Office",
             "long-description": "LibreOffice is a powerful open-source office suite that includes applications for word processing, spreadsheets, presentations, vector graphics, databases, and more. It provides a wide range of tools and features, making it a versatile alternative to proprietary office software. With comprehensive file format compatibility and robust support for extensions, LibreOffice is ideal for users seeking a complete office solution. The appropriate language pack for your system will be installed.",
-            "arch-packages": [ // will be determined by chroot-install.sh depending on the locale
-            ],
             "spdx-identifiers": "LGPL-3.0-or-later",
-            "required-by-chroot": true,
+            "arch-packages": [
+                ""
+            ],
+            "chroot-script": [
+                "`MAIN_LOCALE={Settings.instance.get('main-locale')}`",
+                "LIBREOFFICE=\"libreoffice-still-$MAIN_LOCALE\"",
+                "if ! is_package_available \"$LIBREOFFICE\"; then",
+                "    if [ \"$MAIN_LOCALE\" != \"en\" ]; then",
+                "        echo -e \"\\033[33m--- Unable to localize Libre Office for $MAIN_LOCALE ---\\033[0m\"",
+                "    fi",
+                "    LIBREOFFICE=\"libreoffice-still\"",
+                "fi",
+                "echo -e \"\\033[32m--- Installing $LIBREOFFICE ---\\033[0m\"",
+                "runuser -u builduser -- pikaur -S \"$LIBREOFFICE\" --noconfirm || true"
+            ],
             "available": "`install-desktop-environment`",
             "default-value": "`install-desktop-environment`"
         },
@@ -683,10 +913,22 @@
             "dialog-name": "Desktop Applications",
             "short-description": "Install Betterbird",
             "long-description": "Betterbird is an enhanced version of the popular Thunderbird email client, offering additional features and bug fixes not found in Thunderbird. It includes advanced functionalities such as a multi-line view, vertical tabs, enhanced sorting options, and improved search capabilities, making email management more efficient and customizable. Betterbird also addresses many long-standing issues and user requests, offering a smoother, more reliable email experience. The appropriate language pack for your system will be installed.",
-            "arch-packages": [ // will be determined by chroot-install.sh depending on the locale
-            ],
             "spdx-identifiers": "MPL-2",
-            "required-by-chroot": true,
+            "arch-packages": [
+                ""
+            ],
+            "chroot-script": [
+                "`MAIN_LOCALE={Settings.instance.get('main-locale')}`",
+                "BETTERBIRD=\"betterbird-$MAIN_LOCALE-bin\"",
+                "if ! is_package_available \"$BETTERBIRD\"; then",
+                "    if [ \"$MAIN_LOCALE\" != \"en\" ]; then",
+                "        echo -e \"\\033[33m--- Unable to localize Betterbird for $MAIN_LOCALE ---\\033[0m\"",
+                "    fi",
+                "    BETTERBIRD=\"betterbird-bin\"",
+                "fi",
+                "echo -e \"\\033[32m--- Installing $BETTERBIRD ---\\033[0m\"",
+                "runuser -u builduser -- pikaur -S \"$BETTERBIRD\" --noconfirm || true"
+            ],
             "available": "`install-desktop-environment`",
             "default-value": "`install-desktop-environment`"
         },
@@ -806,9 +1048,13 @@
             "long-description": "Variety is a wallpaper changer that automatically downloads and switches wallpapers on your desktop. It offers a wide range of customization options, allowing users to display random quotes, apply effects, and use images from various online sources.",
             "arch-packages": [
                 "variety",
-                "python-setuptools" // missing dependency in package 'variety'
+                "python-setuptools"
             ],
             "spdx-identifiers": "GPL3",
+            "files": [
+                "/etc/skel/.config/variety/variety.conf",
+                "/etc/skel/.config/autostart/variety.desktop"
+            ],
             "available": "`install-desktop-environment`",
             "default-value": "`install-desktop-environment`"
         },
@@ -907,7 +1153,18 @@
                 "ollama"
             ],
             "spdx-identifiers": "MIT",
-            "available":     "`total-ram-gib>=3`",
+            "chroot-script": [
+                "systemctl enable ollama",
+                "runuser -u ollama -- env HOME=/var/lib/ollama OLLAMA_MODELS=/var/lib/ollama ollama serve > /dev/null 2>&1 &",
+                "OLLAMA_PID=$!",
+                "echo \"Waiting for Ollama to start...\"",
+                "for i in $(seq 1 30); do ollama list > /dev/null 2>&1 && break; sleep 1; done",
+                "echo -e \"\\033[32m--- Pulling phi4-mini model ---\\033[0m\"",
+                "ollama pull phi4-mini",
+                "kill $OLLAMA_PID 2>/dev/null || true",
+                "wait $OLLAMA_PID 2>/dev/null || true"
+            ],
+            "available": "`total-ram-gib>=3`",
             "default-value": "`avx2-available AND total-ram-gib>=12`"
         },
         {
@@ -933,7 +1190,7 @@
                 "ditana-config-logseq"
             ],
             "spdx-identifiers": "AGPL-3.0-or-later",
-            "available":     "`install-desktop-environment AND total-ram-gib>=3 AND install-ollama`",
+            "available": "`install-desktop-environment AND total-ram-gib>=3 AND install-ollama`",
             "default-value": "`install-desktop-environment AND avx2-available AND total-ram-gib>=12`"
         },
         {
@@ -943,6 +1200,9 @@
             "long-description": "Install Stable Diffusion: Stable Diffusion is a powerful tool for generating high-quality images from textual descriptions. By installing this tool, you can create stunning visual content by simply providing text prompts. It’s useful for artists, designers, and anyone interested in AI-powered image generation.",
             "aur-packages": [
                 "stable-diffusion-ui"
+            ],
+            "files": [
+                "/usr/share/applications/stable-diffusion.desktop"
             ],
             "spdx-identifiers": "easydiffusion",
             "available": "`install-desktop-environment AND avx2-available AND total-ram-gib>=6`",
@@ -955,6 +1215,12 @@
             "long-description": "Install codegpt to write git commit messages or do a code review for you using ChatGPT. For this, you need to copy your OpenAI API Key from https://platform.openai.com/api-keys to ~/.shell.d/openai.sh",
             "aur-packages": [
                 "codegpt-bin"
+            ],
+            "files": [
+                "/etc/skel/.shell.d/openai.sh"
+            ],
+            "chroot-script": [
+                "chmod 700 /etc/skel/.shell.d/openai.sh"
             ],
             "spdx-identifiers": "MIT",
             "default-value": false
@@ -1378,6 +1644,9 @@
             "arch-packages": [
                 "zram-generator"
             ],
+            "files": [
+                "/etc/systemd/zram-generator.conf"
+            ],
             "default-value": true
         },
         {
@@ -1404,6 +1673,9 @@
                 "pipewire-pulse",
                 "wireplumber"
             ],
+            "chroot-script": [
+                "`usermod -aG audio {Settings.instance.get('user-name')}`"
+            ],
             "default-value": true
         },
         {
@@ -1419,6 +1691,9 @@
                 "bluez-obex",
                 "bluez-mesh"
             ],
+            "chroot-script": [
+                "systemctl enable bluetooth"
+            ],
             "default-value": "`has-bluetooth`"
         },
         {
@@ -1430,6 +1705,10 @@
             "license-category": "CLOSED/FOSS",
             "arch-packages": [
                 "nvidia-open-dkms"
+            ],
+            "files": [
+                "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf",
+                "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
             ],
             "required-by-chroot": true,
             "available": "`nvidia-pci-id`",
@@ -1443,6 +1722,10 @@
             "license-category": "CLOSED",
             "spdx-identifiers": "",
             "arch-packages": [ // this package is set by check-nvidia()
+            ],
+            "files": [
+                "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf",
+                "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
             ],
             "required-by-chroot": true,
             "available": "`nvidia-pci-id`", // this availability is set by function check-nvidia()
@@ -1466,6 +1749,9 @@
             "arch-packages": [
                 "nvidia-prime",
                 "switcheroo-control"
+            ],
+            "chroot-script": [
+                "systemctl enable switcheroo-control"
             ]
         },
         {
@@ -1477,6 +1763,20 @@
             "spdx-identifiers": "PUEL",
             "arch-packages": [
                 "virtualbox-guest-iso"
+            ],
+            "root-script": [
+                "echo \"Installing VirtualBox guest additions...\"",
+                "mkdir -p /tmp/virtualbox-guest",
+                "mount -o loop /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso /tmp/virtualbox-guest/",
+                "pushd /tmp/virtualbox-guest/",
+                "./VBoxLinuxAdditions.run",
+                "`USER_NAME={Settings.instance.get('user-name')}`",
+                "usermod -aG vboxsf \"$USER_NAME\"",
+                "echo \"VirtualBox guest additions installed successfully.\"",
+                "popd",
+                "umount /tmp/virtualbox-guest/",
+                "rmdir /tmp/virtualbox-guest",
+                "echo \"Finished installing VirtualBox guest additions.\""
             ],
             "available": "`virtualbox`",
             "default-value": "`virtualbox`"
@@ -1494,6 +1794,12 @@
                 "pacseek",
                 "fwupd", // daemon to allow session software to update firmware
                 "pkgfile"
+            ],
+            "chroot-script": [
+                "systemctl enable pkgfiled"
+            ],
+            "files": [
+                "/etc/skel/.config/pacseek/config.json"
             ],
             "default-value": true
         },
@@ -1540,6 +1846,11 @@
             "arch-packages": [
                 "ditana-network"
             ],
+            "chroot-script": [
+                "systemctl enable systemd-timesyncd",
+                "systemctl enable NetworkManager",
+                "systemctl enable systemd-resolved"
+            ],
             "default-value": true
         },
         {
@@ -1567,6 +1878,12 @@
             "arch-packages": [
                 "openssh"
             ],
+            "chroot-script": [
+                "systemctl enable sshd",
+                "`su - {Settings.instance.get('user-name')} -c 'ssh-keygen -t ed25519 -N \"\" -f ~/.ssh/id_ed25519 -q'`",
+                "`su - {Settings.instance.get('user-name')} -c 'touch ~/.ssh/authorized_keys'`",
+                "`su - {Settings.instance.get('user-name')} -c 'chmod 600 ~/.ssh/authorized_keys'`"
+            ],
             "available": "`enable-network`",
             "default-value": true
         },
@@ -1578,6 +1895,9 @@
             "spdx-identifiers": "GPL-2.0-or-later",
             "arch-packages": [
                 "firewalld"
+            ],
+            "chroot-script": [
+                "systemctl enable firewalld"
             ],
             "available": "`enable-network`",
             "default-value": true
@@ -1654,6 +1974,9 @@
             "arch-packages": [
                 "logrotate"
             ],
+            "chroot-script": [
+                "systemctl enable logrotate.timer"
+            ],
             "default-value": true
         },
         {
@@ -1665,7 +1988,10 @@
             "arch-packages": [
                 ""
             ],
-            "required-by-chroot": true,
+            "chroot-script": [
+                "mkdir -p /var/lib/systemd/linger",
+                "`touch /var/lib/systemd/linger/{Settings.instance.get('user-name')}`"
+            ],
             "default-value": "true"
         },
         {
@@ -1687,6 +2013,9 @@
             "spdx-identifiers": "GPL-/LGPL-2.0-or-later",
             "arch-packages": [
                 "audit"
+            ],
+            "chroot-script": [
+                "systemctl enable auditd"
             ],
             "default-value": true
         },
@@ -1710,6 +2039,9 @@
             "arch-packages": [
                 ""
             ],
+            "chroot-script": [
+                "systemctl enable fstrim.timer"
+            ],
             "default-value": "`NOT virtual-environment`",
             "available": "`NOT virtual-environment`"
         },
@@ -1722,6 +2054,10 @@
             "spdx-identifiers": "zsh",
             "arch-packages": [
                 "ditana-config-zsh"
+            ],
+            "chroot-script": [
+                "useradd -D -s \"$(which zsh)\"",
+                "`chsh -s \"\\$(which zsh)\" {Settings.instance.get('user-name')}`"
             ],
             "required-by-chroot": true,
             "default-value": true
@@ -1747,6 +2083,9 @@
             "arch-packages": [
                 "cronie"
             ],
+            "chroot-script": [
+                "systemctl enable cronie"
+            ],
             "default-value": "`install-backintime`"
         },
         {
@@ -1756,7 +2095,37 @@
             "long-description": "Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting.",
             "spdx-identifiers": "",
             "arch-packages": [
-                "bat", "bc", "bind", "expect", "git-lfs", "jq", "fakeroot", "graphviz", "grep", "htop", "img2pdf", "less", "lsof", "lua", "man-db", "mediainfo", "ncdu", "neovim", "perl-image-exiftool", "ripgrep", "rsync", "shellcheck", "sed", "systemctl-tui", "turbostat"
+                "bat",
+                "bc",
+                "bind",
+                "expect",
+                "git-lfs",
+                "jq",
+                "fakeroot",
+                "graphviz",
+                "grep",
+                "htop",
+                "img2pdf",
+                "less",
+                "lsof",
+                "lua",
+                "man-db",
+                "mediainfo",
+                "ncdu",
+                "neovim",
+                "perl-image-exiftool",
+                "ripgrep",
+                "rsync",
+                "shellcheck",
+                "sed",
+                "systemctl-tui",
+                "turbostat"
+            ],
+            "files": [
+                "/etc/skel/.config/bat/config"
+            ],
+            "chroot-script": [
+                "`su - {Settings.instance.get('user-name')} -c 'git lfs install'`"
             ],
             "default-value": true
         },
@@ -1829,6 +2198,17 @@
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Development Tools and Libraries"
         {
+            "name": "install-localized-man-pages",
+            "chroot-script": [
+                "`MAIN_LOCALE={Settings.instance.get('main-locale')}`",
+                "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`",
+                "LOCALIZED_MAN_PAGES=\"man-pages-$LOWERCASE_LOCALE\"",
+                "if ! is_package_available \"$LOCALIZED_MAN_PAGES\"; then LOCALIZED_MAN_PAGES=\"man-pages-$MAIN_LOCALE\"; fi",
+                "if is_package_available \"$LOCALIZED_MAN_PAGES\"; then echo -e \"\\033[32m--- Installing $LOCALIZED_MAN_PAGES ---\\033[0m\"; runuser -u builduser -- pikaur -S \"$LOCALIZED_MAN_PAGES\" --noconfirm || true; fi"
+            ],
+            "default-value": "`NOT standardized-locale`"
+        },
+        {
             "name": "standardized-locale",
             "dialog-name": "Development Tools and Libraries",
             "short-description": "Configure English Locale with Regional Settings",
@@ -1836,6 +2216,10 @@
             "spdx-identifiers": "",
             "arch-packages": [
                 ""
+            ],
+            "chroot-script": [
+                "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`",
+                "if [ \"$LOWERCASE_LOCALE\" != \"en_us\" ]; then echo -e \"\\033[32m--- Installing hunspell-en_us for English system output ---\\033[0m\"; runuser -u builduser -- pikaur -S hunspell-en_us --noconfirm || true; fi"
             ],
             "default-value": false
         },
@@ -1848,7 +2232,14 @@
             "arch-packages": [
                 ""
             ],
-            "required-by-chroot": true,
+            "chroot-script": [
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global init.defaultBranch main'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global pull.rebase false'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global credential.helper store'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global protocol.file.allow always'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global push.autoSetupRemote true'`"
+            ],
+            "available": "`install-terminal-utilities`",
             "default-value": true
         },
         {
@@ -1872,8 +2263,15 @@
             "arch-packages": [
                 "diffuse"
             ],
-            "required-by-chroot": true,
-            "available": "`install-desktop-environment`",
+            "chroot-script": [
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global merge.tool diffuse'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global diff.tool diffuse'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global difftool.prompt false'`"
+            ],
+            "session-setup": [
+                "/usr/share/ditana/set-diffprog.sh"
+            ],
+            "available": "`install-desktop-environment AND install-terminal-utilities`", // install-terminal-utilities provides git (through git-lfs)
             "default-value": false
         },
         {

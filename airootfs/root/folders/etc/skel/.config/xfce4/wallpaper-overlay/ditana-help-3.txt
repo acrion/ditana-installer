@@ -1,0 +1,50 @@
+=== Software Manager ===
+
+- System update: Double-click blue arrow-shaped tray icon "kalu"
+- Search/install software: Click "Add/Remove Software" icon
+
+Ditana uses pikaur as AUR helper. It forwards to pacman
+for official packages:
+
+pikaur -Ss <string> — Search for a package
+pikaur -Si <package> — Show package info
+pikaur -Qs <string> — Search installed packages
+pikaur -Q | less — List all installed packages
+pikaur -G <package> — Clone package's git repo
+pikaur -Qo <path> — Find package that installed a file or dir
+pikaur -F <path> — Find package, possibly not installed, that
+                                provides a file. This does not cover AUR.
+
+=== Micro Terminal Editor ===
+
+Ctrl+Q — Quit editor
+Ctrl+S — Save file
+Ctrl+F — Find text
+Ctrl+J — play macro
+Ctrl+U — record macro (Ctrl+U to stop recording)
+Ctrl+L <n> — Go to line <n> (shortcut for Ctrl+E goto <n>)
+Ctrl+7 — Comment out/in current or selected line(s)
+Ctrl+E — Execute command (e.g., 'help')
+Ctrl+E replaceall "regex" "str" — replace all "regex" with "str"
+Ctrl+E set softwrap on — Enable word wrap
+Ctrl+E set tabstospaces off — Use TAB characters
+Ctrl+E set filetype shell — Set filetype for syntax highlighting
+
+=== Ranger Terminal File Manager ===
+
+:help — Show help
+:touch <name> — Create new file
+:mkdir <name> — Create new directory
+:chmod <octal number> — Set file or dir permissions
+:delete ENTER — Delete current file or directory
+F2 — Rename current file or directory
+SHIFT+S — Open terminal in current directory
+dd — Cut the current file or directory
+yy — Copy the current file or directory
+pp — Paste a previously copied or cut item
+yp — Copy the path of the current item into the clipboard
+m<letter> — Save bookmark with <letter> as name
+'<letter> — Go to bookmark <letter>
+um<letter> — Delete bookmark <letter>
+"<letter> — Tag or untag file with <letter> as identifier
+q — Quit

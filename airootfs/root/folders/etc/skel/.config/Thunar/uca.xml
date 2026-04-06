@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Open Terminal Here</name>
+	<submenu></submenu>
+	<unique-id>1719519426510200-1</unique-id>
+	<command>exo-open --working-directory %f --launch TerminalEmulator</command>
+	<description>Example for a custom action</description>
+	<range></range>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+</action>
+<action>
+	<icon>gnome-disks</icon>
+	<name>Open Disk Management</name>
+	<submenu></submenu>
+	<unique-id>1719573258077667-1</unique-id>
+	<command>/usr/share/ditana/open-disk-manager.sh %f</command>
+	<description></description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>clipboard</icon>
+	<name>Copy Path To Clipboard</name>
+	<submenu></submenu>
+	<unique-id>1719583526794778-1</unique-id>
+	<command>/usr/share/ditana/copy-path-to-clipboard.sh %f</command>
+	<description></description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+</actions>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<channel name="xfwm4" version="1.0">
+  <property name="general" type="empty">
+    <property name="mousewheel_rollup" type="bool" value="false"/>
+    <property name="move_opacity" type="int" value="95"/>
+    <property name="resize_opacity" type="int" value="95"/>
+    <property name="prevent_focus_stealing" type="bool" value="true"/>
+    <property name="snap_to_windows" type="bool" value="true"/>
+    <property name="snap_width" type="int" value="20"/>
+    <property name="theme" type="string" value="Dracula"/>
+  </property>
+</channel>

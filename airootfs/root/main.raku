@@ -32,6 +32,7 @@ use Keyboard;
 use Keymap;
 use Locale;
 use Logging;
+use MimeApps;
 use Mount;
 use Nvidia;
 use NvmeFormat;
@@ -299,11 +300,26 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 when 'curate-chroot-files' {
                     curate-chroot-files();
                 }
+                when 'create-mimeapps-list' {
+                    create-mimeapps-list();
+                }
                 when 'generate-aur-package-installation-script' {
                     generate-aur-package-installation-script();
                 }
                 when 'generate-chroot-script' {
                     generate-chroot-script();
+                }
+                when 'generate-root-script' {
+                    generate-root-script();
+                }
+                when 'generate-session-setup' {
+                    generate-session-setup();
+                }
+                when 'generate-autostart-entries' {
+                    generate-autostart-entries();
+                }
+                when 'patch-lightdm-conf' {
+                    patch-lightdm-conf();
                 }
                 when 'generate-chroot-settings-file' {
                     generate-chroot-settings-file();

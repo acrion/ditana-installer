@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=/bin/bash -c '/usr/share/ditana/xfce-first-login.sh'
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+Name=Initialize System Settings
+Comment=Performs initial system settings adjustments for the user.
+RunHook=0
+Terminal=false

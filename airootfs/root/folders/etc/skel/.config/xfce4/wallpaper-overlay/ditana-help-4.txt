@@ -1,0 +1,50 @@
+=== Terminal Commands ===
+
+bat <file> — Display file content with syntax highlighting
+bat <file.json> | jq — Format and display JSON file
+log_system — Monitor systemd, dmesg, pacman and Xorg logs
+lsof — List open files and associated processes
+monitor_dir <path> — Log file changes within directory
+ncdu <directory> — Analyze and visualize disk usage
+open <path> — Launch file/directory with default application
+turbostat <cmd> — Collect CPU performance metrics for command
+ugrep <pattern> <file> — Search file for regex pattern
+ugrep -r <pattern> <dir> — Recursive regex search in directory
+unbuffer <cmd> | tee <file> — Output to both file and screen
+
+Ctrl+C — Interrupt current process
+Ctrl+\\ — Terminate current process (SIGQUIT)
+Ctrl+L — Clear terminal screen
+Ctrl+U — Delete current line
+Ctrl+Z, bg — Send active process to background
+jobs — List background processes
+kill %%n — Terminate background process n
+nohup <cmd> & — Run command detached from terminal
+<command> | xclip -selection clipboard — Redirect to clipboard
+
+Auto-start scripts: Add executable script files to ~/.shell.d/
+
+=== Kitty Terminal ===
+
+Ctrl+Shift+C — Copy selected text into clipboard
+Ctrl+Shift+P — Paste text from clipboard
+
+Ctrl+Shift+Enter — Open new kitty pane
+Ctrl+Shift+B — Move kitty pane backward
+Ctrl+Shift+F — Move kitty pane forward
+Ctrl+Shift+L — Change kitty pane layout
+Ctrl+Shift+R — Resize kitty pane
+Ctrl+Shift+W — Close kitty pane
+Ctrl+Shift+<n> — Focus nth kitty pane
+
+Ctrl+Shift+J — Scroll down
+Ctrl+Shift+K — Scroll up
+Ctrl+Shift+X — Scroll to next shell prompt
+Ctrl+Shift+Z — Scroll to previous shell prompt
+Ctrl+Shift+PageUp — Scroll page up
+Ctrl+Shift+PageDown — Scroll page down
+Ctrl+Shift+Home — Scroll to top
+Ctrl+Shift+End — Scroll to bottom
+
+kitten ssh — Enhanced SSH (see https://sw.kovidgoyal.net/kitty)
+Ctrl+Shift+F2 — Edit kitty configuration
