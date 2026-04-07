@@ -22,7 +22,7 @@ chmod +x bind-mount/root/enable-chaotic-aur.sh
 chmod +x bind-mount/root/enable-ditana.sh
 chmod +x bind-mount/root/chroot-install.sh
 chmod +x bind-mount/root/sign-ditana.sh
-chmod +x folders/usr/share/ditana/create-debug-user.sh
+chmod +x folders/usr/share/ditana/*.sh
 chmod +x .raku/bin/s6
 export PATH="$HOME/.raku/bin:$PATH"
 bash ./run-ditana-installer.sh
