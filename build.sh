@@ -56,6 +56,7 @@ for key in keys:
 }
 
 list_special_packages() {
+    echo "Identifying special packages..."
     local firmware_pkgs=()
     local module_pkgs=()
     
