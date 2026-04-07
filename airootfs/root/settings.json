@@ -1239,7 +1239,7 @@
             "name": "install-gpu-libraries",
             "dialog-name": "AI Tools and Libraries",
             "short-description": "Install GPU libraries",
-            "long-description": "Install high-performance GPU computing libraries: This option installs a suite of libraries optimized for AI/ML workloads. These libraries provide essential functionality for GPU acceleration and efficient execution of AI/ML models across various hardware platforms:\n\n • clblast: a tuned OpenCL BLAS library for GPU-accelerated linear algebra\n • cuda: NVIDIA’s parallel computing platform and API model for GPU-accelerated computing\n • cudnn: NVIDIA’s Deep Neural Network library, optimized for deep learning operations\n • hipblas: AMD’s ROCm BLAS marshalling library for GPU computations\n • hip-runtime-amd: AMD’s Heterogeneous-compute Interface for Portability\n • ocl-icd, opencl-clhpp: Implementations of the Open Computing Language standard for heterogeneous computing\n • onednn: an optimized Deep Neural Network library for efficient deep learning operations\n\nFor NVIDIA GPU users, the following packages will be installed in addition:\n\n • opencl-nvidia: OpenCL implemention for NVIDIA\n • nccl: Library for NVIDIA multi-GPU and multi-node collective communication primitives",
+            "long-description": "Install high-performance GPU computing libraries: This option installs a suite of libraries optimized for AI/ML workloads. These libraries provide essential functionality for GPU acceleration and efficient execution of AI/ML models across various hardware platforms:\n\n • clblast: a tuned OpenCL BLAS library for GPU-accelerated linear algebra\n • cuda: NVIDIA’s parallel computing platform and API model for GPU-accelerated computing\n • cudnn: NVIDIA’s Deep Neural Network library, optimized for deep learning operations\n • hipblas: AMD’s ROCm BLAS marshalling library for GPU computations\n • hip-runtime-amd: AMD’s Heterogeneous-compute Interface for Portability\n • ocl-icd, opencl-clhpp: Implementations of the Open Computing Language standard for heterogeneous computing\n • onednn: an optimized Deep Neural Network library for efficient deep learning operations\n\nFor NVIDIA GPU users, the following packages will be installed in addition:\n\n • nccl: Library for NVIDIA multi-GPU and multi-node collective communication primitives",
             "arch-packages": [
                 "clblast",
                 "cuda",
@@ -1259,7 +1259,6 @@
         {
             "name": "install-gpu-libraries-nvidia",
             "arch-packages": [
-                "opencl-nvidia",
                 "nccl"
             ],
             "default-value": "`install-gpu-libraries AND nvidia-pci-id`"
