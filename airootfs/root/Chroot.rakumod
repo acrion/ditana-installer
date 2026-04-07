@@ -127,7 +127,7 @@ sub pacstrap() is export {
         for @remaining.batch($batch-size) -> @batch {
             Logging.echo("Installing package batch ({@batch.elems} packages)...");
             # In case of an error, we retry once, in case the error was related to a temporary download issue
-            run-and-echo("arch-chroot", "/mnt", "pacman", "-S", "--noconfirm", |@batch, :retry(2));
+            run-and-echo("pacstrap", "--noconfirm", "/mnt", |@batch, :retry(2));
             # Remove cached package files to free disk space
             shell "rm -f /mnt/var/cache/pacman/pkg/*.pkg.tar.*";
         }
