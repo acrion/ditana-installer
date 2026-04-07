@@ -771,8 +771,11 @@
                 "blueman",
                 // === Network tray ===
                 "network-manager-applet",
-                // === Terminal ===
-                "ditana-config-kitty",
+                // === Terminal including optional dependencies ===
+                "kitty",
+                "imagemagick",
+                "python-pygments",
+                "libcanberra",
                 // === Media ===
                 "ristretto",
                 "vlc",
@@ -831,6 +834,9 @@
                 // === Kalu customization ===
                 "/etc/skel/.config/autostart/kalu.desktop",
                 "/etc/skel/.config/kalu/kalu.conf",
+                // === Terminal customization ===
+                "/etc/skel/.config/kitty/kitty.conf",
+                "/usr/share/pixmaps/ditana-logo-tiny.png",
                 // === Desktop shortcuts ===
                 "/etc/skel/Desktop/Donate to Ditana.desktop",
                 "/etc/skel/Desktop/Best Practices.desktop",
