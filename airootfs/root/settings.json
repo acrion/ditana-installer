@@ -2027,7 +2027,7 @@
                 "/etc/systemd/system/ditana-rate-mirrors.timer"
             ],
             "chroot-script": [
-                "systemctl enable ditana-rate-mirrors"
+                "systemctl enable ditana-rate-mirrors.timer"
             ],
             "default-value": true
         },
