@@ -255,12 +255,12 @@ class Settings {
     }
 
     method get-session-setup-scripts() {
-        my Str @scripts;
+        my @scripts;
         for %!settings.values -> $setting {
             next unless $setting.current-value;
             next unless $setting.session-setup && $setting.session-setup[0];
-            for @($setting.session-setup[0]) -> $script {
-                @scripts.push($script.Str) if $script;
+            for @($setting.session-setup[0]) -> $entry {
+                @scripts.push($entry) if $entry;
             }
         }
         return @scripts;

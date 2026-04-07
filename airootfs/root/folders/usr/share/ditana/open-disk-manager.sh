@@ -45,20 +45,41 @@ main() {
         echo "Extracted block device: $block_dev" | systemd-cat -t ditana-open-disk-manager -p debug
     fi
 
-    if [[ -n "$block_dev" ]]; then
-        echo "Opening gnome-disks with block device: $block_dev" | systemd-cat -t ditana-open-disk-manager -p debug
-        if gnome-disks --block-device "$block_dev"; then
-            echo "gnome-disks started successfully for $block_dev" | systemd-cat -t ditana-open-disk-manager -p debug
-        else
-            echo "Failed to start gnome-disks for $block_dev" | systemd-cat -t ditana-open-disk-manager -p err
-            zenity --error --text="Failed to open disk manager for $block_dev"
-            exit 1
-        fi
-    else
+    if [[ -z "$block_dev" ]]; then
         echo "Error: Could not find block device for $path" | systemd-cat -t ditana-open-disk-manager -p warning
         zenity --error --text="Could not find block device for $path"
         exit 1
     fi
+
+    case "$block_dev" in
+        /dev/*)
+            echo "Opening gnome-disks with block device: $block_dev" | systemd-cat -t ditana-open-disk-manager -p debug
+            if gnome-disks --block-device "$block_dev"; then
+                echo "gnome-disks started successfully for $block_dev" | systemd-cat -t ditana-open-disk-manager -p debug
+            else
+                echo "Failed to start gnome-disks for $block_dev" | systemd-cat -t ditana-open-disk-manager -p err
+                zenity --error --text="Failed to open disk manager for $block_dev"
+                exit 1
+            fi
+            ;;
+        *)
+            local pool
+            pool=$(echo "$block_dev" | cut -d/ -f1)
+            echo "Detected ZFS pool: $pool" | systemd-cat -t ditana-open-disk-manager -p debug
+            exec xdg-terminal-exec sh -c "
+                echo '=== Pool Status ==='
+                zpool status '$pool'
+                echo
+                echo '=== Pool Usage ==='
+                zpool list '$pool'
+                echo
+                echo '=== Datasets ==='
+                zfs list -r '$pool'
+                echo
+                read -r _
+            "
+            ;;
+    esac
 }
 
 main "$@"

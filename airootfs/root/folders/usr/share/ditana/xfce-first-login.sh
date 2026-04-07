@@ -3,22 +3,26 @@
 # Copyright (c) 2024, 2025 acrion innovations GmbH
 # Authors: Stefan Zipproth, s.zipproth@acrion.ch
 #
-# This file is part of ditana-config-xfce, see https://github.com/acrion/ditana-config-xfce
+# This file is part of Ditana Installer, see
+# https://github.com/acrion/ditana-installer and https://ditana.org/installer.
 #
-# ditana-config-xfce is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
+# Ditana Installer is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# ditana-config-xfce is distributed in the hope that it will be useful,
+# Ditana Installer is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
+# GNU General Public License for more details.
 #
-# You should have received a copy of the GNU Affero General Public License
-# along with ditana-config-xfce. If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License
+# along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
-# This script is executed once after the first XFCE login of each user via $HOME/.config/autostart/initialize-system.desktop.
+# This script is executed once after the first XFCE login of each user via
+# /etc/xdg/autostart/ditana-xfce-first-login.desktop.
+# After execution, it disables itself for the current user using the XDG
+# autostart override mechanism (Hidden=true in ~/.config/autostart/).
 
 shopt -s dotglob
 mkdir -p "$HOME/.ditana"
@@ -30,6 +34,7 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
     trust_link() {
         local DESKTOP_LINK="$1"
         if [[ -f "$DESKTOP_LINK" ]]; then
+            chmod +x "$DESKTOP_LINK"
             gio set -t string "$DESKTOP_LINK" metadata::xfce-exe-checksum "$(sha256sum "$DESKTOP_LINK" | awk '{print $1}')"
         fi
     }
@@ -81,6 +86,7 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
         exit 0
     fi
 
+    AUTOSTART_NAME="ditana-xfce-first-login.desktop"
     NEW_WALLPAPER='/usr/share/backgrounds/xfce/ditana-wallpaper.jpg'
 
     if [[ -f "$NEW_WALLPAPER" ]]; then
@@ -119,13 +125,16 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
     gsettings set org.gnome.desktop.default-applications.terminal exec 'xdg-terminal-exec'
     gsettings set org.gnome.desktop.default-applications.terminal exec-arg '-e'
 
+    # Wait for gvfsd-metadata to become available (started on-demand by D-Bus)
+    for i in $(seq 1 30); do
+        if gio set -t string /dev/null metadata::test test 2>/dev/null; then
+            break
+        fi
+        sleep 0.5
+    done
+    
     trust_link "$XDG_DESKTOP_DIR/Donate to Ditana.desktop"
     trust_link "$XDG_DESKTOP_DIR/Best Practices.desktop"
-
-    if [[ -f /usr/share/applications/koboldcpp.desktop ]]; then
-        cp /usr/share/applications/koboldcpp.desktop "$XDG_DESKTOP_DIR/koboldcpp.desktop"
-        trust_link "$XDG_DESKTOP_DIR/koboldcpp.desktop"
-    fi
 
     systemctl --user enable --now xfce-display-config-observer.service
 
@@ -143,15 +152,15 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
     xfconf-query -c xfce4-keyboard-shortcuts -p "/commands/custom/<Alt>Page_Down" -n -t string -s "pactl set-sink-volume @DEFAULT_SINK@ -1%"
     xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary>Page_Up" -n -t string -s "prev_workspace_key"
     xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary>Page_Down" -n -t string -s "next_workspace_key"
-    xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary><Alt>Page_Up" -n -t string -s "move_window_prev_workspace_key"   # XFCE default is <Primary><Alt>Home
-    xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary><Alt>Page_Down" -n -t string -s "move_window_next_workspace_key" # XFCE default is <Primary><Alt>End
+    xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary><Alt>Page_Up" -n -t string -s "move_window_prev_workspace_key"
+    xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary><Alt>Page_Down" -n -t string -s "move_window_next_workspace_key"
 
     if command -v ranger &> /dev/null; then
         # Launches the 'ranger' file manager in a terminal emulator to perform initial configuration.
-        # The use of 'kitty' ensures that a valid terminal environment is available, preventing
+        # The use of 'xdg-terminal-exec' ensures that a valid terminal environment is available, preventing
         # issues related to missing terminfo database or improper terminal initialization.
         # This resolves the error '_curses.error: setupterm: could not find terminfo database'.
-        kitty -e ranger --copy-config=all
+        xdg-terminal-exec -e ranger --copy-config=all
         for config in 'show_hidden' 'vcs_aware' 'preview_images' 'unicode_ellipsis'; do
             if sed -i "s/^set $config false/set $config true/" ~/.config/ranger/rc.conf; then
                 echo "Updated ranger config: set $config to true"
@@ -159,8 +168,8 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
                 echo "No change needed for ranger config: $config"
             fi
         done
-        if sed -i 's/^set preview_images_method w3m/set preview_images_method kitty/' ~/.config/ranger/rc.conf; then
-            echo "Updated ranger config: set preview_images_method to kitty"
+        if sed -i 's/^set preview_images_method w3m/set preview_images_method xdg-terminal-exec/' ~/.config/ranger/rc.conf; then
+            echo "Updated ranger config: set preview_images_method to xdg-terminal-exec"
         else
             echo "No change needed for ranger config: preview_images_method"
         fi
@@ -171,8 +180,8 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
     pactl set-sink-mute @DEFAULT_SINK@ 0
     pactl set-sink-volume @DEFAULT_SINK@ 50%
 
-    # Disable this autostart entry for the current user by creating an override
+    # Disable this autostart entry for the current user using the XDG override mechanism
     mkdir -p "$HOME/.config/autostart"
-    cp /etc/xdg/autostart/ditana-xfce-first-login.desktop "$HOME/.config/autostart/"
-    sed -i 's/^Hidden=false/Hidden=true/' "$HOME/.config/autostart/ditana-xfce-first-login.desktop"
+    cp "/etc/xdg/autostart/$AUTOSTART_NAME" "$HOME/.config/autostart/$AUTOSTART_NAME"
+    sed -i 's/^Hidden=false/Hidden=true/' "$HOME/.config/autostart/$AUTOSTART_NAME"
 } 2>&1 | tee -a "$LOG_PATH"
