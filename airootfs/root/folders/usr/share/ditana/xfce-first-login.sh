@@ -81,7 +81,6 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
         exit 0
     fi
 
-    DESKTOP_ENTRY_PATH="$HOME/.config/autostart/initialize-system.desktop"
     NEW_WALLPAPER='/usr/share/backgrounds/xfce/ditana-wallpaper.jpg'
 
     if [[ -f "$NEW_WALLPAPER" ]]; then
@@ -172,5 +171,8 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
     pactl set-sink-mute @DEFAULT_SINK@ 0
     pactl set-sink-volume @DEFAULT_SINK@ 50%
 
-    rm -f "$DESKTOP_ENTRY_PATH"
+    # Disable this autostart entry for the current user by creating an override
+    mkdir -p "$HOME/.config/autostart"
+    cp /etc/xdg/autostart/ditana-xfce-first-login.desktop "$HOME/.config/autostart/"
+    sed -i 's/^Hidden=false/Hidden=true/' "$HOME/.config/autostart/ditana-xfce-first-login.desktop"
 } 2>&1 | tee -a "$LOG_PATH"

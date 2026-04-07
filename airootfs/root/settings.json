@@ -822,7 +822,9 @@
                 "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-2.txt",
                 "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-3.txt",
                 "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-4.txt",
-                // === Ditana first-login trigger ===
+                // Marker file for first-login detection. If this file exists when the user logs in,
+                // session-setup scripts marked with once=true (see "session-setup" below) are executed,
+                // and the file is then deleted. See generate-session-setup() in Chroot.rakumod.
                 "/etc/skel/.config/ditana/trigger-first-login",
                 // === Thunar custom actions ===
                 "/etc/skel/.config/Thunar/uca.xml",
@@ -872,7 +874,10 @@
                 "fi"
             ],
             "session-setup": [
-                "/usr/share/ditana/pre-xfce-first-login.sh"
+                [
+                    "/usr/share/ditana/pre-xfce-first-login.sh",
+                    true // only on first login
+                ]
             ],
             "autostart": [
                 [
