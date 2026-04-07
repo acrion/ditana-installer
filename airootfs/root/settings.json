@@ -2002,10 +2002,17 @@
             "name": "install-rate-mirrors",
             "dialog-name": "System Maintenance Tools",
             "short-description": "Install rate-mirrors",
-            "long-description": "Install rate-mirrors:\nRate-mirrors optimizes your system’s package downloads by selecting the fastest repository mirrors. While this process is performed during Ditana’s initial installation, re-running it can be beneficial, especially for laptops that change geographic locations or when mirror configurations change. The tool tests mirror speeds based on your current network conditions and location, using data about submarine cable connections and inter-country network topologies. By regularly using rate-mirrors, you ensure your system maintains optimal download speeds for updates and package installations, adapting to changes in your network environment or mirror availability.",
+            "long-description": "Install rate-mirrors:\nRate-mirrors optimizes your system’s package downloads by selecting the fastest repository mirrors. A daily systemd timer automatically re-evaluates mirror speeds, ensuring optimal download performance without manual intervention. This is especially beneficial for laptops that change geographic locations or when mirror configurations change. The tool tests mirror speeds based on your current network conditions and location, using data about submarine cable connections and inter-country network topologies.",
             "spdx-identifiers": "CC-BY-NC-SA-3.0",
             "arch-packages": [
                 "rate-mirrors"
+            ],
+            "files": [
+                "/etc/systemd/system/ditana-rate-mirrors.service",
+                "/etc/systemd/system/ditana-rate-mirrors.timer"
+            ],
+            "chroot-script": [
+                "systemctl enable ditana-rate-mirrors"
             ],
             "default-value": true
         },
