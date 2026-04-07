@@ -1665,8 +1665,18 @@
             "short-description": "Install RAM Disk",
             "long-description": "Make a RAM Disk available: This option creates a dedicated RAM Disk mounted within the user’s runtime directory and symlinked to their home directory, making it easily accessible. Key features include:\n\n• A clean, user-exclusive space for temporary data, free from system files, unlike $XDG_RUNTIME_DIR and /tmp.\n• Accessible only to the user, offering a controlled and secure temporary storage.\n• Set up with the $RAMDISK environment variable for easy reference in the terminal.\n\nIdeal for tasks needing fast, temporary storage, such as video processing or caching, the RAM Disk integrates with the file manager on desktops and clears automatically upon logout.",
             "spdx-identifiers": "AGPL-3.0-or-later",
-            "arch-packages": [
-                "ditana-ramdisk"
+            "files": [
+                // Install the systemd user service to launch the RAM disk script located at /usr/share/ditana/ramdisk.sh
+                "/etc/systemd/user/ditana-ramdisk.service",
+                // Install the main RAM disk script that creates and manages the RAM disk directory
+                "/usr/share/ditana/ramdisk.sh",
+                // Install the environment configuration for systemd context to ensure the RAMDISK variable is available
+                "/etc/environment.d/90-ditana-ramdisk.conf",
+                // Install the profile script to export the RAMDISK variable for user shell sessions
+                "/etc/profile.d/ditana-ramdisk.sh"
+            ],
+            "chroot-script": [
+                "systemctl --global enable ditana-ramdisk.service"
             ],
             "default-value": true
         },

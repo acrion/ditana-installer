@@ -1,0 +1,11 @@
+[Unit]
+Description=Create and configure RAM Disk
+After=systemd-tmpfiles-setup.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/ditana/ramdisk.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=default.target
