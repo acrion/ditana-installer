@@ -1,0 +1,13 @@
+{
+    "autosu": true,
+    "diffgutter": true,
+    "hlsearch": true,
+    "indentchar": "·",
+    "mkparents": true,
+    "multiopen": "vsplit",
+    "savecursor": true,
+    "saveundo": true,
+    "scrollbar": true,
+    "tabstospaces": true,
+    "wordwrap": true
+}

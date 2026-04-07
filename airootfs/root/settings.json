@@ -2152,10 +2152,26 @@
             "short-description": "Install micro editor and set it as default",
             "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
             "spdx-identifiers": "MIT",
+            "files": [
+                "/etc/skel/.config/micro/settings.json",
+                "/etc/profile.d/ditana-set-micro-as-default-editor.sh",
+                "/etc/environment.d/90-ditana-micro-editor.conf",
+                // Install the custom sudoers configuration to preserve the EDITOR and VISUAL environment variables in the sudo context,
+                // ensuring that 'micro' is used as the default editor even when elevated permissions are required.
+                "/etc/sudoers.d/10-ditana-micro"
+            ],
             "arch-packages": [
-                "ditana-config-micro"
+                "micro"
             ],
             "default-value": true
+        },
+        {
+            "name": "configure-micro-for-xfce",
+            "files": [
+                // we overrule the default desktop shortcut to use exo-open --launch TerminalEmulator micro %F
+                "/etc/skel/.local/share/applications/micro.desktop"
+            ],
+            "default-value": "`install-micro AND install-desktop-environment`"
         },
         {
             // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
