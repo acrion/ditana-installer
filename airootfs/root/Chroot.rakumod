@@ -103,35 +103,14 @@ sub genfstab() is export {
 }
 
 sub pacstrap() is export {
-    my $s = Settings.instance;
-    my @native-packages = $s.get-installed-native-packages;
-    my @bootstrap = $s.get-bootstrap-packages;
+    my @native-packages = Settings.instance.get-installed-native-packages;
     Logging.echo(@native-packages.gist);
 
     # At this point, the system time is synchronized. We log the status here to include it in bug reports (should include "System clock synchronized: yes").
     run-and-echo("timedatectl", "status");
-
-    # Bootstrap with essential packages to initialize the target system.
-    # The keyring is created via -K only on this first call.
-    Logging.echo("Bootstrap packages: {@bootstrap.gist}");
-    run-and-echo("pacstrap", "-K", "/mnt", |@bootstrap, :retry(2));
-
-    # Install remaining packages in batches to reduce peak disk usage
-    # (see https://github.com/acrion/ditana-installer/issues/5).
-    # Using pacstrap without -K reuses the host's pacman.conf,
-    # so custom repos (ditana, chaotic-aur) remain available.
-    my @remaining = @native-packages.grep({ $_ ∉ @bootstrap });
-
-    if @remaining.elems > 0 {
-        my $batch-size = 30;
-        for @remaining.batch($batch-size) -> @batch {
-            Logging.echo("Installing package batch ({@batch.elems} packages)...");
-            # In case of an error, we retry once, in case the error was related to a temporary download issue
-            run-and-echo("pacstrap", "/mnt", |@batch, :retry(2));
-            # Remove cached package files to free disk space
-            shell "rm -f /mnt/var/cache/pacman/pkg/*.pkg.tar.*";
-        }
-    }
+    
+    # In case of an error, we retry once, in case the error was related to a temporary download issue
+    run-and-echo("pacstrap", "-K", "/mnt", |@native-packages, :retry(2))
 }
 
 sub generate-chroot-settings-file() is export {
