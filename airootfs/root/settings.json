@@ -704,7 +704,6 @@
                 "xfconf",
                 "xfdesktop",
                 "xfwm4",
-                "xfwm4-themes",
                 // === XDG terminal exec ===
                 "xdg-terminal-exec-git",
                 // === XDG utilities ===
