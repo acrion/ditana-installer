@@ -2145,6 +2145,7 @@
                 "shellcheck",
                 "sed",
                 "systemctl-tui",
+                "trash-cli",
                 "turbostat"
             ],
             "files": [
