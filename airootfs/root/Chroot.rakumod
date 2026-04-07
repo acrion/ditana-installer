@@ -110,7 +110,10 @@ sub pacstrap() is export {
     run-and-echo("timedatectl", "status");
     
     # In case of an error, we retry once, in case the error was related to a temporary download issue
-    run-and-echo("pacstrap", "-K", "/mnt", |@native-packages, :retry(2))
+    run-and-echo("pacstrap", "-K", "/mnt", |@native-packages, :retry(2));
+
+    # Remove cached package files to free disk space
+    shell "rm -f /mnt/var/cache/pacman/pkg/*.pkg.tar.*";
 }
 
 sub generate-chroot-settings-file() is export {
