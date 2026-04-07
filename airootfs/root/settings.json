@@ -2260,7 +2260,11 @@
             "long-description": "Install the Open Source build of Visual Studio Code, including marketplace support. Font ligatures will be switched on, using an appropriate font.",
             "spdx-identifiers": "MIT",
             "arch-packages": [
-                "ditana-config-vscode"
+                "code",
+                "code-marketplace"
+            ],
+            "files": [
+                "/etc/skel/.config/Code - OSS/User/settings.json"
             ],
             "available": "`install-desktop-environment`",
             "default-value": false
