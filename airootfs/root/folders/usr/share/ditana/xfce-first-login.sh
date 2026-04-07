@@ -133,6 +133,11 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
         sleep 0.5
     done
     
+    if [[ -f "$HOME/.config/user-dirs.dirs" ]]; then
+        source "$HOME/.config/user-dirs.dirs"
+    fi
+    XDG_DESKTOP_DIR="${XDG_DESKTOP_DIR:-$HOME/Desktop}"
+
     trust_link "$XDG_DESKTOP_DIR/Donate to Ditana.desktop"
     trust_link "$XDG_DESKTOP_DIR/Best Practices.desktop"
 
