@@ -33,6 +33,8 @@ sub add-repos-and-sync() is export {
     my $s = Settings.instance;
 
     return unless $s.get('real-install');
+
+    show-dialog-raw('--infobox', "Checking Internet Connection...", 4, 65);
     establish-internet-connection();
 
     show-dialog-raw('--infobox', "Downloading software information...", 4, 65);

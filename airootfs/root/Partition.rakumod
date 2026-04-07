@@ -169,6 +169,8 @@ sub create-zfs-pool(Str $partition) {
     
     my $part-uuid = run-and-echo('blkid', '-s', 'PARTUUID', '-o', 'value', $partition).trim;
     Logging.echo("PART_UUID of $partition: $part-uuid");
+
+    run-and-echo('udevadm', 'settle');
     
     run-and-echo(
         'zpool', 'create',
