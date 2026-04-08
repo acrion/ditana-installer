@@ -315,6 +315,9 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
                 when 'generate-session-setup' {
                     generate-session-setup();
                 }
+                when 'generate-session-setup-script' {
+                    generate-session-setup-script();
+                }
                 when 'generate-autostart-entries' {
                     generate-autostart-entries();
                 }

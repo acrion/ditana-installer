@@ -61,7 +61,7 @@ sub copy-files-into-chroot-after-pacstrap() is export {
             run-and-echo("cp", "--preserve=mode,timestamps", $src, $dest);
             Logging.log("Copied $src to $dest");
         } else {
-            Logging.log("WARNING: File $src does not exist, skipping");
+            die "File $src does not exist (required by settings)";
         }
     }
 }
@@ -223,7 +223,7 @@ sub generate-root-script() is export {
 
 sub generate-session-setup() is export {
     my $s = Settings.instance;
-    my @scripts = $s.get-session-setup-scripts;
+    my @scripts = $s.get-session-setups;
 
     # Generate /usr/share/ditana/session-setup.sh which sources all registered scripts
     my $setup-script-path = '/mnt/usr/share/ditana/session-setup.sh';
@@ -275,6 +275,53 @@ sub generate-session-setup() is export {
     $wrapper-path.IO.chmod(0o755);
 
     Logging.log("Generated session-wrapper with {@scripts.elems} session-setup scripts");
+}
+
+sub generate-session-setup-script() is export {
+    my $s = Settings.instance;
+    my @script-entries = $s.get-session-setup-scripts;
+    return unless @script-entries;
+
+    my $setup-script-path = '/mnt/usr/share/ditana/session-setup.sh';
+    unless $setup-script-path.IO.e {
+        die "session-setup.sh does not exist. "
+          ~ "Call generate-session-setup before generate-session-setup-script.";
+    }
+
+    my @once-lines;
+    my @always-lines;
+
+    for @script-entries -> $entry {
+        my ($lines, $once) = @($entry);
+        if $once {
+            @once-lines.append(@($lines));
+        } else {
+            @always-lines.append(@($lines));
+        }
+    }
+
+    my $content = $setup-script-path.IO.slurp;
+
+    if @once-lines {
+        my $insertion = @once-lines.map({"    $_"}).join("\n") ~ "\n";
+        my $marker = '    rm -f "$HOME/.config/ditana/trigger-first-login"';
+        if $content.contains($marker) {
+            $content = $content.subst($marker, $insertion ~ $marker);
+        } else {
+            # No existing first-login block — create one
+            $content ~= "\nif [ -f \"\$HOME/.config/ditana/trigger-first-login\" ]; then\n";
+            $content ~= $insertion;
+            $content ~= "    rm -f \"\$HOME/.config/ditana/trigger-first-login\"\n";
+            $content ~= "fi\n";
+        }
+    }
+
+    if @always-lines {
+        $content ~= @always-lines.map({"$_"}).join("\n") ~ "\n";
+    }
+
+    $setup-script-path.IO.spurt($content);
+    Logging.log("Updated session-setup.sh with {@script-entries.elems} inline script block(s)");
 }
 
 sub generate-autostart-entries() is export {

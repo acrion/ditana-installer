@@ -44,6 +44,7 @@ class Setting {
     has Array @.chroot-script = [];
     has Array @.root-script = [];
     has Array @.session-setup = [];
+    has Array @.session-setup-script = [];
     has Array @.autostart = [];  # list of [onlyshowin, script-path] pairs
 }
 
@@ -254,16 +255,43 @@ class Settings {
         return @steps;
     }
 
-    method get-session-setup-scripts() {
+    method get-session-setups() {
         my @scripts;
         for %!settings.values -> $setting {
             next unless $setting.current-value;
             next unless $setting.session-setup && $setting.session-setup[0];
             for @($setting.session-setup[0]) -> $entry {
+                if $entry ~~ Str {
+                    die "Setting '{$setting.name}': 'session-setup' entries must be "
+                      ~ "[path, once-flag] tuples, not bare strings. Got: '$entry'";
+                }
                 @scripts.push($entry) if $entry;
             }
         }
         return @scripts;
+    }
+
+    method get-session-setup-scripts() {
+        my @results;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.session-setup-script && $setting.session-setup-script[0];
+            my @data = @($setting.session-setup-script[0]);
+            if @data.elems < 2 {
+                die "Setting '{$setting.name}': 'session-setup-script' must be "
+                  ~ "[[line, ...], once-flag(bool)], got only {@data.elems} element(s)";
+            }
+            my $once = @data[*-1];
+            unless $once ~~ Bool {
+                die "Setting '{$setting.name}': last element of 'session-setup-script' "
+                  ~ "must be a boolean (once-flag), got: {$once.raku}";
+            }
+            my @line-groups = @data[0..^(*-1)];
+            for @line-groups -> $group {
+                @results.push([@($group), $once]);
+            }
+        }
+        return @results;
     }
 
     method get-autostart-entries() {

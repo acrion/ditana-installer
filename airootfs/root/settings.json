@@ -420,6 +420,11 @@
             "available": "`real-install AND install-desktop-environment`"
         },
         {
+            "name": "generate-session-setup-script",
+            "type": "procedure",
+            "available": "`real-install AND install-desktop-environment`"
+        },
+        {
             "name": "generate-autostart-entries",
             "type": "procedure",
             "available": "`real-install AND install-desktop-environment`"
@@ -1229,8 +1234,11 @@
             "files": [
                 "/etc/skel/.shell.d/openai.sh"
             ],
-            "chroot-script": [
-                "chmod 700 /etc/skel/.shell.d/openai.sh"
+            "session-setup-script": [
+                [
+                    "chmod 600 $HOME/.shell.d/openai.sh"
+                ],
+                true
             ],
             "spdx-identifiers": "MIT",
             "default-value": false
@@ -2316,8 +2324,13 @@
                 "`su - {Settings.instance.get('user-name')} -c 'git config --global diff.tool diffuse'`",
                 "`su - {Settings.instance.get('user-name')} -c 'git config --global difftool.prompt false'`"
             ],
-            "session-setup": [
-                "/usr/share/ditana/set-diffprog.sh"
+            "session-setup-script": [
+                [
+                    "if command -v diffuse &> /dev/null; then",
+                    "    export DIFFPROG=diffuse",
+                    "fi"
+                ],
+                false
             ],
             "available": "`install-desktop-environment AND install-terminal-utilities`", // install-terminal-utilities provides git (through git-lfs)
             "default-value": false
