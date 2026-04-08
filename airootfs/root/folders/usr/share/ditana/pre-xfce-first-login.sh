@@ -29,6 +29,8 @@ shopt -s dotglob
 
     if pacman -Qi librewolf &> /dev/null; then
         PINNED_APPS_FRONT+="librewolf;"
+    elif pacman -Qi zen-browser-bin &> /dev/null; then
+        PINNED_APPS_FRONT+="zen;"
     elif pacman -Qi chromium &> /dev/null; then
         PINNED_APPS_FRONT+="chromium;"
     elif pacman -Qi floorp &> /dev/null; then
@@ -39,6 +41,14 @@ shopt -s dotglob
         PINNED_APPS_FRONT+="firefox;"
     fi
 
+    if pacman -Qi ghostty &> /dev/null; then
+        PINNED_APPS_FRONT+="com.mitchellh.ghostty;"
+    elif pacman -Qi kitty &> /dev/null; then
+        PINNED_APPS_FRONT+="kitty;"
+    elif pacman -Qi alacritty &> /dev/null; then
+        PINNED_APPS_FRONT+="Alacritty;"
+    fi
+    
     if command -v logseq &> /dev/null; then
         PINNED_APPS_FRONT+="logseq-desktop;"
     fi

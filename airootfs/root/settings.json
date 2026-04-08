@@ -719,6 +719,7 @@
                 // === LightDM and X11 ===
                 "lightdm",
                 "xclip",
+                "xsel",
                 "xorg-xev",
                 "xorg-xkill",
                 "xorg-xrandr",
@@ -2179,10 +2180,12 @@
                 "bc",
                 "bind",
                 "expect",
+                "fd",
+                "ffmpeg",
+                "fzf",
                 "git-lfs",
                 "jq",
                 "fakeroot",
-                "graphviz",
                 "grep",
                 "htop",
                 "img2pdf",
@@ -2200,7 +2203,9 @@
                 "sed",
                 "systemctl-tui",
                 "trash-cli",
-                "turbostat"
+                "turbostat",
+                "zoxide",
+                "zellij"
             ],
             "files": [
                 "/etc/skel/.config/bat/config"
@@ -2238,31 +2243,17 @@
             "default-value": "`install-micro AND install-desktop-environment`"
         },
         {
-            // TODO move ranger configuration from https://github.com/acrion/ditana-config-xfce/blob/main/folders/usr/share/ditana/xfce-first-login.sh
-            // to raku, depending on `install-desktop-environment`
-            "name": "install-ranger",
+            "name": "install-yazi",
             "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install ranger terminal file manager including optional packages",
-            "long-description": "Install ranger, a terminal file manager, including optional packages. It will be configured\n\n (1) to make use of the kitty terminal to display true graphics,\n (2) to display git information, which is particularly useful for directories, and\n (3) to display hidden items.",
-            "spdx-identifiers": "GPL-3.0-or-later",
+            "short-description": "Install yazi terminal file manager including optional packages",
+            "long-description": "Install yazi, a blazing fast terminal file manager written in Rust, including optional packages for thumbnails, previews, searching, and clipboard support.",
+            "spdx-identifiers": "MIT",
             "arch-packages": [
-                // ranger including its optional dependencies
-                "atool",
-                "elinks",
-                "ffmpegthumbnailer",
-                "highlight",
-                "imagemagick",
-                "libcaca",
-                "mediainfo",
-                "odt2txt",
-                "perl-image-exiftool",
-                "poppler",
-                "python-chardet",
-                "python-pillow",
-                "transmission-cli",
-                "ueberzug",
-                "w3m",
-                "ranger"
+                "yazi",
+                "chafa", // fallback ASCII image preview
+                "imagemagick", // for image and font preview
+                "poppler", // for PDF preview
+                "resvg" // for SVG preview
             ],
             "default-value": true
         },

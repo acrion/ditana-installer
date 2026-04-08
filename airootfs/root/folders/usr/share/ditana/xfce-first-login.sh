@@ -119,8 +119,7 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
     # environments, retaining these settings ensures system stability and doesn't
     # introduce any adverse effects.
     # The primary configuration for the default terminal is now managed through
-    # the '/etc/xdg/xdg-terminals.list' file. This file is installed with the content
-    # 'kitty.desktop', which serves as the authoritative configuration.
+    # the '/etc/xdg/xdg-terminals.list' file.
     # For more information, refer to: https://github.com/Vladimir-csp/xdg-terminal-exec
     gsettings set org.gnome.desktop.default-applications.terminal exec 'xdg-terminal-exec'
     gsettings set org.gnome.desktop.default-applications.terminal exec-arg '-e'
@@ -159,26 +158,6 @@ LOG_PATH="$HOME/.ditana/xfce-first-login.log"
     xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary>Page_Down" -n -t string -s "next_workspace_key"
     xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary><Alt>Page_Up" -n -t string -s "move_window_prev_workspace_key"
     xfconf-query -c xfce4-keyboard-shortcuts -p "/xfwm4/custom/<Primary><Alt>Page_Down" -n -t string -s "move_window_next_workspace_key"
-
-    if command -v ranger &> /dev/null; then
-        # Launches the 'ranger' file manager in a terminal emulator to perform initial configuration.
-        # The use of 'xdg-terminal-exec' ensures that a valid terminal environment is available, preventing
-        # issues related to missing terminfo database or improper terminal initialization.
-        # This resolves the error '_curses.error: setupterm: could not find terminfo database'.
-        xdg-terminal-exec -e ranger --copy-config=all
-        for config in 'show_hidden' 'vcs_aware' 'preview_images' 'unicode_ellipsis'; do
-            if sed -i "s/^set $config false/set $config true/" ~/.config/ranger/rc.conf; then
-                echo "Updated ranger config: set $config to true"
-            else
-                echo "No change needed for ranger config: $config"
-            fi
-        done
-        if sed -i 's/^set preview_images_method w3m/set preview_images_method xdg-terminal-exec/' ~/.config/ranger/rc.conf; then
-            echo "Updated ranger config: set preview_images_method to xdg-terminal-exec"
-        else
-            echo "No change needed for ranger config: preview_images_method"
-        fi
-    fi
 
     # Audio is muted by default for new users (especially post-installation), requiring an adjustment.
     sleep 2 # Adding a delay to avoid setting volume during xfce4-pulseaudio-plugin initialization, as this seems to cause sporadic crashes

@@ -23,28 +23,3 @@ nohup <cmd> & — Run command detached from terminal
 <command> | xclip -selection clipboard — Redirect to clipboard
 
 Auto-start scripts: Add executable script files to ~/.shell.d/
-
-=== Kitty Terminal ===
-
-Ctrl+Shift+C — Copy selected text into clipboard
-Ctrl+Shift+P — Paste text from clipboard
-
-Ctrl+Shift+Enter — Open new kitty pane
-Ctrl+Shift+B — Move kitty pane backward
-Ctrl+Shift+F — Move kitty pane forward
-Ctrl+Shift+L — Change kitty pane layout
-Ctrl+Shift+R — Resize kitty pane
-Ctrl+Shift+W — Close kitty pane
-Ctrl+Shift+<n> — Focus nth kitty pane
-
-Ctrl+Shift+J — Scroll down
-Ctrl+Shift+K — Scroll up
-Ctrl+Shift+X — Scroll to next shell prompt
-Ctrl+Shift+Z — Scroll to previous shell prompt
-Ctrl+Shift+PageUp — Scroll page up
-Ctrl+Shift+PageDown — Scroll page down
-Ctrl+Shift+Home — Scroll to top
-Ctrl+Shift+End — Scroll to bottom
-
-kitten ssh — Enhanced SSH (see https://sw.kovidgoyal.net/kitty)
-Ctrl+Shift+F2 — Edit kitty configuration
