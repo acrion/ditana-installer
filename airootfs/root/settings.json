@@ -655,7 +655,7 @@
                 "base", // Minimal package set to define a basic Arch Linux installation.
                 "base-devel", // Provides various essential tools like sudo. Optional dependency of pacman, required to use makepkg.
                 "dialog", // Utilized in chroot-install.sh to prompt for the user password.
-                "ditana-config-bash", // Ditana bash configuration.
+                "bash",
                 "ditana-filesystem", // Base Ditana GNU/Linux files, based on the original 'filesystem' package from Arch Linux.
                 "glibc-locales", // Required for localized output and locale-dependent functions in various applications (even for users who choose en_US.UTF-8 for LC_MESSAGES).
                 "libpwquality", // Provides pwscore which we use in chroot-install.sh to validate user passwort quality
@@ -671,7 +671,16 @@
             "files": [
                 "/etc/lsb-release",
                 "/etc/systemd/system/ditana-initialize-system.service",
-                "/usr/share/ditana/create-debug-user.sh"
+                "/etc/profile.d/ditana-java.sh",
+                "/etc/profile.d/ditana-system-paths.sh",
+                "/etc/profile.d/ditana-bash-setup.sh",
+                "/usr/share/ditana/create-debug-user.sh",
+                "/etc/skel/.bashrc_ditana",
+                "/etc/skel/.shellrc",
+                "/etc/skel/.shell.d/readme.md"
+            ],
+            "chroot-script": [
+                "echo COLORTERM=truecolor >>/etc/environment"
             ],
             "default-value": true
         },
@@ -2134,13 +2143,20 @@
             "long-description": "Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting.",
             "spdx-identifiers": "zsh",
             "arch-packages": [
-                "ditana-config-zsh"
+                "zsh",
+                "zsh-syntax-highlighting",
+                "zsh-autosuggestions",
+                "zsh-history-substring-search",
+                "fzf",
+                "pkgfile"
             ],
             "chroot-script": [
                 "useradd -D -s \"$(which zsh)\"",
                 "`chsh -s \"\\$(which zsh)\" {Settings.instance.get('user-name')}`"
             ],
-            "required-by-chroot": true,
+            "files": [
+                "/etc/skel/.zshrc"
+            ],
             "default-value": true
         },
         //        {
@@ -2179,7 +2195,9 @@
                 "bat",
                 "bc",
                 "bind",
-                "expect",
+                "ditana-print-system-infos",
+                "expect", // for unbuffer
+                "eza",
                 "fd",
                 "ffmpeg",
                 "fzf",
@@ -2189,6 +2207,7 @@
                 "grep",
                 "htop",
                 "img2pdf",
+                "inotify-tools",
                 "less",
                 "lsof",
                 "lua",
@@ -2201,6 +2220,7 @@
                 "rsync",
                 "shellcheck",
                 "sed",
+                "starship", // used by bash and zsh configuration (if installed)
                 "systemctl-tui",
                 "trash-cli",
                 "turbostat",
@@ -2380,6 +2400,9 @@
             "arch-packages": [
                 "jdk-openjdk",
                 "java-runtime-common"
+            ],
+            "files": [
+                "/etc/profile.d/ditana-java.sh"
             ],
             "default-value": true
         },

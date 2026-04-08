@@ -8,8 +8,6 @@ monitor_dir <path> — Log file changes within directory
 ncdu <directory> — Analyze and visualize disk usage
 open <path> — Launch file/directory with default application
 turbostat <cmd> — Collect CPU performance metrics for command
-ugrep <pattern> <file> — Search file for regex pattern
-ugrep -r <pattern> <dir> — Recursive regex search in directory
 unbuffer <cmd> | tee <file> — Output to both file and screen
 
 Ctrl+C — Interrupt current process
