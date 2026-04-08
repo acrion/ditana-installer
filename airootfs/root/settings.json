@@ -709,8 +709,6 @@
                 "xfconf",
                 "xfdesktop",
                 "xfwm4",
-                // === XDG terminal exec ===
-                "xdg-terminal-exec-git",
                 // === XDG utilities ===
                 "xdg-user-dirs",
                 "xdg-utils",
@@ -776,11 +774,6 @@
                 "blueman",
                 // === Network tray ===
                 "network-manager-applet",
-                // === Terminal including optional dependencies ===
-                "kitty",
-                "imagemagick",
-                "python-pygments",
-                "libcanberra",
                 // === Media ===
                 "ristretto",
                 "vlc",
@@ -839,9 +832,6 @@
                 // === Kalu customization ===
                 "/etc/skel/.config/autostart/kalu.desktop",
                 "/etc/skel/.config/kalu/kalu.conf",
-                // === Terminal customization ===
-                "/etc/skel/.config/kitty/kitty.conf",
-                "/usr/share/pixmaps/ditana-logo-tiny.png",
                 // === Desktop shortcuts ===
                 "/etc/skel/Desktop/Donate to Ditana.desktop",
                 "/etc/skel/Desktop/Best Practices.desktop",
@@ -852,8 +842,6 @@
                 "/etc/X11/xinit/xinitrc.d/55-ditana-xdg-dirs.sh",
                 // === LightDM greeter config ===
                 "/etc/lightdm/slick-greeter.conf",
-                // === XDG terminal list ===
-                "/etc/xdg/xdg-terminals.list",
                 // === Ditana helper scripts ===
                 "/usr/share/ditana/open-disk-manager.sh",
                 "/usr/share/ditana/copy-path-to-clipboard.sh",
@@ -897,6 +885,41 @@
                 ]
             ],
             "default-value": "`NOT installing-over-ssh`"
+        },
+        {
+            "name": "kitty",
+            "arch-packages": [
+                "kitty",
+                "imagemagick",
+                "python-pygments",
+                "libcanberra",
+                "xdg-terminal-exec-git"
+            ],
+            "files": [
+                "/etc/skel/.config/kitty/kitty.conf",
+                "/usr/share/pixmaps/ditana-logo-tiny.png"
+            ],
+            "chroot-script": [
+                "mkdir /etc/xdg",
+                "echo kitty.desktop >/etc/xdg/xdg-terminals.list"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "ghostty",
+            "arch-packages": [
+                "ghostty",
+                "xdg-terminal-exec-git"
+            ],
+            "files": [
+                "/etc/skel/.config/ghostty/config",
+                "/usr/share/pixmaps/ditana-logo-tiny.png"
+            ],
+            "chroot-script": [
+                "mkdir /etc/xdg",
+                "echo com.mitchellh.ghostty.desktop >/etc/xdg/xdg-terminals.list"
+            ],
+            "default-value": "`install-desktop-environment`"
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Applications"
         {
