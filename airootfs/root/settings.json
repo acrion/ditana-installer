@@ -1179,6 +1179,9 @@
                 "kill $OLLAMA_PID 2>/dev/null || true",
                 "wait $OLLAMA_PID 2>/dev/null || true"
             ],
+            "files": [
+                "/etc/systemd/system/ollama.service.d/override.conf"
+            ],
             "available": "`total-ram-gib>=3`",
             "default-value": "`avx2-available AND total-ram-gib>=12`"
         },
@@ -1202,9 +1205,28 @@
             "short-description": "Install Logseq",
             "long-description": "Logseq: More than just a note-taking app, Logseq serves as a comprehensive platform for organizing thoughts, managing tasks, and building knowledge databases. In Ditana, Logseq is specially configured to leverage the local AI powered by Ollama. This integration enables AI-assisted note-taking, content generation, and knowledge management, all while maintaining privacy and security. Ideal for anyone looking to enhance their intellectual workflow with the power of AI, without compromising on data privacy.",
             "arch-packages": [
-                "ditana-config-logseq"
+                "logseq-desktop-bin"
             ],
             "spdx-identifiers": "AGPL-3.0-or-later",
+            "chroot-script": [
+                "pacman -S --noconfirm --needed npm git",
+                "cd /tmp",
+                "git clone --branch v1.14.2 --depth 1 https://github.com/briansunter/logseq-plugin-gpt3-openai.git",
+                "cd logseq-plugin-gpt3-openai",
+                "sed -i 's/return response\\.data\\[0\\]\\.url;/return response.data![0].url;/' src/lib/openai.ts",
+                "sed -i 's/engine.startsWith(\"gpt-3.5\") || engine.startsWith(\"gpt-4\")/true/' src/lib/openai.ts",
+                "npm install",
+                "npm run build",
+                "mkdir -p /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai",
+                "install -Dm644 LICENSE /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/LICENSE",
+                "install -Dm644 package.json /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/package.json",
+                "cp -r dist /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/dist",
+                "rm -rf /tmp/logseq-plugin-gpt3-openai"
+            ],
+            "files": [
+                "/etc/skel/.logseq/settings/logseq-plugin-gpt3-openai.json",
+                "/etc/skel/.logseq/config/plugins.edn"
+            ],
             "available": "`install-desktop-environment AND total-ram-gib>=3 AND install-ollama`",
             "default-value": "`install-desktop-environment AND avx2-available AND total-ram-gib>=12`"
         },

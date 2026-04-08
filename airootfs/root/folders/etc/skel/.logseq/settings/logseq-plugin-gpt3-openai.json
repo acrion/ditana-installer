@@ -1,0 +1,13 @@
+{
+  "openAIKey": "not-required",
+  "openAICompletionEngine": "phi4-mini",
+  "chatCompletionEndpoint": "http://localhost:11434/v1",
+  "chatPrompt": "Do not refer to yourself in your answers. Provide concise, self-contained responses. Do not ask follow-up questions or encourage further interaction. Focus solely on addressing the query at hand.",
+  "openAITemperature": 1,
+  "openAIMaxTokens": "1000",
+  "injectPrefix": "",
+  "dalleImageSize": "512",
+  "shortcutBlock": "mod+j",
+  "popupShortcut": "mod+g",
+  "disabled": false
+}
