@@ -1,4 +1,5 @@
 shell-integration-features = ssh-terminfo,ssh-env
+cursor-color = #bbbbbb
 background-image = /usr/share/pixmaps/ditana-logo-tiny.png
 background-image-position = top-right
 background-image-opacity = 0.4

@@ -89,20 +89,6 @@
             "instruction": "User name for new system\n\nEnter a login name in lowercase letters only (this is not your real name, but a system identifier). Using lowercase letters ensures consistency across system components and avoids potential issues with case sensitivity in command-line operations and configuration files."
         },
         {
-            "name": "user-id",
-            "type": "ask-for-setting",
-            "validation": "integer",
-            "extra-validation": "$_ ∈ 1000..60000",
-            "instruction": "ID of user «$user-name».\n\nThe user ID (UID) is a unique number assigned to each user on a Linux system. The default value (1000) is suitable for most cases and ensures compatibility with standard system settings.\n\nYou might want to change this if:\n\n• You’re mounting existing Linux-formatted drives with data owned by a user with a different UID.\n• You’re setting up a multi-user system and want to align UIDs with an existing network structure.\n\nIf unsure, it’s recommended to keep the default value."
-        },
-        {
-            "name": "user-group",
-            "type": "ask-for-setting",
-            "validation": "integer",
-            "extra-validation": "$_ ∈ 1000..60000",
-            "instruction": "Group of user «$user-name».\n\nIn Linux, every user belongs to at least one group. Groups help manage permissions for shared resources. The default value (1000) creates a private group for the user, which is suitable for most personal systems.\n\nYou might want to change this if:\n\n• You’re integrating this system into an existing network with predefined group structures.\n• You’re mounting drives with data owned by a specific group and want to maintain access permissions.\n• You’re setting up a multi-user system and want to implement a specific group-based access control.\n\nIf unsure, it’s recommended to keep the default value."
-        },
-        {
             "name": "install-desktop-environment",
             "type": "ask-for-yes-no",
             "instruction": "Install Desktop Environment?"
@@ -208,6 +194,27 @@
                             "instruction": "Choose Storage & File System Options:",
                             "help-intro": "",
                             "help-note": ""
+                        },
+                        {
+                            "name": "sudo-timeout",
+                            "type": "ask-for-setting",
+                            "validation": "integer",
+                            "extra-validation": "$_ ∈ 0..480",
+                            "instruction": "Sudo password timeout in minutes.\n\nThis sets how long sudo remembers your password before asking again. The default (5 minutes) is a common balance between security and convenience.\n\n• 0 means sudo will ask for the password every time.\n• Higher values are more convenient but less secure, as any process running in your terminal can use the cached credentials.\n\nIf unsure, it's recommended to keep the default value."
+                        },
+                        {
+                            "name": "user-id",
+                            "type": "ask-for-setting",
+                            "validation": "integer",
+                            "extra-validation": "$_ ∈ 1000..60000",
+                            "instruction": "ID of user «$user-name».\n\nThe user ID (UID) is a unique number assigned to each user on a Linux system. The default value (1000) is suitable for most cases and ensures compatibility with standard system settings.\n\nYou might want to change this if:\n\n• You’re mounting existing Linux-formatted drives with data owned by a user with a different UID.\n• You’re setting up a multi-user system and want to align UIDs with an existing network structure.\n\nIf unsure, it’s recommended to keep the default value."
+                        },
+                        {
+                            "name": "user-group",
+                            "type": "ask-for-setting",
+                            "validation": "integer",
+                            "extra-validation": "$_ ∈ 1000..60000",
+                            "instruction": "Group of user «$user-name».\n\nIn Linux, every user belongs to at least one group. Groups help manage permissions for shared resources. The default value (1000) creates a private group for the user, which is suitable for most personal systems.\n\nYou might want to change this if:\n\n• You’re integrating this system into an existing network with predefined group structures.\n• You’re mounting drives with data owned by a specific group and want to maintain access permissions.\n• You’re setting up a multi-user system and want to implement a specific group-based access control.\n\nIf unsure, it’s recommended to keep the default value."
                         },
                         {
                             "name": "Kernel Selection",
@@ -693,7 +700,8 @@
                 "python-pysocks", // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
                 "rakudo-bin", // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
                 "terminus-font", // The terminal font that will be configured.
-                "util-linux" // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
+                "util-linux", // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
+                "ditana-keyring" // Provides keyring update for the Ditana Arch repo
             ],
             "files": [
                 "/etc/lsb-release",
@@ -1105,18 +1113,6 @@
             "default-value": false
         },
         {
-            "name": "install-zapzap",
-            "dialog-name": "Desktop Applications",
-            "short-description": "Install ZapZap",
-            "long-description": "ZapZap is a reliable WhatsApp desktop application that avoids heavy CPU load in browsers. It allows you to paste images directly into a chat.",
-            "arch-packages": [
-                "zapzap"
-            ],
-            "spdx-identifiers": "GPL3",
-            "available": "`install-desktop-environment`",
-            "default-value": false
-        },
-        {
             "name": "install-variety",
             "dialog-name": "Desktop Applications",
             "short-description": "Install Variety",
@@ -1454,6 +1450,21 @@
                 "systemctl --global enable ditana-ramdisk.service"
             ],
             "default-value": true
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "sudo-timeout"
+        {
+            "name": "sudo-timeout",
+            "category": "system",
+            "dialog-name": "Advanced Settings",
+            "short-description": "Sudo password timeout (minutes)",
+            "long-description": "Configure how many minutes sudo remembers the password before prompting again. Creates a sudoers override file in /etc/sudoers.d/ with correct permissions.",
+            "spdx-identifiers": "ISC",
+            "chroot-script": [
+                "`echo 'Defaults timestamp_timeout={Settings.instance.get('sudo-timeout')}' > /etc/sudoers.d/99-timeout`",
+                "chmod 440 /etc/sudoers.d/99-timeout",
+                "chown root:root /etc/sudoers.d/99-timeout"
+            ],
+            "default-value": 5
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Kernel Selection"
         {

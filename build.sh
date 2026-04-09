@@ -100,6 +100,8 @@ mv /tmp/nvidia_open_gpu_page.txt airootfs/root/cached_open_gpu_page.txt
 # Export the GPG key to be used as a fallback during installation in case keyserver.ubuntu.com is down
 sudo pacman-key --export 3056513887B78AEB | tee airootfs/root/bind-mount/root/chaotic-aur-key.asc >/dev/null
 
+gpg --export --armor 3F8054C3FF755E5544E68516BC333E9AE877D45A >airootfs/root/bind-mount/root/ditana-key.asc
+
 sudo pacman -Sy
 TMP_ISO=/tmp/ditana-iso
 if [[ -n "$TMP_ISO" ]]; then

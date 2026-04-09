@@ -71,6 +71,12 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) {
                         }
                         configure-and-show-dialog($selected-dialog);
                     }
+                    when 'ask-for-setting' {
+                        if Settings.instance.get('tmux') {
+                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,fg=white,bg=black] $selected-dialog-name #[align=right,fg=green,bg=green] $current-dialog-name ← <Back> "};
+                        }
+                        ask-for-setting($selected-dialog);
+                    }
                     when 'procedure' {
                         given $selected-dialog<name> {
                             when 'review-summary-and-start-installation' {

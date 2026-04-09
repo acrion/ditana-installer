@@ -94,7 +94,7 @@ If you are unsure, use the default value. Note that the default does not conside
                     "
 Swap space acts as an extension of your system’s physical RAM, allowing it to handle more data than the physical memory permits. The optimal swap partition size depends on your specific use case and the resource demands of the applications you intend to run. If these demands exceed your physical RAM, a swap partition can help prevent system instability or crashes.
 
-Ditana enables ZRAM by default to optimize memory usage (see «Expert Settings» → «Storage & File System Options»). ZRAM creates a compressed swap space in RAM, enhancing system responsiveness under memory pressure and reducing wear on storage devices by minimizing writes to physical swap partitions on SSDs or HDDs. With ZRAM enabled, the system can handle occasional high memory demands efficiently without relying heavily on a physical swap partition.
+Ditana enables ZRAM by default to optimize memory usage (see «Advanced Settings» → «Storage & File System Options»). ZRAM creates a compressed swap space in RAM, enhancing system responsiveness under memory pressure and reducing wear on storage devices by minimizing writes to physical swap partitions on SSDs or HDDs. With ZRAM enabled, the system can handle occasional high memory demands efficiently without relying heavily on a physical swap partition.
 
 If you configure both a swap partition and ZRAM, the system will use ZRAM first before accessing the swap partition. This approach combines the benefits of having additional swap space while reducing wear on your storage devices.
 
