@@ -107,6 +107,36 @@ if [[ -n "$TMP_ISO" ]]; then
 fi
 sudo rm -rf out
 
+# --- GPG key selection (moved before list_special_packages) ---
+
+mapfile -t key_list < <(list_gpg_keys)
+
+echo "Available GPG keys for signing (ID - Name <Email>):"
+for i in "${!key_list[@]}"; do
+    IFS=',' read -r key_id full_uid <<< "${key_list[i]}"
+    echo "$((i+1))) $key_id - $full_uid"
+done
+echo "$(( ${#key_list[@]} + 1 ))) No signing"
+
+ZEF_SWITCHES=""
+
+read -rp "Choose a key by number for signing or press enter for 'No signing': " choice
+if [[ "$choice" -gt 0 && "$choice" -le "${#key_list[@]}" ]]; then
+    IFS=',' read -r selected_key selected_signer <<< "${key_list[$((choice - 1))]}"
+    echo "Selected GPG Key ID: $selected_key"
+
+    zef upgrade Sparrow6
+    zef upgrade Tomty
+    pushd tests/configuration
+    tomty --color --all
+    popd
+else
+    echo "No signing selected."
+    selected_signer="(none)"
+    selected_key=""
+    ZEF_SWITCHES="--/test --/test-depends"
+fi
+
 list_special_packages
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -143,34 +173,6 @@ if [[ "$current_branch" != "main" ]]; then
     LABEL+="-Testing"
 fi
 
-mapfile -t key_list < <(list_gpg_keys)
-
-echo "Available GPG keys for signing (ID - Name <Email>):"
-for i in "${!key_list[@]}"; do
-    IFS=',' read -r key_id full_uid <<< "${key_list[i]}"
-    echo "$((i+1))) $key_id - $full_uid"
-done
-echo "$(( ${#key_list[@]} + 1 ))) No signing"
-
-ZEF_SWITCHES=""
-
-read -rp "Choose a key by number for signing or press enter for 'No signing': " choice
-if [[ "$choice" -gt 0 && "$choice" -le "${#key_list[@]}" ]]; then
-    IFS=',' read -r selected_key selected_signer <<< "${key_list[$((choice - 1))]}"
-    echo "Selected GPG Key ID: $selected_key"
-
-    zef upgrade Sparrow6
-    zef upgrade Tomty
-    pushd tests/configuration
-    tomty --color --all
-    popd
-else
-    echo "No signing selected."
-    selected_signer="(none)"
-    selected_key=""
-    ZEF_SWITCHES="--/test --/test-depends"
-fi
-
 mkdir -p airootfs/root/.raku
 zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
 
@@ -196,9 +198,9 @@ echo "selected_key:    '$selected_key'"
 echo "LABEL:           '$LABEL'"
 echo "TMP_ISO:         '$TMP_ISO'"
 
-# Execute mkarchiso with elevated privileges, while preserving the current user’s environment (-E).
-# The GNUPGHOME environment variable points to the user’s GPG home directory, ensuring that GPG operations within mkarchiso
-# continue to use the user’s keyring and associated permissions.
+# Execute mkarchiso with elevated privileges, while preserving the current user's environment (-E).
+# The GNUPGHOME environment variable points to the user's GPG home directory, ensuring that GPG operations within mkarchiso
+# continue to use the user's keyring and associated permissions.
 if [[ -n "$selected_key" ]]; then
     sudo -E mkarchiso -v -C pacman.conf -L "$LABEL" -w "$TMP_ISO" -P "$selected_signer" -G "$selected_signer" -g "$selected_key" .
     sudo chown -R "$USER:$USER" out/

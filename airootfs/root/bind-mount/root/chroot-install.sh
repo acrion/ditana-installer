@@ -43,6 +43,14 @@ export PATH="$HOME/.raku/bin:$PATH"
         groupadd -g "$USER_GROUP" "$USER_NAME"
     fi
 
+    echo -e "\033[32m--- Configuring umask ---\033[0m"
+    if [[ "$UMASK_027" == "y" ]]; then
+        sed -i 's/^UMASK.*/UMASK\t\t027/' /etc/login.defs
+    elif [[ "$UMASK_077" == "y" ]]; then
+        sed -i 's/^UMASK.*/UMASK\t\t077/' /etc/login.defs
+    fi
+    # umask-022: no change needed, 022 is the default in /etc/login.defs
+    
     echo -e "\033[32m--- Creating user $USER_NAME with UID $USER_ID and GID $USER_GROUP ---\033[0m"
     useradd -m -u "$USER_ID" -g "$USER_GROUP" "$USER_NAME"
     

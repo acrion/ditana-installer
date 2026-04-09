@@ -210,6 +210,13 @@
                             "help-note": ""
                         },
                         {
+                            "name": "Umask Configuration",
+                            "type": "radiolist",
+                            "instruction": "Choose umask:",
+                            "help-intro": "The umask determines default file permissions for newly created files and directories. A more restrictive umask enhances privacy by limiting access for other users on the system.",
+                            "help-note": "For further information, please consult the following URL:\n • https://wiki.archlinux.org/title/Umask"
+                        },
+                        {
                             "name": "Kernel Selection",
                             "type": "radiolist",
                             "instruction": "Choose kernel:",
@@ -225,12 +232,26 @@
                             "suppress-license": true
                         },
                         {
+                            "name": "System Hardening",
+                            "type": "checklist",
+                            "instruction": "Select system hardening options:",
+                            "help-intro": "These settings harden the system against common attack vectors by restricting access to kernel internals, reducing the attack surface, protecting the network stack, and securing the file system. All selected options are written to /etc/sysctl.d/ditana.conf.",
+                            "help-note": "For further information, please consult the following URLs:\n • https://wiki.archlinux.org/title/Security\n • https://www.kernel.org/doc/html/latest/admin-guide/sysctl/\n • https://madaidans-insecurities.github.io/guides/linux-hardening.html"
+                        },
+                        {
                             "name": "CPU Vulnerability Mitigation Options",
                             "type": "checklist",
                             "instruction": "The options listed below are mitigations for CPU vulnerabilities detected on your system. These mitigations are enabled by default to enhance security. You can adjust these settings as needed. Please note that modifying these settings may impact system performance or security.\n\nIf you choose to uncheck all mitigations, the kernel will revert to its standard vulnerability management strategy. However, it is important to note that the standard kernel settings may introduce security vulnerabilities. The purpose of this dialog is to present you with the most secure kernel settings available, allowing you to make an informed decision based on the provided documentation. While some users may prioritize potential performance improvements, it is generally recommended to maintain the default mitigations to ensure robust security.\n\nFor more information about each mitigation, click the Help button below. Comprehensive details are also available at ditana.org/mitigations.",
                             "help-intro": "",
                             "help-note": "For further information, please consult the following URLs:\n • https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln\n • https://docs.kernel.org/next/admin-guide/kernel-parameters.html",
                             "suppress-license": true
+                        },
+                        {
+                            "name": "System Allocator",
+                            "type": "radiolist",
+                            "instruction": "Choose system memory allocator:",
+                            "help-intro": "The system memory allocator handles all dynamic memory requests from applications. Replacing the default glibc allocator can improve performance, security, or both.",
+                            "help-note": "For further information, please consult the following URLs:\n • https://github.com/microsoft/mimalloc (mimalloc)\n • https://github.com/GrapheneOS/hardened_malloc (hardened_malloc)"
                         },
                         {
                             "name": "Boot Init System",
@@ -1346,8 +1367,8 @@
             //     https://aur.archlinux.org/pkgbase/linux-hardened-lts#comment-1028414).
             // Both constraints can cause installation failures (see runtime check in bind-mount/root/install-and-configure-bootloader.sh)
             // and system update issues. We restrict ZFS to LTS kernel only for maximum stability.
-            "available": "`install-standard-lts-kernel`",
-            "default-value": "`install-standard-lts-kernel`"
+            "available": "`install-standard-lts-kernel OR install-hardened-lts-kernel`",
+            "default-value": "`install-standard-lts-kernel OR install-hardened-lts-kernel`"
         },
         {
             "name": "btrfs-filesystem",
@@ -1360,7 +1381,7 @@
             ],
             "spdx-identifiers": "GPL-2.0-only",
             "required-by-chroot": true,
-            "default-value": "`NOT install-standard-lts-kernel`"
+            "default-value": "`NOT (install-standard-lts-kernel OR install-hardened-lts-kernel)`"
         },
         {
             "name": "xfs-filesystem",
@@ -1382,6 +1403,33 @@
                 "e2fsprogs"
             ],
             "spdx-identifiers": "GPL-2.0-only et al.",
+            "default-value": false
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Umask Configuration"
+        {
+            "name": "umask-027",
+            "dialog-name": "Umask Configuration",
+            "short-description": "Restrictive (027) — Ditana Default",
+            "long-description": "Restrictive Umask (027): New files are created with permissions 640 (owner: read/write, group: read, others: none) and new directories with 750 (owner: full, group: read/execute, others: none). This prevents other users on the system from accessing your files while still allowing group members to read them. Recommended for most users.",
+            "spdx-identifiers": "",
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "umask-077",
+            "dialog-name": "Umask Configuration",
+            "short-description": "Private (077)",
+            "long-description": "Private Umask (077): New files are created with permissions 600 (owner: read/write only) and new directories with 700 (owner: full access only). No other user, including group members, can access newly created files. This provides maximum privacy but may cause issues with services or applications that expect group-readable files.",
+            "spdx-identifiers": "",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+        {
+            "name": "umask-022",
+            "dialog-name": "Umask Configuration",
+            "short-description": "Permissive (022) — Linux Default",
+            "long-description": "Permissive Umask (022): New files are created with permissions 644 (owner: read/write, others: read) and new directories with 755 (owner: full, others: read/execute). This is the standard Linux default and allows all users on the system to read your files. Choose this if you rely on software that expects world-readable files or if you are the only user on the system.",
+            "spdx-identifiers": "",
             "default-value": false
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Kernel Selection"
@@ -1408,7 +1456,7 @@
                 "linux-lts-headers"
             ],
             "available": "`NOT b43-required`",
-            "default-value": "`NOT b43-required`"
+            "default-value": false
         },
         {
             "name": "install-hardened-stable-kernel",
@@ -1434,7 +1482,7 @@
                 "linux-hardened-lts-headers"
             ],
             "available": "`NOT b43-required`",
-            "default-value": false
+            "default-value": "`NOT b43-required`"
         },
         {
             "name": "install-zen-kernel",
@@ -1469,6 +1517,9 @@
             "short-description": "Enable Magic SysRq Keys (kernel.sysrq=1)",
             "long-description": "Enable Magic System Request Keys: Enables the SysRq (commonly «Print Screen») key for emergency recovery actions, such as Alt+SysRq+B to reboot.",
             "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'kernel.sysrq=1 # Enable Magic SysRq Keys' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": true
         },
         {
@@ -1477,6 +1528,9 @@
             "short-description": "Reduce background reclaiming of file system cache (vm.vfs_cache_pressure 100 -> 50)",
             "long-description": "Reduce background reclaiming of file system cache: Retains more file system metadata in memory for faster access, increasing RAM usage.",
             "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'vm.vfs_cache_pressure=50 # Reduce background reclaiming of file system cache' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": "`total-ram-gib >= 24`"
         },
         {
@@ -1485,6 +1539,9 @@
             "short-description": "Minimize background memory compaction (vm.compaction_proactiveness 20/100 → 1/100)",
             "long-description": "Minimize background memory compaction: Reduces effort spent on memory compaction in the background, which may decrease CPU load at the cost of increased RAM consumption.",
             "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'vm.compaction_proactiveness=1 # Minimize background memory compaction' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": "`total-ram-gib >= 24`"
         },
         {
@@ -1509,6 +1566,10 @@
             "short-description": "Disable Swap Readahead (vm.page-cluster 3 → 0)",
             "long-description": "Disable Swap Readahead: The system reads only one page at a time from swap, potentially reducing initial latency when accessing swapped-out pages. This is advantageous when using ZRAM, as ZRAM provides fast access to swap space. Reading only the required pages can improve performance without the overhead of prefetching additional pages.",
             "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                // # https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+                "echo 'vm.page-cluster=0 # Disable Swap Readahead - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": "`install-zram`"
         },
         {
@@ -1517,6 +1578,10 @@
             "short-description": "Disable Extra Memory Reclaim (vm.watermark_boost_factor 15000 → 0)",
             "long-description": "Disable Extra Memory Reclaim: This reduces reclaim activity during memory fragmentation when high-order memory allocations are less critical. This can optimize memory management for systems using ZRAM. Since ZRAM reduces the need for high-order memory allocations, the extra memory reclaim becomes unnecessary, improving overall performance.",
             "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                // https: //wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+                "echo 'vm.watermark_boost_factor=0 # Disable Extra Memory Reclaim - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": "`install-zram`"
         },
         {
@@ -1525,6 +1590,10 @@
             "short-description": "Maintain free memory (vm.watermark_scale_factor 10/3000 → 125/3000)",
             "long-description": "Maintain free memory: Make the Kernel Swap Thread more aggressive in maintaining free memory. This helps prevent applications from entering direct memory reclaim, enhancing system responsiveness under memory pressure. This is particularly beneficial for systems with ZRAM, because it allows the system to better utilize ZRAM’s fast swap capabilities by maintaining more free memory and reducing allocation stalls.",
             "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                // https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+                "echo 'vm.watermark_scale_factor=125 # Maintain free memory - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": "`install-zram`"
         },
         {
@@ -1541,6 +1610,10 @@
             "short-description": "Allow normal users to access performance profiling tools (perf_event_paranoid=1)",
             "long-description": "Allow normal users to access performance profiling tools: This is particularly useful for developers who need to analyze application performance in a more secure way without needing full root privileges.",
             "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                // https://docs.kernel.org/admin-guide/sysctl/kernel.html#perf-event-paranoid
+                "echo 'kernel.perf_event_paranoid=1 # Allow normal users to access performance profiling tools' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": true
         },
         {
@@ -1550,6 +1623,10 @@
             "long-description": "Disable unprivileged user namespaces: Enhances system security by preventing local privilege escalation attacks through user namespace exploitation. However, this will break application sandboxing tools that rely on unprivileged user namespaces, including Bubblejail, certain containerization tools, and communication software. Consider leaving this disabled if you plan to use these security tools.",
             "spdx-identifiers": "GPL-2.0-only",
             "available": "`NOT (install-bubblejail OR install-hardened-stable-kernel OR install-hardened-lts-kernel)`",
+            "chroot-script": [
+                // https://wiki.archlinux.org/title/Security#Sandboxing_applications
+                "echo 'kernel.unprivileged_userns_clone=0 # Disable unprivileged user namespaces' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": false
         },
         {
@@ -1566,6 +1643,89 @@
             "short-description": "Automatically fill deallocated memory with 0 (init_on_free=1)",
             "long-description": "Fill Deallocated Memory with 0: Aids in preventing data leakage by clearing freed memory.",
             "spdx-identifiers": "GPL-2.0-only",
+            "default-value": true
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Hardening"
+        {
+            "name": "sysctl-kptr-restrict",
+            "dialog-name": "System Hardening",
+            "short-description": "Hide kernel pointers (kernel.kptr_restrict=2)",
+            "long-description": "Hide Kernel Pointers: Prevents all users, including root, from reading kernel symbol addresses via /proc/kallsyms. These addresses can help attackers develop exploits targeting specific kernel functions. This setting has no impact on normal system operation.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'kernel.kptr_restrict=2 # hide kernel pointers' >> /etc/sysctl.d/ditana.conf"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "sysctl-dmesg-restrict",
+            "dialog-name": "System Hardening",
+            "short-description": "Restrict kernel log access to root (kernel.dmesg_restrict=1)",
+            "long-description": "Restrict Kernel Log Access: Prevents unprivileged users from reading kernel log messages via dmesg. The kernel log can reveal hardware details, loaded modules, and error messages that help attackers map out the system. Administrators can still access logs via journalctl or by running dmesg as root.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'kernel.dmesg_restrict=1 # restrict dmesg to root' >> /etc/sysctl.d/ditana.conf"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "sysctl-bpf-disabled",
+            "dialog-name": "System Hardening",
+            "short-description": "Disable unprivileged BPF (kernel.unprivileged_bpf_disabled=1)",
+            "long-description": "Disable Unprivileged BPF: Restricts the BPF JIT compiler to root. BPF is a powerful in-kernel virtual machine that can be abused for attacks such as heap spraying. Normal users and applications rarely need direct BPF access.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'kernel.unprivileged_bpf_disabled=1 # restrict BPF to root' >> /etc/sysctl.d/ditana.conf"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "sysctl-kexec-disabled",
+            "dialog-name": "System Hardening",
+            "short-description": "Disable kexec (kernel.kexec_load_disabled=1)",
+            "long-description": "Disable kexec: Prevents loading a replacement kernel at runtime via the kexec system call. An attacker with sufficient privileges could use kexec to boot a malicious kernel, bypassing Secure Boot and other boot-time protections. Once set to 1 at runtime, this cannot be changed back without a reboot.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'kernel.kexec_load_disabled=1 # disable kexec' >> /etc/sysctl.d/ditana.conf"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "sysctl-ptrace-restrict",
+            "dialog-name": "System Hardening",
+            "short-description": "Restrict ptrace to root (kernel.yama.ptrace_scope=2)",
+            "long-description": "Restrict ptrace to Root: Limits the ptrace system call to processes running as root. ptrace allows inspecting and modifying the memory of running processes, which can be used to extract passwords or inject code. This setting will prevent non-root users from using debuggers such as gdb and strace. Developers who need debugging tools should disable this option. The Linux default (0) allows unrestricted ptrace between processes of the same user.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'kernel.yama.ptrace_scope=2 # restrict ptrace to root' >> /etc/sysctl.d/ditana.conf"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "sysctl-net-hardening",
+            "dialog-name": "System Hardening",
+            "short-description": "Harden network stack (syncookies, no redirects, no source routing, rp_filter)",
+            "long-description": "Harden Network Stack: Applies several network protections in a single setting:\n\n• SYN flood protection via TCP syncookies.\n• Reject ICMP redirects to prevent man-in-the-middle attacks (IPv4 and IPv6).\n• Disable source routing, which allows senders to dictate the packet path through the network.\n• Enable reverse-path filtering to drop packets with spoofed source addresses.\n\nThese settings are broadly recommended and unlikely to cause compatibility issues.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'net.ipv4.tcp_syncookies=1 # SYN flood protection' >> /etc/sysctl.d/ditana.conf",
+                "echo 'net.ipv4.conf.all.accept_redirects=0 # reject ICMP redirects' >> /etc/sysctl.d/ditana.conf",
+                "echo 'net.ipv6.conf.all.accept_redirects=0 # reject ICMP redirects (IPv6)' >> /etc/sysctl.d/ditana.conf",
+                "echo 'net.ipv4.conf.all.accept_source_route=0 # disable source routing' >> /etc/sysctl.d/ditana.conf",
+                "echo 'net.ipv4.conf.all.rp_filter=1 # reverse-path filtering' >> /etc/sysctl.d/ditana.conf"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "sysctl-fs-protection",
+            "dialog-name": "System Hardening",
+            "short-description": "Protect FIFOs and regular files in sticky directories (fs.protected_fifos/regular=2)",
+            "long-description": "Protect FIFOs and Regular Files in Sticky Directories: Prevents users from writing to FIFOs or regular files they do not own in world-writable sticky directories such as /tmp. This mitigates a class of privilege escalation attacks where an attacker creates or replaces files in shared directories to trick privileged processes into reading or writing attacker-controlled data. The Linux default protects hardlinks and symlinks (fs.protected_hardlinks=1, fs.protected_symlinks=1) but leaves FIFOs and regular files unprotected.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "chroot-script": [
+                "echo 'fs.protected_fifos=2 # protect FIFOs in sticky dirs' >> /etc/sysctl.d/ditana.conf",
+                "echo 'fs.protected_regular=2 # protect regular files in sticky dirs' >> /etc/sysctl.d/ditana.conf"
+            ],
             "default-value": true
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "CPU Vulnerability Mitigation Options".
@@ -1676,6 +1836,59 @@
             "short-description": "Disable all Mitigations - Security Risk! (mitigations=off)",
             "long-description": "Disable all Mitigations: This option differs from unchecking all mitigations in the list: It disables all kernel-based security mitigations against speculative execution vulnerabilities such as Spectre, Meltdown, MDS, and others. This option maximizes system performance by avoiding the overhead of security patches, but it significantly increases the risk of exposure to these vulnerabilities. Use this setting only if you fully understand the implications and are confident that your system is not at risk from these types of attacks.",
             "spdx-identifiers": "GPL-2.0-only",
+            "default-value": false
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Allocator"
+        {
+            "name": "allocator-mimalloc",
+            "dialog-name": "System Allocator",
+            "short-description": "mimalloc — Ditana Default",
+            "long-description": "mimalloc (Microsoft Research): A high-performance general-purpose allocator that excels in multi-threaded workloads. It provides faster allocation and deallocation than glibc's default allocator, with reduced fragmentation and better scalability across CPU cores. Recommended for both desktop and server use.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "mimalloc"
+            ],
+            "chroot-script": [
+                "echo /usr/lib/libmimalloc.so > /etc/ld.so.preload"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "allocator-hardened",
+            "dialog-name": "System Allocator",
+            "short-description": "hardened_malloc (Full)",
+            "long-description": "hardened_malloc (GrapheneOS, Full): A security-focused allocator designed to make exploitation of heap vulnerabilities significantly harder. It provides strong protections including guard pages, randomized allocation, and strict size class isolation. This comes at the cost of higher memory usage and reduced allocation performance compared to mimalloc or glibc. Not available when Xorg is in use, as Xorg is incompatible with hardened_malloc.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "hardened_malloc"
+            ],
+            "available": "`NOT install-desktop-environment`",
+            "chroot-script": [
+                "echo /usr/lib/libhardened_malloc.so > /etc/ld.so.preload"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "allocator-hardened-light",
+            "dialog-name": "System Allocator",
+            "short-description": "hardened_malloc (Light)",
+            "long-description": "hardened_malloc Light (GrapheneOS, Light): A less aggressive variant of hardened_malloc that reduces memory overhead while retaining most of its security properties. It uses smaller guard regions and less strict isolation than the full variant, making it more suitable for memory-constrained environments. Not available when Xorg is in use, as Xorg is incompatible with hardened_malloc.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "hardened_malloc"
+            ],
+            "available": "`NOT install-desktop-environment`",
+            "chroot-script": [
+                "echo /usr/lib/libhardened_malloc-light.so > /etc/ld.so.preload"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "allocator-glibc",
+            "dialog-name": "System Allocator",
+            "short-description": "glibc Default — Linux Default",
+            "long-description": "glibc Default Allocator: The standard memory allocator provided by the GNU C Library. It is well-tested, compatible with all software, and requires no additional packages. While it does not offer the performance benefits of mimalloc or the security hardening of hardened_malloc, it is the most conservative and universally compatible choice.",
+            "spdx-identifiers": "LGPL-2.1-or-later",
             "default-value": false
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Boot Init System"

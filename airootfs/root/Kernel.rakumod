@@ -32,14 +32,10 @@ sub create-kernel-configuration() is export {
         $kernel-options ~= " nomodeset"
     }
 
+    # Unconditional sysctl settings and swappiness (which depends on multiple other settings)
     my $conf-content = "";
-
     $conf-content ~= "net.ipv6.conf.all.accept_ra=1\n";
     $conf-content ~= "net.ipv6.conf.default.accept_ra=1\n";
-    
-    if $s.get("kernel-option-sysrq") { $conf-content ~= "kernel.sysrq=1\n" }
-    if $s.get("kernel-option-vfsca") { $conf-content ~= "vm.vfs_cache_pressure=50\n" }
-    if $s.get("kernel-option-compa") { $conf-content ~= "vm.compaction_proactiveness=1\n" }
 
     if $s.get("kernel-option-swapp") { # For all settings, True means that we deviate from the Kernel Default.
         if $s.get("install-zram") { # kernel-option-swapp is a special setting that we handle differently based on ZRAM
@@ -49,16 +45,11 @@ sub create-kernel-configuration() is export {
         }
     }
 
-    if $s.get("kernel-option-pagec") { $conf-content ~= "vm.page-cluster=0 # recommended for ZRAM\n" }             # https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
-    if $s.get("kernel-option-wmboo") { $conf-content ~= "vm.watermark_boost_factor=0 # recommended for ZRAM\n" }   # https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
-    if $s.get("kernel-option-wmsca") { $conf-content ~= "vm.watermark_scale_factor=125 # recommended for ZRAM\n" } # https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
-    if $s.get("kernel-option-perf1") { $conf-content ~= "kernel.perf_event_paranoid=1\n" }                         # https://docs.kernel.org/admin-guide/sysctl/kernel.html#perf-event-paranoid
-    if $s.get("kernel-option-duurn") { $conf-content ~= "kernel.unprivileged_userns_clone=0\n" }                   # https://wiki.archlinux.org/title/Security#Sandboxing_applications
-
     my $kernel-conf-dir = "/mnt/etc/sysctl.d";
     mkdir($kernel-conf-dir);
     "$kernel-conf-dir/ditana.conf".IO.spurt($conf-content);
 
+    # Kernel command line parameters
     if $s.get("kernel-option-fwdpe") { $kernel-options ~= " fw_devlink=permissive" }      # https://docs.kernel.org/admin-guide/kernel-parameters.html
     if $s.get("kernel-option-inita") { $kernel-options ~= " init_on_alloc=1" }            # https://docs.kernel.org/admin-guide/kernel-parameters.html
     if $s.get("kernel-option-initf") { $kernel-options ~= " init_on_free=1" }             # https://docs.kernel.org/admin-guide/kernel-parameters.html
