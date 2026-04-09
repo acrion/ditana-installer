@@ -76,6 +76,9 @@ export PATH="$HOME/.raku/bin:$PATH"
 
     source installation-steps.sh
 
+    # restore current directory (potentially changed by installation-steps.sh)
+    cd $HOME
+
     # Spell checker installation (locale-dependent, kept here for simplicity)
     LOWERCASE_LOCALE=$(echo "$LOCALE" | tr '[:upper:]' '[:lower:]')
     SPELL_CHECKER="hunspell-$LOWERCASE_LOCALE"
