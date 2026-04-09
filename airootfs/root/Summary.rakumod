@@ -70,8 +70,28 @@ sub get-kernel-params-description() {
     Logging.log("kernel-option-wmsca = {$s.get('kernel-option-wmsca')}");
     Logging.log("kernel-option-fwdpe = {$s.get('kernel-option-fwdpe')}");
     Logging.log("kernel-option-perf1 = {$s.get('kernel-option-perf1')}");
+    Logging.log("kernel-option-duurn = {$s.get('kernel-option-duurn')}");
     Logging.log("kernel-option-inita = {$s.get('kernel-option-inita')}");
     Logging.log("kernel-option-initf = {$s.get('kernel-option-initf')}");
+    Logging.log("sysctl-kptr-restrict  = {$s.get('sysctl-kptr-restrict')}");
+    Logging.log("sysctl-dmesg-restrict = {$s.get('sysctl-dmesg-restrict')}");
+    Logging.log("sysctl-bpf-disabled   = {$s.get('sysctl-bpf-disabled')}");
+    Logging.log("sysctl-kexec-disabled = {$s.get('sysctl-kexec-disabled')}");
+    Logging.log("sysctl-ptrace-restrict = {$s.get('sysctl-ptrace-restrict')}");
+    Logging.log("sysctl-net-hardening  = {$s.get('sysctl-net-hardening')}");
+    Logging.log("sysctl-fs-protection  = {$s.get('sysctl-fs-protection')}");
+    Logging.log("kernel-option-spec2 = {$s.get('kernel-option-spec2')}");
+    Logging.log("kernel-option-l1tff = {$s.get('kernel-option-l1tff')}");
+    Logging.log("kernel-option-mdsfu = {$s.get('kernel-option-mdsfu')}");
+    Logging.log("kernel-option-tsxaa = {$s.get('kernel-option-tsxaa')}");
+    Logging.log("kernel-option-meltd = {$s.get('kernel-option-meltd')}");
+    Logging.log("kernel-option-mmios = {$s.get('kernel-option-mmios')}");
+    Logging.log("kernel-option-retbl = {$s.get('kernel-option-retbl')}");
+    Logging.log("kernel-option-srsom = {$s.get('kernel-option-srsom')}");
+    Logging.log("kernel-option-gdsfo = {$s.get('kernel-option-gdsfo')}");
+    Logging.log("kernel-option-rfdso = {$s.get('kernel-option-rfdso')}");
+    Logging.log("kernel-option-ibtof = {$s.get('kernel-option-ibtof')}");
+    Logging.log("kernel-option-mitof = {$s.get('kernel-option-mitof')}");
     Logging.log("total-ram-gib       = {$s.get('total-ram-gib')}");
     Logging.log("install-zram        = {$s.get('install-zram')}");
     
@@ -85,8 +105,30 @@ sub get-kernel-params-description() {
        $s.get('kernel-option-wmsca') == $s.get('install-zram') &&
        $s.get('kernel-option-fwdpe') &&
        $s.get('kernel-option-perf1') &&
+       !$s.get('kernel-option-duurn') &&
        $s.get('kernel-option-inita') &&
-       $s.get('kernel-option-initf') {
+       $s.get('kernel-option-initf') &&
+       # System Hardening
+       $s.get('sysctl-kptr-restrict') &&
+       $s.get('sysctl-dmesg-restrict') &&
+       $s.get('sysctl-bpf-disabled') &&
+       $s.get('sysctl-kexec-disabled') &&
+       !$s.get('sysctl-ptrace-restrict') &&
+       $s.get('sysctl-net-hardening') &&
+       $s.get('sysctl-fs-protection') &&
+       # CPU Vulnerability Mitigation Options
+       $s.get('kernel-option-spec2') == $s.get('is-spectre-v2-vulnerable') &&
+       $s.get('kernel-option-l1tff') == $s.get('is-l1tf-vulnerable') &&
+       $s.get('kernel-option-mdsfu') == $s.get('is-mds-vulnerable') &&
+       $s.get('kernel-option-tsxaa') == $s.get('is-taa-vulnerable') &&
+       $s.get('kernel-option-meltd') == $s.get('is-meltdown-vulnerable') &&
+       $s.get('kernel-option-mmios') == $s.get('is-mmio-stale-data-vulnerable') &&
+       $s.get('kernel-option-retbl') == $s.get('is-retbleed-vulnerable') &&
+       $s.get('kernel-option-srsom') == $s.get('is-srso-vulnerable') &&
+       $s.get('kernel-option-gdsfo') == $s.get('is-gds-vulnerable') &&
+       $s.get('kernel-option-rfdso') == $s.get('is-rfds-vulnerable') &&
+       !$s.get('kernel-option-ibtof') &&
+       !$s.get('kernel-option-mitof') {
         return "Recommended (Ditana customized)";
     }
     
@@ -100,8 +142,30 @@ sub get-kernel-params-description() {
        $s.get('kernel-option-wmsca') ||
        $s.get('kernel-option-fwdpe') ||
        $s.get('kernel-option-perf1') ||
+       $s.get('kernel-option-duurn') ||
        $s.get('kernel-option-inita') ||
-       $s.get('kernel-option-initf') {
+       $s.get('kernel-option-initf') ||
+       # System Hardening
+       $s.get('sysctl-kptr-restrict') ||
+       $s.get('sysctl-dmesg-restrict') ||
+       $s.get('sysctl-bpf-disabled') ||
+       $s.get('sysctl-kexec-disabled') ||
+       $s.get('sysctl-ptrace-restrict') ||
+       $s.get('sysctl-net-hardening') ||
+       $s.get('sysctl-fs-protection') ||
+       # CPU Vulnerability Mitigation Options
+       $s.get('kernel-option-spec2') ||
+       $s.get('kernel-option-l1tff') ||
+       $s.get('kernel-option-mdsfu') ||
+       $s.get('kernel-option-tsxaa') ||
+       $s.get('kernel-option-meltd') ||
+       $s.get('kernel-option-mmios') ||
+       $s.get('kernel-option-retbl') ||
+       $s.get('kernel-option-srsom') ||
+       $s.get('kernel-option-gdsfo') ||
+       $s.get('kernel-option-rfdso') ||
+       $s.get('kernel-option-ibtof') ||
+       $s.get('kernel-option-mitof') {
         return "Kernel Default";
     }
     
@@ -160,7 +224,7 @@ Kernel Configuration:          $kernel-params-description
 CPU Vulnerability Mitigations: $mitigations-description
 
 By pressing the Escape-Key you may navigate backwards and make changes. Note that the $nvidia-mention
-Kernel and Boot Init System settings are available in the Menu «Expert settings».";
+Kernel and Boot Init System settings are available in the Menu «Advanced settings».";
     
     my %dialog-result = show-dialog-raw(
         '--defaultno',

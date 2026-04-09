@@ -94,7 +94,7 @@ The «Locale» setting also influences various regional settings on your system.
 
 If you’d like to later choose whether system messages, folder names, or your Desktop
 Environment’s language (if you install one) should be displayed in your selected language or
-in English, you’ll find this option under «Expert Settings» → «Development Tools and
+in English, you’ll find this option under «Advanced Settings» → «Development Tools and
 Libraries.»
 END
 

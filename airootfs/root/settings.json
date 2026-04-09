@@ -192,7 +192,7 @@
                     "help-note": ""
                 },
                 {
-                    "name": "Expert Settings",
+                    "name": "Advanced Settings",
                     "type": "categories",
                     "categories": [
                         {
@@ -200,7 +200,7 @@
                             "type": "radiolist",
                             "instruction": "Select the file system for your root partition using the [SPACE] key. If you are unsure, leave it at the default.",
                             "help-intro": "Choose the appropriate file system for your root partition.",
-                            "help-note": "Note: Timeshift is enabled by default for BTRFS, XFS, and EXT4. For ZFS, a native snapshot solution is pre-configured instead of using Timeshift. You can configure automatic system snapshots in the Expert Settings → System Maintenance Tools menu, available for selection later."
+                            "help-note": "Note: Timeshift is enabled by default for BTRFS, XFS, and EXT4. For ZFS, a native snapshot solution is pre-configured instead of using Timeshift. You can configure automatic system snapshots in the Advanced Settings → System Maintenance Tools menu, available for selection later."
                         },
                         {
                             "name": "Storage & File System Options",
@@ -210,48 +210,11 @@
                             "help-note": ""
                         },
                         {
-                            "name": "Umask Configuration",
-                            "type": "radiolist",
-                            "instruction": "Choose umask:",
-                            "help-intro": "The umask determines default file permissions for newly created files and directories. A more restrictive umask enhances privacy by limiting access for other users on the system.",
-                            "help-note": "For further information, please consult the following URL:\n • https://wiki.archlinux.org/title/Umask"
-                        },
-                        {
                             "name": "Kernel Selection",
                             "type": "radiolist",
                             "instruction": "Choose kernel:",
                             "help-intro": "You may choose one of the following kernels:",
                             "help-note": "For further information, please consult the following URLs:\n • https://www.kernel.org (Default Kernel)\n • https://github.com/anthraxx/linux-hardened (Hardened Kernel)\n • https://wiki.linuxfoundation.org/realtime/start (Realtime Kernel)\n • https://github.com/zen-kernel/zen-kernel/wiki/Detailed-Feature-List (Zen Kernel)"
-                        },
-                        {
-                            "name": "General Kernel Configuration",
-                            "type": "checklist",
-                            "instruction": "The checked items indicate modifications to the default kernel configurations. If you prefer to adhere to established standards for security and stability, you may wish to uncheck all items and retain the standard Linux kernel configurations. These modifications have been carefully selected and are further explained in the Help page.",
-                            "help-intro": "",
-                            "help-note": "For further information, please consult the following URLs:\n • https://docs.kernel.org/next/admin-guide/sysctl\n • https://docs.kernel.org/next/admin-guide/kernel-parameters.html",
-                            "suppress-license": true
-                        },
-                        {
-                            "name": "System Hardening",
-                            "type": "checklist",
-                            "instruction": "Select system hardening options:",
-                            "help-intro": "These settings harden the system against common attack vectors by restricting access to kernel internals, reducing the attack surface, protecting the network stack, and securing the file system. All selected options are written to /etc/sysctl.d/ditana.conf.",
-                            "help-note": "For further information, please consult the following URLs:\n • https://wiki.archlinux.org/title/Security\n • https://www.kernel.org/doc/html/latest/admin-guide/sysctl/\n • https://madaidans-insecurities.github.io/guides/linux-hardening.html"
-                        },
-                        {
-                            "name": "CPU Vulnerability Mitigation Options",
-                            "type": "checklist",
-                            "instruction": "The options listed below are mitigations for CPU vulnerabilities detected on your system. These mitigations are enabled by default to enhance security. You can adjust these settings as needed. Please note that modifying these settings may impact system performance or security.\n\nIf you choose to uncheck all mitigations, the kernel will revert to its standard vulnerability management strategy. However, it is important to note that the standard kernel settings may introduce security vulnerabilities. The purpose of this dialog is to present you with the most secure kernel settings available, allowing you to make an informed decision based on the provided documentation. While some users may prioritize potential performance improvements, it is generally recommended to maintain the default mitigations to ensure robust security.\n\nFor more information about each mitigation, click the Help button below. Comprehensive details are also available at ditana.org/mitigations.",
-                            "help-intro": "",
-                            "help-note": "For further information, please consult the following URLs:\n • https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln\n • https://docs.kernel.org/next/admin-guide/kernel-parameters.html",
-                            "suppress-license": true
-                        },
-                        {
-                            "name": "System Allocator",
-                            "type": "radiolist",
-                            "instruction": "Choose system memory allocator:",
-                            "help-intro": "The system memory allocator handles all dynamic memory requests from applications. Replacing the default glibc allocator can improve performance, security, or both.",
-                            "help-note": "For further information, please consult the following URLs:\n • https://github.com/microsoft/mimalloc (mimalloc)\n • https://github.com/GrapheneOS/hardened_malloc (hardened_malloc)"
                         },
                         {
                             "name": "Boot Init System",
@@ -301,6 +264,49 @@
                             "instruction": "Choose development options:",
                             "help-intro": "",
                             "help-note": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Expert Settings",
+                    "type": "categories",
+                    "categories": [
+                        {
+                            "name": "Umask Configuration",
+                            "type": "radiolist",
+                            "instruction": "Choose umask:",
+                            "help-intro": "The umask determines default file permissions for newly created files and directories. A more restrictive umask enhances privacy by limiting access for other users on the system.",
+                            "help-note": "For further information, please consult the following URL:\n • https://wiki.archlinux.org/title/Umask"
+                        },
+                        {
+                            "name": "General Kernel Configuration",
+                            "type": "checklist",
+                            "instruction": "The checked items indicate modifications to the default kernel configurations. If you prefer to adhere to established standards for security and stability, you may wish to uncheck all items and retain the standard Linux kernel configurations. These modifications have been carefully selected and are further explained in the Help page.",
+                            "help-intro": "",
+                            "help-note": "For further information, please consult the following URLs:\n • https://docs.kernel.org/next/admin-guide/sysctl\n • https://docs.kernel.org/next/admin-guide/kernel-parameters.html",
+                            "suppress-license": true
+                        },
+                        {
+                            "name": "System Hardening",
+                            "type": "checklist",
+                            "instruction": "Select system hardening options:",
+                            "help-intro": "These settings harden the system against common attack vectors by restricting access to kernel internals, reducing the attack surface, protecting the network stack, and securing the file system. All selected options are written to /etc/sysctl.d/ditana.conf.",
+                            "help-note": "For further information, please consult the following URLs:\n • https://wiki.archlinux.org/title/Security\n • https://www.kernel.org/doc/html/latest/admin-guide/sysctl/\n • https://madaidans-insecurities.github.io/guides/linux-hardening.html"
+                        },
+                        {
+                            "name": "CPU Vulnerability Mitigation Options",
+                            "type": "checklist",
+                            "instruction": "The options listed below are mitigations for CPU vulnerabilities detected on your system. These mitigations are enabled by default to enhance security. You can adjust these settings as needed. Please note that modifying these settings may impact system performance or security.\n\nIf you choose to uncheck all mitigations, the kernel will revert to its standard vulnerability management strategy. However, it is important to note that the standard kernel settings may introduce security vulnerabilities. The purpose of this dialog is to present you with the most secure kernel settings available, allowing you to make an informed decision based on the provided documentation. While some users may prioritize potential performance improvements, it is generally recommended to maintain the default mitigations to ensure robust security.\n\nFor more information about each mitigation, click the Help button below. Comprehensive details are also available at ditana.org/mitigations.",
+                            "help-intro": "",
+                            "help-note": "For further information, please consult the following URLs:\n • https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln\n • https://docs.kernel.org/next/admin-guide/kernel-parameters.html",
+                            "suppress-license": true
+                        },
+                        {
+                            "name": "System Allocator",
+                            "type": "radiolist",
+                            "instruction": "Choose system memory allocator:",
+                            "help-intro": "The system memory allocator handles all dynamic memory requests from applications. Replacing the default glibc allocator can improve performance, security, or both.",
+                            "help-note": "For further information, please consult the following URLs:\n • https://github.com/microsoft/mimalloc (mimalloc)\n • https://github.com/GrapheneOS/hardened_malloc (hardened_malloc)"
                         }
                     ]
                 },
@@ -1347,7 +1353,7 @@
             ],
             "default-value": "`install-gpu-libraries AND nvidia-pci-id`"
         },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "File System"
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "File System"
         {
             "name": "zfs-filesystem",
             "dialog-name": "File System",
@@ -1405,34 +1411,51 @@
             "spdx-identifiers": "GPL-2.0-only et al.",
             "default-value": false
         },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Umask Configuration"
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Storage & File System Options"
         {
-            "name": "umask-027",
-            "dialog-name": "Umask Configuration",
-            "short-description": "Restrictive (027) — Ditana Default",
-            "long-description": "Restrictive Umask (027): New files are created with permissions 640 (owner: read/write, group: read, others: none) and new directories with 750 (owner: full, group: read/execute, others: none). This prevents other users on the system from accessing your files while still allowing group members to read them. Recommended for most users.",
+            "name": "disable-atimes",
+            "dialog-name": "Storage & File System Options",
+            "short-description": "Disable File Access Time Recording",
+            "long-description": "Disable File Access Time Recording: Enable the «noatime» option when mounting the root file system to prevent the recording of the last access time of files. This configuration offers several benefits:\n\n• Performance Improvement: Reduces the overhead associated with updating access times on each file read operation, leading to faster file system performance.\n• Reduced Wear on Storage Devices: Minimizes write operations, which is particularly advantageous for SSDs by extending their lifespan.\n• Optimized for Btrfs: Enhances snapshot performance by reducing the number of write operations required during snapshot creation and management.\n• Enhanced Security: Prevents exposure of file access patterns, reducing potential information leakage.\n\nWhile «noatime» is beneficial for most users, it can be disabled if specific applications rely on access time information.",
             "spdx-identifiers": "",
-            "required-by-chroot": true,
             "default-value": true
         },
         {
-            "name": "umask-077",
-            "dialog-name": "Umask Configuration",
-            "short-description": "Private (077)",
-            "long-description": "Private Umask (077): New files are created with permissions 600 (owner: read/write only) and new directories with 700 (owner: full access only). No other user, including group members, can access newly created files. This provides maximum privacy but may cause issues with services or applications that expect group-readable files.",
-            "spdx-identifiers": "",
-            "required-by-chroot": true,
-            "default-value": false
+            "name": "install-zram",
+            "dialog-name": "Storage & File System Options",
+            "short-description": "Install ZRAM",
+            "long-description": "Install ZRAM: ZRAM is enabled by default to optimize memory usage, creating a compressed swap space in RAM that reduces wear on storage devices (SSDs and HDDs) and enhances system responsiveness under memory pressure. ZRAM is managed by the zram-generator, which efficiently configures and activates ZRAM without manual setup. Keeping ZRAM enabled balances performance and minimizes storage usage. Only consider disabling ZRAM if you are certain the system will not encounter high memory demand.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "zram-generator"
+            ],
+            "files": [
+                "/etc/systemd/zram-generator.conf"
+            ],
+            "default-value": true
         },
         {
-            "name": "umask-022",
-            "dialog-name": "Umask Configuration",
-            "short-description": "Permissive (022) — Linux Default",
-            "long-description": "Permissive Umask (022): New files are created with permissions 644 (owner: read/write, others: read) and new directories with 755 (owner: full, others: read/execute). This is the standard Linux default and allows all users on the system to read your files. Choose this if you rely on software that expects world-readable files or if you are the only user on the system.",
-            "spdx-identifiers": "",
-            "default-value": false
+            "name": "install-ramdisk",
+            "dialog-name": "Storage & File System Options",
+            "short-description": "Install RAM Disk",
+            "long-description": "Make a RAM Disk available: This option creates a dedicated RAM Disk mounted within the user’s runtime directory and symlinked to their home directory, making it easily accessible. Key features include:\n\n• A clean, user-exclusive space for temporary data, free from system files, unlike $XDG_RUNTIME_DIR and /tmp.\n• Accessible only to the user, offering a controlled and secure temporary storage.\n• Set up with the $RAMDISK environment variable for easy reference in the terminal.\n\nIdeal for tasks needing fast, temporary storage, such as video processing or caching, the RAM Disk integrates with the file manager on desktops and clears automatically upon logout.",
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "files": [
+                // Install the systemd user service to launch the RAM disk script located at /usr/share/ditana/ramdisk.sh
+                "/etc/systemd/user/ditana-ramdisk.service",
+                // Install the main RAM disk script that creates and manages the RAM disk directory
+                "/usr/share/ditana/ramdisk.sh",
+                // Install the environment configuration for systemd context to ensure the RAMDISK variable is available
+                "/etc/environment.d/90-ditana-ramdisk.conf",
+                // Install the profile script to export the RAMDISK variable for user shell sessions
+                "/etc/profile.d/ditana-ramdisk.sh"
+            ],
+            "chroot-script": [
+                "systemctl --global enable ditana-ramdisk.service"
+            ],
+            "default-value": true
         },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Kernel Selection"
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Kernel Selection"
         {
             "name": "install-standard-stable-kernel",
             "dialog-name": "Kernel Selection",
@@ -1508,6 +1531,816 @@
                 "linux-rt-lts-headers"
             ],
             "available": "`NOT b43-required`",
+            "default-value": false
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Boot Init System"
+        {
+            "name": "use-init-busybox",
+            "dialog-name": "Boot Init System",
+            "short-description": "BusyBox",
+            "long-description": "BusyBox provides a suite of Unix utilities in a single executable. It combines various common commands and system functions into one binary, optimizing the size and complexity of the boot process.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "default-value": "`zfs-filesystem`"
+        },
+        {
+            "name": "use-init-systemd",
+            "dialog-name": "Boot Init System",
+            "short-description": "systemd",
+            "long-description": "systemd integrates several boot and process management functions into one framework. It is designed to handle system initialization, service management, and logging in a unified way, with built-in parallelization and dependency management. systemd offers a modular architecture where different components work together to manage the system’s lifecycle from boot to shutdown.\n\nNote that using systemd with a ZFS root filesystem is presently only possible if the root partition is not encrypted. As a result, Ditana does not currently support the use of systemd with ZFS.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "required-by-chroot": true,
+            // Using systemd init system for ZFS requires https://github.com/dasJ/sd-zfs, but this project does not yet support ZFS encryption (which we configure when encrypt-root-partition is true). We could still support this, but currently do not.
+            "available": "`NOT zfs-filesystem`",
+            "default-value": "`NOT zfs-filesystem`"
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Hardware Support Options"
+        {
+            "name": "install-audio",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install Audio support",
+            "long-description": "Install Audio Support: Installs PipeWire with PulseAudio and ALSA compatibility layers, and adds the user «$user-name» to the «audio» group to enable access to audio devices.",
+            "spdx-identifiers": "MIT LGPL-2.1-or-later",
+            "arch-packages": [
+                "pipewire",
+                "pipewire-alsa",
+                "pipewire-pulse",
+                "wireplumber"
+            ],
+            "chroot-script": [
+                "`usermod -aG audio {Settings.instance.get('user-name')}`"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-bluetooth",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install Bluetooth support",
+            "long-description": "Install Bluetooth Support: Installs the necessary Bluetooth components (protocol stack, management tools, OBEX for file transfer, and mesh services) and enables the Bluetooth service in the system. Bluetooth allows wireless connection to various devices such as keyboards, mice, headsets, smartphones, and other Bluetooth-capable devices. The Bluetooth service will be automatically started at system boot, making Bluetooth devices immediately available. This entry is enabled by default if Bluetooth hardware is detected in the system.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                // see https://wiki.archlinux.org/title/Bluetooth
+                "bluez",
+                "bluez-utils",
+                "bluez-obex",
+                "bluez-mesh"
+            ],
+            "chroot-script": [
+                "systemctl enable bluetooth"
+            ],
+            "default-value": "`has-bluetooth`"
+        },
+        {
+            "name": "install-nvidia-opensource",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install open-source NVIDIA kernel modules",
+            "long-description": "Install the open-source NVIDIA kernel modules (nvidia-open-dkms): These kernel modules, developed by NVIDIA and published as open source, are now the default NVIDIA driver in Arch Linux since driver version 590 (December 2025). They integrate natively with the Linux kernel, resulting in better system stability, improved power management, and full Wayland support.\n\nThis driver supports Turing (RTX 20xx, GTX 16xx) and newer GPUs.\n\nFor older GPUs (Maxwell, Pascal, Volta, Kepler), the open-source kernel modules are NOT available. These GPUs require a legacy proprietary driver or the Nouveau driver.\n\nNote: Like the proprietary driver, the open kernel modules still rely on the proprietary NVIDIA userspace utilities (nvidia-utils).\n\nFor more information, visit: https://github.com/NVIDIA/open-gpu-kernel-modules",
+            "spdx-identifiers": "",
+            "license-category": "CLOSED/FOSS",
+            "arch-packages": [
+                "nvidia-open-dkms"
+            ],
+            "files": [
+                "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf",
+                "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
+            ],
+            "required-by-chroot": true,
+            "available": "`nvidia-pci-id`",
+            "default-value": false // this default is set by check-nvidia()
+        },
+        {
+            "name": "install-nvidia-proprietary",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install proprietary NVIDIA legacy driver",
+            "long-description": "Install the proprietary NVIDIA legacy driver: This driver provides support for older NVIDIA GPUs that are not compatible with the open-source NVIDIA kernel modules. Since driver version 590 (December 2025), the main Arch Linux NVIDIA packages have switched to open kernel modules, which only support Turing and newer GPUs.\n\nFor Maxwell (GTX 900), Pascal (GTX 10xx), and Volta GPUs, the nvidia-580xx-dkms legacy driver is required. This driver will receive security updates through October 2028.\n\nFor Kepler (GTX 600/700) GPUs, the nvidia-470xx-dkms legacy driver is required. Note that this driver is no longer receiving updates.\n\nThe specific legacy driver package for your GPU is determined automatically by the installer.\n\nFor detailed driver information, please visit: https://www.nvidia.com/en-us/drivers/unix",
+            "license-category": "CLOSED",
+            "spdx-identifiers": "",
+            "arch-packages": [ // this package is set by check-nvidia()
+            ],
+            "files": [
+                "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf",
+                "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
+            ],
+            "required-by-chroot": true,
+            "available": "`nvidia-pci-id`", // this availability is set by function check-nvidia()
+            "default-value": false // this default set by check-nvidia()
+        },
+        {
+            "name": "install-nouveau",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install open-source Nouveau NVIDIA driver",
+            "long-description": "Install the Nouveau open-source NVIDIA graphics card driver: Nouveau is a community-developed, fully open-source driver for NVIDIA graphics cards. It offers the following benefits:\n\n• Broad support for older NVIDIA hardware, including GPUs not supported by NVIDIA's own drivers.\n• Unlike NVIDIA's open kernel modules and the proprietary legacy drivers, Nouveau does not depend on any proprietary NVIDIA components, making it the only truly open-source NVIDIA driver.\n• For first-generation Maxwell GPUs (GTX 750 series), Nouveau provides good support including GPU re-clocking.\n\nLimitations:\n• For GPUs from GTX 900 series onwards, signed firmware requirements limit Nouveau's power management and performance capabilities.\n• Modern Nouveau development focuses on GPUs with the NVIDIA GPU System Processor (GSP), i.e., GTX 1600/RTX 2000 and newer, via the upcoming NOVA driver.\n\nDefault Recommendation: Nouveau is recommended for very old GPUs (requiring drivers older than version 470), where running outdated proprietary drivers would pose compatibility or security risks.\n\nFor more detailed information, visit: https://nouveau.freedesktop.org",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "xf86-video-nouveau"
+            ],
+            "available": "`nvidia-pci-id`",
+            "default-value": false // this default is set by check-nvidia()
+        },
+        {
+            "name": "install-nvidia-prime",
+            "default-value": "`has-hybrid-nvidia-gpu AND install-desktop-environment AND (install-nvidia-proprietary OR install-nvidia-opensource)`",
+            "arch-packages": [
+                "nvidia-prime",
+                "switcheroo-control"
+            ],
+            "chroot-script": [
+                "systemctl enable switcheroo-control"
+            ]
+        },
+        {
+            "name": "install-virtualbox-guest",
+            "dialog-name": "Hardware Support Options",
+            "short-description": "Install the VirtualBox Guest Additions",
+            "long-description": "Install the VirtualBox Guest Additions: These enhance the integration and performance of Ditana in a VirtualBox environment, including better graphics performance, shared clipboard, drag & drop functionality, and automatic window resizing.\n\nFor more information, visit: https://www.virtualbox.org/manual/ch04.html\n\nPlease note that although the actual package is licensed under the FOSS GPL2, it will automatically install additional components that are closed-source. These are licensed under the VirtualBox Extension Pack Personal Use and Evaluation Licence, see https://www.virtualbox.org/wiki/VirtualBox_PUEL",
+            "license-category": "CLOSED",
+            "spdx-identifiers": "PUEL",
+            "arch-packages": [
+                "virtualbox-guest-iso"
+            ],
+            "root-script": [
+                "echo \"Installing VirtualBox guest additions...\"",
+                "mkdir -p /tmp/virtualbox-guest",
+                "mount -o loop /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso /tmp/virtualbox-guest/",
+                "pushd /tmp/virtualbox-guest/",
+                "./VBoxLinuxAdditions.run",
+                "`USER_NAME={Settings.instance.get('user-name')}`",
+                "usermod -aG vboxsf \"$USER_NAME\"",
+                "echo \"VirtualBox guest additions installed successfully.\"",
+                "popd",
+                "umount /tmp/virtualbox-guest/",
+                "rmdir /tmp/virtualbox-guest",
+                "echo \"Finished installing VirtualBox guest additions.\""
+            ],
+            "available": "`virtualbox`",
+            "default-value": "`virtualbox`"
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Repository & Package Management Configuration"
+        {
+            "name": "install-pacman-core-tools",
+            "dialog-name": "Repository & Package Management Configuration",
+            "short-description": "Install package management tools",
+            "long-description": "Install core package management tools:\n\n• arch-audit: A security tool that checks installed packages for known vulnerabilities. It uses data from the Arch Security Team, helping to keep your system secure.\n• pacman-contrib: This package includes various useful scripts and tools to enhance the functionality of the pacman package manager. Tools such as pacdiff for managing configuration file changes and checkupdates for checking package updates are included.\n• pacseek: A convenient text-based graphical interface that supports quick browsing of available installation packages (including AUR) and their installation. For AUR, pikaur is configured, which is the default AUR helper on Ditana.\n• fwupd: Simple daemon to allow session software to update firmware.\n• pkgfile: A utility to search for files across all packages in the repositories, not just installed ones. It is particularly useful for identifying which package a specific file belongs to, even if the package is not currently installed on the system.",
+            "spdx-identifiers": "MIT GPL-2.0-or-later GPL-3.0-only LGPL-2.1-or-later",
+            "arch-packages": [
+                "arch-audit",
+                "pacman-contrib", // optional dependency of pikaur
+                "pacseek",
+                "fwupd", // daemon to allow session software to update firmware
+                "pkgfile"
+            ],
+            "chroot-script": [
+                "systemctl enable pkgfiled"
+            ],
+            "files": [
+                "/etc/skel/.config/pacseek/config.json"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-pkgstats",
+            "dialog-name": "Repository & Package Management Configuration",
+            "short-description": "Contribute to Arch statistics",
+            "long-description": "Contribute to the Arch Linux package statistics. «pkgstats» anonymously submits a list of installed packages to the Arch Linux project every week. See https://pkgstats.archlinux.de",
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "arch-packages": [
+                "pkgstats"
+            ],
+            "default-value": "`release-version AND NOT virtual-environment`"
+        },
+        {
+            "name": "enable-multilib",
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "enable-chaotic-aur",
+            //"dialog-name": "Repository & Package Management Configuration",
+            //"short-description": "Enable autom. building repo \"Chaotic-AUR\"",
+            //"long-description": "Enable the automated building repo for AUR packages «Chaotic-AUR»: Chaotic-AUR provides a repository of pre-built packages from the AUR, saving time and computational resources by avoiding manual compilation. This is especially useful for users who frequently install or update AUR packages and prefer immediate access over building from source. Note that the installer will enable this for certain packages, but you can safely disable it.",
+            //"spdx-identifiers": "",
+            //"arch-packages": [
+            //    ""
+            //],
+            "required-by-chroot": true,
+            //"available": "`enable-multilib`",
+            // Temporary solution: Due to build issues of AUR package librewolf, we rely on chaotic-aur
+            // for desktop installations (i.e. package ditana-config-xfce).
+            // Future Ditana releases will offer browser selection (and ditana-config-xfce will be deprecated).
+            "default-value": "`install-desktop-environment`"
+            //"default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Network and Security Tools"
+        {
+            "name": "enable-network",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Enable network access",
+            "long-description": "Enable network access: Enables basic networking capabilities on your system. This includes configuration of DNSSEC and DNS over TLS for secure, encrypted DNS, fully integrated with systemd-resolved to ensure consistent and reliable name resolution. Additionally, it enables the Network Time Synchronization systemd service.",
+            "spdx-identifiers": "LGPL-2.1-or-later,GPL-2.0-or-later",
+            "arch-packages": [
+                "ditana-network"
+            ],
+            "chroot-script": [
+                "systemctl enable systemd-timesyncd",
+                "systemctl enable NetworkManager",
+                "systemctl enable systemd-resolved"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-network-tools",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install basic network tools",
+            "long-description": "Install basic network tools:\n • net-tools: Provides commands like netstat and route.\n • nmap: Network exploration and security auditing tool.\n • mtr: Combines the functionality of traceroute and ping.\n • tcpdump: Captures and analyzes network traffic.\n • wget: Network utility to retrieve files from the Web",
+            "spdx-identifiers": "FOSS GPL-2.0-only,GPL3,BSD-3-Clause,Nmap",
+            "arch-packages": [
+                "net-tools",
+                "nmap",
+                "mtr",
+                "tcpdump",
+                "wget"
+            ],
+            "available": "`enable-network`",
+            "default-value": true
+        },
+        {
+            "name": "install-openssh",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install and configure OpenSSH",
+            "long-description": "Install OpenSSH server with public key authentication, and creates an ed25519 SSH key pair for your user «$user-name».",
+            "spdx-identifiers": "BSD-2-Clause,BSD-3-Clause,ISC,MIT",
+            "arch-packages": [
+                "openssh"
+            ],
+            "chroot-script": [
+                "systemctl enable sshd",
+                "`su - {Settings.instance.get('user-name')} -c 'ssh-keygen -t ed25519 -N \"\" -f ~/.ssh/id_ed25519 -q'`",
+                "`su - {Settings.instance.get('user-name')} -c 'touch ~/.ssh/authorized_keys'`",
+                "`su - {Settings.instance.get('user-name')} -c 'chmod 600 ~/.ssh/authorized_keys'`"
+            ],
+            "available": "`enable-network`",
+            "default-value": true
+        },
+        {
+            "name": "install-firewalld",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install and enable firewalld",
+            "long-description": "Install firewalld, a dynamically managed firewall with D-Bus interface. Key features include support for network zones, IPv4/IPv6, runtime/permanent configurations, and a rich language for complex rules. It utilizes nftables, the modern successor to iptables, offering improved performance and flexibility. firewalld allows easy integration for services and applications to modify firewall settings without service restarts. For desktop installations, a graphical configuration tool is included.",
+            "spdx-identifiers": "GPL-2.0-or-later",
+            "arch-packages": [
+                "firewalld"
+            ],
+            "chroot-script": [
+                "systemctl enable firewalld"
+            ],
+            "available": "`enable-network`",
+            "default-value": true
+        },
+        {
+            "name": "install-bubblejail",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install Bubblejail",
+            "long-description": "Install Bubblejail, a sandboxing utility that provides application isolation without parallel packaging systems. It implements a resource-oriented permission model, enhanced by seccomp and D-Bus filtering. Key features include:\n • Fine-grained control over application permissions and resource access\n • X11/Wayland display server integration\n • Custom home directory isolation per application\n • User-friendly graphical interface for sandbox configuration",
+            "spdx-identifiers": "GPL-3.0-or-later",
+            "arch-packages": [
+                "bubblejail"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-protonvpn",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install ProtonVPN",
+            "long-description": "Install ProtonVPN, a secure VPN service with strong privacy features and servers in over 110 countries. It offers NetShield Ad-blocker to filter ads, trackers, and malware before they reach your device. Features include high-speed connections via their 10 Gbps network with VPN Accelerator technology, strict no-logs policy backed by Swiss privacy laws, and Stealth protocol for bypassing censorship. An account from https://protonvpn.com is required for full functionality.",
+            "license-category": "CLOSED",
+            "arch-packages": [
+                "proton-vpn-gtk-app"
+            ],
+            "available": "`enable-network AND install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-expressvpn",
+            "dialog-name": "Network and Security Tools",
+            "short-description": "Install ExpressVPN",
+            "long-description": "Install ExpressVPN, offering a robust VPN service with optional filtering of ads, trackers and malicious sites even before they arrive at your browser. An Activation Code from https://expressvpn.com is required to use ExpressVPN.",
+            "license-category": "CLOSED",
+            "aur-packages": [
+                "expressvpn"
+            ],
+            "available": "`enable-network`",
+            "default-value": false
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "System Maintenance Tools"
+        {
+            "name": "configure-automatic-snapshots",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Configure Automatic System Snapshots",
+            "long-description": "Configure Automatic System Snapshots\nCreate automatic snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues. Depending on the selected file system, different tools are used to perform these snapshots:\n\n• ext4, xfs, btrfs: Timeshift is utilized to create snapshots. For btrfs, Timeshift performs atomic operations with minimal overhead, while for ext4 and xfs, it uses rsync, typically completing backups in under five seconds.\n• zfs: ZFS snapshots are created instead, providing the same reliable snapshot functionality.\n\nIn the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.",
+            "spdx-identifiers": "GPL-2.0-or-later,MIT",
+            "arch-packages": [
+                ""
+            ],
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "configure-automatic-snapshots-zfs",
+            "arch-packages": [
+                "zfs-autosnap"
+            ],
+            "default-value": "`configure-automatic-snapshots AND zfs-filesystem`"
+        },
+        {
+            "name": "configure-automatic-snapshots-timeshift",
+            "arch-packages": [
+                "timeshift",
+                "timeshift-autosnap"
+            ],
+            "default-value": "`configure-automatic-snapshots AND NOT zfs-filesystem`"
+        },
+        {
+            "name": "install-logrotate",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Install and enable logrotate",
+            "long-description": "Install and enable logrotate:\nLogrotate manages the automatic rotation and compression of various system and application log files across your Linux system. It prevents these logs from consuming excessive disk space by periodically archiving, compressing, or deleting old logs. When enabled, the logrotate.timer service runs this task at scheduled intervals, maintaining a balance between keeping necessary logs for troubleshooting and controlling their growth.",
+            "spdx-identifiers": "GPL",
+            "arch-packages": [
+                "logrotate"
+            ],
+            "chroot-script": [
+                "systemctl enable logrotate.timer"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "configure-lingering",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Enable persistent user services",
+            "long-description": "Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "chroot-script": [
+                "mkdir -p /var/lib/systemd/linger",
+                "`touch /var/lib/systemd/linger/{Settings.instance.get('user-name')}`"
+            ],
+            "default-value": "true"
+        },
+        {
+            "name": "install-rate-mirrors",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Install rate-mirrors",
+            "long-description": "Install rate-mirrors:\nRate-mirrors optimizes your system’s package downloads by selecting the fastest repository mirrors. A daily systemd timer automatically re-evaluates mirror speeds, ensuring optimal download performance without manual intervention. This is especially beneficial for laptops that change geographic locations or when mirror configurations change. The tool tests mirror speeds based on your current network conditions and location, using data about submarine cable connections and inter-country network topologies.",
+            "spdx-identifiers": "CC-BY-NC-SA-3.0",
+            "arch-packages": [
+                "rate-mirrors"
+            ],
+            "files": [
+                "/etc/systemd/system/ditana-rate-mirrors.service",
+                "/etc/systemd/system/ditana-rate-mirrors.timer"
+            ],
+            "chroot-script": [
+                "systemctl enable ditana-rate-mirrors.timer"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "enable-auditd",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Enable the Linux Audit Daemon",
+            "long-description": "Enable the Linux Audit Daemon:\nThe Linux Audit Daemon (auditd) monitors and logs critical system events, enhancing system security and integrity. It captures a wide range of activities, such as file accesses and user actions, making it invaluable for auditing and forensic analysis. Enabling auditd with its default configuration ensures comprehensive logging of system events. You can view summaries of these logs with «sudo aureport», providing essential insights into system behavior and potential security issues.",
+            "spdx-identifiers": "GPL-/LGPL-2.0-or-later",
+            "arch-packages": [
+                "audit"
+            ],
+            "chroot-script": [
+                "systemctl enable auditd"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "disable-core-dumps",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Disable Core Dumps",
+            "long-description": "Disable Core Dumps:\nCore dumps capture the memory state of a program during crashes, which is useful for debugging but may inadvertently expose sensitive information. In Ditana, core dumps are disabled by default, safeguarding system integrity and user privacy. Advanced users can choose to enable core dumps temporarily in shell sessions or for specific systemd services, ensuring a secure default configuration while allowing flexibility for debugging needs.",
+            "spdx-identifiers": "AGPL-3.0-or-later",
+            "files": [
+                "/etc/security/limits.d/50-ditana.conf",
+                "/etc/systemd/system.conf.d/50-ditana-limits.conf"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "enable-fstrim",
+            "dialog-name": "System Maintenance Tools",
+            "short-description": "Weekly discarding of unuseds SSD blocks",
+            "long-description": "TRIM is a command that informs a solid-state drive (SSD) which blocks of data are no longer in use and can be wiped internally. For Linux systems, enabling the fstrim.timer service schedules a weekly TRIM operation on all mounted file systems that support it, optimizing free space management. This helps maintain SSD performance and extends the drive’s longevity by reducing wear during write operations. Unlike continuous TRIM methods, which can slightly degrade performance by issuing TRIM commands at every delete operation, scheduling TRIM operations weekly minimizes the impact on system performance and is less stressful on the SSD. The fstrim.timer is a safe and effective way to ensure your SSD’s health and efficiency. It activates only on partitions that support TRIM, making it a non-invasive and beneficial optimization for your system. This option is only available outside virtualization.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "chroot-script": [
+                "systemctl enable fstrim.timer"
+            ],
+            "default-value": "`NOT virtual-environment`",
+            "available": "`NOT virtual-environment`"
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Terminal Tools and Utilities"
+        {
+            "name": "install-zsh",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install zsh and make it default",
+            "long-description": "Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting.",
+            "spdx-identifiers": "zsh",
+            "arch-packages": [
+                "zsh",
+                "zsh-syntax-highlighting",
+                "zsh-autosuggestions",
+                "zsh-history-substring-search",
+                "fzf",
+                "pkgfile"
+            ],
+            "chroot-script": [
+                "useradd -D -s \"$(which zsh)\"",
+                "`chsh -s \"\\$(which zsh)\" {Settings.instance.get('user-name')}`"
+            ],
+            "files": [
+                "/etc/skel/.zshrc"
+            ],
+            "default-value": true
+        },
+        //        {
+        //            "name": "install-kmscon",
+        //            "dialog-name": "Terminal Tools and Utilities",
+        //            "short-description": "Install kmscon userspace console emulator",
+        //            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
+        //            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
+        //            "arch-packages": [
+        //                "kmscon"
+        //            ],
+        //            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
+        //            "default-value": "`install-desktop-environment`"
+        //        },
+        {
+            "name": "install-cron",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install cron and activate service",
+            "long-description": "Install cron and activate service: cron is a common service that allows for the scheduling of regular jobs directly from the terminal.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "cronie"
+            ],
+            "chroot-script": [
+                "systemctl enable cronie"
+            ],
+            "default-value": "`install-backintime`"
+        },
+        {
+            "name": "install-terminal-utilities",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install essential terminal utilities like grep, rsync, bc...",
+            "long-description": "Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "bat",
+                "bc",
+                "bind",
+                "ditana-print-system-infos",
+                "expect", // for unbuffer
+                "eza",
+                "fd",
+                "ffmpeg",
+                "fzf",
+                "git-lfs",
+                "jq",
+                "fakeroot",
+                "grep",
+                "htop",
+                "img2pdf",
+                "inotify-tools",
+                "less",
+                "lsof",
+                "lua",
+                "man-db",
+                "mediainfo",
+                "ncdu",
+                "neovim",
+                "perl-image-exiftool",
+                "ripgrep",
+                "rsync",
+                "shellcheck",
+                "sed",
+                "starship", // used by bash and zsh configuration (if installed)
+                "systemctl-tui",
+                "trash-cli",
+                "turbostat",
+                "zoxide",
+                "zellij"
+            ],
+            "files": [
+                "/etc/skel/.config/bat/config"
+            ],
+            "chroot-script": [
+                "`su - {Settings.instance.get('user-name')} -c 'git lfs install'`"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-micro",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install micro editor and set it as default",
+            "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
+            "spdx-identifiers": "MIT",
+            "files": [
+                "/etc/skel/.config/micro/settings.json",
+                "/etc/profile.d/ditana-set-micro-as-default-editor.sh",
+                "/etc/environment.d/90-ditana-micro-editor.conf",
+                // Install the custom sudoers configuration to preserve the EDITOR and VISUAL environment variables in the sudo context,
+                // ensuring that 'micro' is used as the default editor even when elevated permissions are required.
+                "/etc/sudoers.d/10-ditana-micro"
+            ],
+            "arch-packages": [
+                "micro"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "configure-micro-for-xfce",
+            "files": [
+                // we overrule the default desktop shortcut to use exo-open --launch TerminalEmulator micro %F
+                "/etc/skel/.local/share/applications/micro.desktop"
+            ],
+            "default-value": "`install-micro AND install-desktop-environment`"
+        },
+        {
+            "name": "install-yazi",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install yazi terminal file manager including optional packages",
+            "long-description": "Install yazi, a blazing fast terminal file manager written in Rust, including optional packages for thumbnails, previews, searching, and clipboard support.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "yazi",
+                "chafa", // fallback ASCII image preview
+                "imagemagick", // for image and font preview
+                "poppler", // for PDF preview
+                "resvg" // for SVG preview
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-archivers",
+            "dialog-name": "Terminal Tools and Utilities",
+            "short-description": "Install various command line archivers like zip, unzip, 7z...",
+            "long-description": "Install various command line archivers: $packages.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "7zip",
+                "arj",
+                "bzip2",
+                "cpio",
+                "gzip",
+                "lhasa",
+                "lrzip",
+                "lz4",
+                "lzip",
+                "lzop",
+                "tar",
+                "unarj",
+                "unrar",
+                "unzip",
+                "xz",
+                "zip",
+                "zstd"
+            ],
+            "default-value": true
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Development Tools and Libraries"
+        {
+            "name": "install-localized-man-pages",
+            "chroot-script": [
+                "`MAIN_LOCALE={Settings.instance.get('main-locale')}`",
+                "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`",
+                "LOCALIZED_MAN_PAGES=\"man-pages-$LOWERCASE_LOCALE\"",
+                "if ! is_package_available \"$LOCALIZED_MAN_PAGES\"; then LOCALIZED_MAN_PAGES=\"man-pages-$MAIN_LOCALE\"; fi",
+                "if is_package_available \"$LOCALIZED_MAN_PAGES\"; then echo -e \"\\033[32m--- Installing $LOCALIZED_MAN_PAGES ---\\033[0m\"; runuser -u builduser -- pikaur -S \"$LOCALIZED_MAN_PAGES\" --noconfirm || true; fi"
+            ],
+            "default-value": "`NOT standardized-locale`"
+        },
+        {
+            "name": "standardized-locale",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Configure English Locale with Regional Settings",
+            "long-description": "By default, the locale you selected is used for everything, including\n\n • The output of terminal commands\n • The language of the Desktop Environment (if selected to install)\n • The names of the standard folders (generated by xdg-user-dirs-update)\n • Installation of man pages matching your chosen language\n\nBy activating this option, in contrast, an English-centric environment will be maintained while respecting your regional settings (like date and currency formats). This is achieved by setting the following locale categories to C.UTF-8, regardless of the main locale you chose:\n\n• Setting LC_COLLATE to C.UTF-8 ensures consistent sorting order across different languages. Affected C functions include strcoll and wcscoll.\n\n• LC_CTYPE set to C.UTF-8 guarantees consistent character classification and conversion, which is crucial for string manipulation and text processing. Affected C functions include isalpha, isdigit, isspace, toupper, and tolower.\n\n• LC_NUMERIC set to C.UTF-8 ensures numerical data is consistently formatted and parsed, for example, no thousands separator as in en_US.UTF-8 and period (.) as the decimal separator. Affected C functions include atof, strtod, printf, and scanf.\n\n• LC_MESSAGES set to C.UTF-8 provides consistent system messages in English, making it easier for developers to search for solutions to errors online. In addition, names of the XDG standard folders will be in English.\n\nThis standardized approach ensures uniform behavior across various C and C++ library functions, avoiding discrepancies that can arise from differing regional settings. It’s particularly useful for developers or users who prefer a consistent English interface while maintaining their regional preferences for date and currency formats. Both spell checkers will be installed (in case your locale is different from en_US).",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "chroot-script": [
+                "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`",
+                "if [ \"$LOWERCASE_LOCALE\" != \"en_us\" ]; then echo -e \"\\033[32m--- Installing hunspell-en_us for English system output ---\\033[0m\"; runuser -u builduser -- pikaur -S hunspell-en_us --noconfirm || true; fi"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "configure-git",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Configure Git with useful global settings",
+            "long-description": "Configure Git with useful global settings: default branch name (main), rebase behavior (false), credential storage (store), file protocol permissions (always) and push.autoSetupRemote (true).",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                ""
+            ],
+            "chroot-script": [
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global init.defaultBranch main'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global pull.rebase false'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global credential.helper store'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global protocol.file.allow always'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global push.autoSetupRemote true'`"
+            ],
+            "available": "`install-terminal-utilities`",
+            "default-value": true
+        },
+        {
+            "name": "install-vscode",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install Visual Studio Code (Open Source build)",
+            "long-description": "Install the Open Source build of Visual Studio Code, including marketplace support. Font ligatures will be switched on, using an appropriate font.",
+            "spdx-identifiers": "MIT",
+            "arch-packages": [
+                "code",
+                "code-marketplace"
+            ],
+            "files": [
+                "/etc/skel/.config/Code - OSS/User/settings.json"
+            ],
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        {
+            "name": "install-diffuse",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install Diffuse and configure as git diff/merge tool",
+            "long-description": "Install Diffuse. A sophisticated graphical diff and merge tool. Features include advanced merge functionality, separate display of all versions (base, local, and remote), manual correction of misaligned lines, n-way merging capabilities, syntax highlighting, direct file editing during comparison, and easy block copying between windows.",
+            "spdx-identifiers": "GPL-2.0-only",
+            "arch-packages": [
+                "diffuse"
+            ],
+            "chroot-script": [
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global merge.tool diffuse'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global diff.tool diffuse'`",
+                "`su - {Settings.instance.get('user-name')} -c 'git config --global difftool.prompt false'`"
+            ],
+            "session-setup-script": [
+                [
+                    "if command -v diffuse &> /dev/null; then",
+                    "    export DIFFPROG=diffuse",
+                    "fi"
+                ],
+                false
+            ],
+            "available": "`install-desktop-environment AND install-terminal-utilities`", // install-terminal-utilities provides git (through git-lfs)
+            "default-value": false
+        },
+        {
+            "name": "install-java-jdk",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Java development kit",
+            "long-description": "Install $packages and configure dynamic path variables to the current version.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "jdk-openjdk",
+                "java-runtime-common"
+            ],
+            "files": [
+                "/etc/profile.d/ditana-java.sh"
+            ],
+            "default-value": true
+        },
+        {
+            "name": "install-general-dev",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install general development packages",
+            "long-description": "Install general development packages: $packages.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "ltrace",
+                "binutils",
+                "perf",
+                "patchelf",
+                "strace",
+                "stress-ng",
+                "ditana-update-from-skel"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-pacman-additional-tools",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install Tools for Arch package maintainers",
+            "long-description": "Install Tools for Arch package maintainers:\n• auracle: A flexible client for the Arch User Repository (AUR). It provides advanced features for managing and searching AUR packages (not installation).\n• devtools: Essential tools for building and maintaining official Arch repository packages, ensuring reproducible builds and standardized development workflows.\n• perl-locale-gettext: translation support in makepkg-template",
+            "spdx-identifiers": "GPL GPL-3.0-or-later PerlArtistic MIT",
+            "arch-packages": [
+                "auracle-git",
+                "devtools", // optional dependency of pikaur
+                "perl-locale-gettext" // translation support in makepkg-template
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-cpp-dev",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install C++ development packages",
+            "long-description": "Install C++ development packages: Equips your system with $packages.",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "cmake",
+                "meson",
+                "gdb",
+                "lldb",
+                "gcc",
+                "clang",
+                "gtest",
+                "doxygen",
+                "vcpkg",
+                "libtool",
+                "pkgconf"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-cpu-parallel-dev",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install CPU Parallel Programming Frameworks",
+            "long-description": "Install CPU Parallel Programming Frameworks:\n • blas-openblas: a Basic Linear Algebra Subprograms library for matrix operations\n • eigen: Lightweight C++ template library for vector and matrix math\n • openmp: a shared-memory multiprocessing library\n • openmpi: High performance message passing library\n • intel-oneapi-mkl: Intel’s Math Kernel Library\n • ispc: a compiler for high-performance SIMD programming on the CPU",
+            "spdx-identifiers": "",
+            "arch-packages": [
+                "blas-openblas",
+                "eigen",
+                "openmp",
+                "openmpi",
+                "intel-oneapi-mkl",
+                "ispc"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-qt5",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install Qt5 development libraries",
+            "long-description": "Install Qt5 development libraries $packages.",
+            "spdx-identifiers": "Qt Dual license",
+            "arch-packages": [
+                "qt5-base",
+                "qt5-declarative",
+                "qt5-svg",
+                "qt5-tools",
+                "qt5-script"
+            ],
+            "default-value": false
+        },
+        {
+            "name": "install-clion",
+            "dialog-name": "Development Tools and Libraries",
+            "short-description": "Install CLion",
+            "long-description": "Install CLion: CLion is a powerful Integrated Development Environment (IDE) for C and C++ development, offering smart code analysis, advanced debugging, and support for CMake and other build systems. To ensure full compatibility, CLion and its specific tool versions (separate from those on your system) are installed. A free 30-day trial is available, and the full version can be purchased at https://www.jetbrains.com/clion.",
+            "license-category": "CLOSED",
+            "spdx-identifiers": "",
+            "aur-packages": [
+                "clion-jre",
+                "clion-cmake",
+                "clion-gdb",
+                "clion-lldb",
+                "clion"
+            ],
+            "available": "`install-desktop-environment`",
+            "default-value": false
+        },
+        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Umask Configuration"
+        {
+            "name": "umask-027",
+            "dialog-name": "Umask Configuration",
+            "short-description": "Restrictive (027) — Ditana Default",
+            "long-description": "Restrictive Umask (027): New files are created with permissions 640 (owner: read/write, group: read, others: none) and new directories with 750 (owner: full, group: read/execute, others: none). This prevents other users on the system from accessing your files while still allowing group members to read them. Recommended for most users.",
+            "spdx-identifiers": "",
+            "required-by-chroot": true,
+            "default-value": true
+        },
+        {
+            "name": "umask-077",
+            "dialog-name": "Umask Configuration",
+            "short-description": "Private (077)",
+            "long-description": "Private Umask (077): New files are created with permissions 600 (owner: read/write only) and new directories with 700 (owner: full access only). No other user, including group members, can access newly created files. This provides maximum privacy but may cause issues with services or applications that expect group-readable files.",
+            "spdx-identifiers": "",
+            "required-by-chroot": true,
+            "default-value": false
+        },
+        {
+            "name": "umask-022",
+            "dialog-name": "Umask Configuration",
+            "short-description": "Permissive (022) — Linux Default",
+            "long-description": "Permissive Umask (022): New files are created with permissions 644 (owner: read/write, others: read) and new directories with 755 (owner: full, others: read/execute). This is the standard Linux default and allows all users on the system to read your files. Choose this if you rely on software that expects world-readable files or if you are the only user on the system.",
+            "spdx-identifiers": "",
             "default-value": false
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "General Kernel Configuration"
@@ -1889,833 +2722,6 @@
             "short-description": "glibc Default — Linux Default",
             "long-description": "glibc Default Allocator: The standard memory allocator provided by the GNU C Library. It is well-tested, compatible with all software, and requires no additional packages. While it does not offer the performance benefits of mimalloc or the security hardening of hardened_malloc, it is the most conservative and universally compatible choice.",
             "spdx-identifiers": "LGPL-2.1-or-later",
-            "default-value": false
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Boot Init System"
-        {
-            "name": "use-init-busybox",
-            "dialog-name": "Boot Init System",
-            "short-description": "BusyBox",
-            "long-description": "BusyBox provides a suite of Unix utilities in a single executable. It combines various common commands and system functions into one binary, optimizing the size and complexity of the boot process.",
-            "spdx-identifiers": "GPL-2.0-only",
-            "default-value": "`zfs-filesystem`"
-        },
-        {
-            "name": "use-init-systemd",
-            "dialog-name": "Boot Init System",
-            "short-description": "systemd",
-            "long-description": "systemd integrates several boot and process management functions into one framework. It is designed to handle system initialization, service management, and logging in a unified way, with built-in parallelization and dependency management. systemd offers a modular architecture where different components work together to manage the system’s lifecycle from boot to shutdown.\n\nNote that using systemd with a ZFS root filesystem is presently only possible if the root partition is not encrypted. As a result, Ditana does not currently support the use of systemd with ZFS.",
-            "spdx-identifiers": "GPL-2.0-only",
-            "required-by-chroot": true,
-            // Using systemd init system for ZFS requires https://github.com/dasJ/sd-zfs, but this project does not yet support ZFS encryption (which we configure when encrypt-root-partition is true). We could still support this, but currently do not.
-            "available": "`NOT zfs-filesystem`",
-            "default-value": "`NOT zfs-filesystem`"
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Storage & File System Options"
-        {
-            "name": "disable-atimes",
-            "dialog-name": "Storage & File System Options",
-            "short-description": "Disable File Access Time Recording",
-            "long-description": "Disable File Access Time Recording: Enable the «noatime» option when mounting the root file system to prevent the recording of the last access time of files. This configuration offers several benefits:\n\n• Performance Improvement: Reduces the overhead associated with updating access times on each file read operation, leading to faster file system performance.\n• Reduced Wear on Storage Devices: Minimizes write operations, which is particularly advantageous for SSDs by extending their lifespan.\n• Optimized for Btrfs: Enhances snapshot performance by reducing the number of write operations required during snapshot creation and management.\n• Enhanced Security: Prevents exposure of file access patterns, reducing potential information leakage.\n\nWhile «noatime» is beneficial for most users, it can be disabled if specific applications rely on access time information.",
-            "spdx-identifiers": "",
-            "default-value": true
-        },
-        {
-            "name": "install-zram",
-            "dialog-name": "Storage & File System Options",
-            "short-description": "Install ZRAM",
-            "long-description": "Install ZRAM: ZRAM is enabled by default to optimize memory usage, creating a compressed swap space in RAM that reduces wear on storage devices (SSDs and HDDs) and enhances system responsiveness under memory pressure. ZRAM is managed by the zram-generator, which efficiently configures and activates ZRAM without manual setup. Keeping ZRAM enabled balances performance and minimizes storage usage. Only consider disabling ZRAM if you are certain the system will not encounter high memory demand.",
-            "spdx-identifiers": "MIT",
-            "arch-packages": [
-                "zram-generator"
-            ],
-            "files": [
-                "/etc/systemd/zram-generator.conf"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-ramdisk",
-            "dialog-name": "Storage & File System Options",
-            "short-description": "Install RAM Disk",
-            "long-description": "Make a RAM Disk available: This option creates a dedicated RAM Disk mounted within the user’s runtime directory and symlinked to their home directory, making it easily accessible. Key features include:\n\n• A clean, user-exclusive space for temporary data, free from system files, unlike $XDG_RUNTIME_DIR and /tmp.\n• Accessible only to the user, offering a controlled and secure temporary storage.\n• Set up with the $RAMDISK environment variable for easy reference in the terminal.\n\nIdeal for tasks needing fast, temporary storage, such as video processing or caching, the RAM Disk integrates with the file manager on desktops and clears automatically upon logout.",
-            "spdx-identifiers": "AGPL-3.0-or-later",
-            "files": [
-                // Install the systemd user service to launch the RAM disk script located at /usr/share/ditana/ramdisk.sh
-                "/etc/systemd/user/ditana-ramdisk.service",
-                // Install the main RAM disk script that creates and manages the RAM disk directory
-                "/usr/share/ditana/ramdisk.sh",
-                // Install the environment configuration for systemd context to ensure the RAMDISK variable is available
-                "/etc/environment.d/90-ditana-ramdisk.conf",
-                // Install the profile script to export the RAMDISK variable for user shell sessions
-                "/etc/profile.d/ditana-ramdisk.sh"
-            ],
-            "chroot-script": [
-                "systemctl --global enable ditana-ramdisk.service"
-            ],
-            "default-value": true
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Hardware Support Options"
-        {
-            "name": "install-audio",
-            "dialog-name": "Hardware Support Options",
-            "short-description": "Install Audio support",
-            "long-description": "Install Audio Support: Installs PipeWire with PulseAudio and ALSA compatibility layers, and adds the user «$user-name» to the «audio» group to enable access to audio devices.",
-            "spdx-identifiers": "MIT LGPL-2.1-or-later",
-            "arch-packages": [
-                "pipewire",
-                "pipewire-alsa",
-                "pipewire-pulse",
-                "wireplumber"
-            ],
-            "chroot-script": [
-                "`usermod -aG audio {Settings.instance.get('user-name')}`"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-bluetooth",
-            "dialog-name": "Hardware Support Options",
-            "short-description": "Install Bluetooth support",
-            "long-description": "Install Bluetooth Support: Installs the necessary Bluetooth components (protocol stack, management tools, OBEX for file transfer, and mesh services) and enables the Bluetooth service in the system. Bluetooth allows wireless connection to various devices such as keyboards, mice, headsets, smartphones, and other Bluetooth-capable devices. The Bluetooth service will be automatically started at system boot, making Bluetooth devices immediately available. This entry is enabled by default if Bluetooth hardware is detected in the system.",
-            "spdx-identifiers": "GPL-2.0-only",
-            "arch-packages": [
-                // see https://wiki.archlinux.org/title/Bluetooth
-                "bluez",
-                "bluez-utils",
-                "bluez-obex",
-                "bluez-mesh"
-            ],
-            "chroot-script": [
-                "systemctl enable bluetooth"
-            ],
-            "default-value": "`has-bluetooth`"
-        },
-        {
-            "name": "install-nvidia-opensource",
-            "dialog-name": "Hardware Support Options",
-            "short-description": "Install open-source NVIDIA kernel modules",
-            "long-description": "Install the open-source NVIDIA kernel modules (nvidia-open-dkms): These kernel modules, developed by NVIDIA and published as open source, are now the default NVIDIA driver in Arch Linux since driver version 590 (December 2025). They integrate natively with the Linux kernel, resulting in better system stability, improved power management, and full Wayland support.\n\nThis driver supports Turing (RTX 20xx, GTX 16xx) and newer GPUs.\n\nFor older GPUs (Maxwell, Pascal, Volta, Kepler), the open-source kernel modules are NOT available. These GPUs require a legacy proprietary driver or the Nouveau driver.\n\nNote: Like the proprietary driver, the open kernel modules still rely on the proprietary NVIDIA userspace utilities (nvidia-utils).\n\nFor more information, visit: https://github.com/NVIDIA/open-gpu-kernel-modules",
-            "spdx-identifiers": "",
-            "license-category": "CLOSED/FOSS",
-            "arch-packages": [
-                "nvidia-open-dkms"
-            ],
-            "files": [
-                "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf",
-                "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
-            ],
-            "required-by-chroot": true,
-            "available": "`nvidia-pci-id`",
-            "default-value": false // this default is set by check-nvidia()
-        },
-        {
-            "name": "install-nvidia-proprietary",
-            "dialog-name": "Hardware Support Options",
-            "short-description": "Install proprietary NVIDIA legacy driver",
-            "long-description": "Install the proprietary NVIDIA legacy driver: This driver provides support for older NVIDIA GPUs that are not compatible with the open-source NVIDIA kernel modules. Since driver version 590 (December 2025), the main Arch Linux NVIDIA packages have switched to open kernel modules, which only support Turing and newer GPUs.\n\nFor Maxwell (GTX 900), Pascal (GTX 10xx), and Volta GPUs, the nvidia-580xx-dkms legacy driver is required. This driver will receive security updates through October 2028.\n\nFor Kepler (GTX 600/700) GPUs, the nvidia-470xx-dkms legacy driver is required. Note that this driver is no longer receiving updates.\n\nThe specific legacy driver package for your GPU is determined automatically by the installer.\n\nFor detailed driver information, please visit: https://www.nvidia.com/en-us/drivers/unix",
-            "license-category": "CLOSED",
-            "spdx-identifiers": "",
-            "arch-packages": [ // this package is set by check-nvidia()
-            ],
-            "files": [
-                "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf",
-                "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
-            ],
-            "required-by-chroot": true,
-            "available": "`nvidia-pci-id`", // this availability is set by function check-nvidia()
-            "default-value": false // this default set by check-nvidia()
-        },
-        {
-            "name": "install-nouveau",
-            "dialog-name": "Hardware Support Options",
-            "short-description": "Install open-source Nouveau NVIDIA driver",
-            "long-description": "Install the Nouveau open-source NVIDIA graphics card driver: Nouveau is a community-developed, fully open-source driver for NVIDIA graphics cards. It offers the following benefits:\n\n• Broad support for older NVIDIA hardware, including GPUs not supported by NVIDIA's own drivers.\n• Unlike NVIDIA's open kernel modules and the proprietary legacy drivers, Nouveau does not depend on any proprietary NVIDIA components, making it the only truly open-source NVIDIA driver.\n• For first-generation Maxwell GPUs (GTX 750 series), Nouveau provides good support including GPU re-clocking.\n\nLimitations:\n• For GPUs from GTX 900 series onwards, signed firmware requirements limit Nouveau's power management and performance capabilities.\n• Modern Nouveau development focuses on GPUs with the NVIDIA GPU System Processor (GSP), i.e., GTX 1600/RTX 2000 and newer, via the upcoming NOVA driver.\n\nDefault Recommendation: Nouveau is recommended for very old GPUs (requiring drivers older than version 470), where running outdated proprietary drivers would pose compatibility or security risks.\n\nFor more detailed information, visit: https://nouveau.freedesktop.org",
-            "spdx-identifiers": "MIT",
-            "arch-packages": [
-                "xf86-video-nouveau"
-            ],
-            "available": "`nvidia-pci-id`",
-            "default-value": false // this default is set by check-nvidia()
-        },
-        {
-            "name": "install-nvidia-prime",
-            "default-value": "`has-hybrid-nvidia-gpu AND install-desktop-environment AND (install-nvidia-proprietary OR install-nvidia-opensource)`",
-            "arch-packages": [
-                "nvidia-prime",
-                "switcheroo-control"
-            ],
-            "chroot-script": [
-                "systemctl enable switcheroo-control"
-            ]
-        },
-        {
-            "name": "install-virtualbox-guest",
-            "dialog-name": "Hardware Support Options",
-            "short-description": "Install the VirtualBox Guest Additions",
-            "long-description": "Install the VirtualBox Guest Additions: These enhance the integration and performance of Ditana in a VirtualBox environment, including better graphics performance, shared clipboard, drag & drop functionality, and automatic window resizing.\n\nFor more information, visit: https://www.virtualbox.org/manual/ch04.html\n\nPlease note that although the actual package is licensed under the FOSS GPL2, it will automatically install additional components that are closed-source. These are licensed under the VirtualBox Extension Pack Personal Use and Evaluation Licence, see https://www.virtualbox.org/wiki/VirtualBox_PUEL",
-            "license-category": "CLOSED",
-            "spdx-identifiers": "PUEL",
-            "arch-packages": [
-                "virtualbox-guest-iso"
-            ],
-            "root-script": [
-                "echo \"Installing VirtualBox guest additions...\"",
-                "mkdir -p /tmp/virtualbox-guest",
-                "mount -o loop /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso /tmp/virtualbox-guest/",
-                "pushd /tmp/virtualbox-guest/",
-                "./VBoxLinuxAdditions.run",
-                "`USER_NAME={Settings.instance.get('user-name')}`",
-                "usermod -aG vboxsf \"$USER_NAME\"",
-                "echo \"VirtualBox guest additions installed successfully.\"",
-                "popd",
-                "umount /tmp/virtualbox-guest/",
-                "rmdir /tmp/virtualbox-guest",
-                "echo \"Finished installing VirtualBox guest additions.\""
-            ],
-            "available": "`virtualbox`",
-            "default-value": "`virtualbox`"
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Repository & Package Management Configuration"
-        {
-            "name": "install-pacman-core-tools",
-            "dialog-name": "Repository & Package Management Configuration",
-            "short-description": "Install package management tools",
-            "long-description": "Install core package management tools:\n\n• arch-audit: A security tool that checks installed packages for known vulnerabilities. It uses data from the Arch Security Team, helping to keep your system secure.\n• pacman-contrib: This package includes various useful scripts and tools to enhance the functionality of the pacman package manager. Tools such as pacdiff for managing configuration file changes and checkupdates for checking package updates are included.\n• pacseek: A convenient text-based graphical interface that supports quick browsing of available installation packages (including AUR) and their installation. For AUR, pikaur is configured, which is the default AUR helper on Ditana.\n• fwupd: Simple daemon to allow session software to update firmware.\n• pkgfile: A utility to search for files across all packages in the repositories, not just installed ones. It is particularly useful for identifying which package a specific file belongs to, even if the package is not currently installed on the system.",
-            "spdx-identifiers": "MIT GPL-2.0-or-later GPL-3.0-only LGPL-2.1-or-later",
-            "arch-packages": [
-                "arch-audit",
-                "pacman-contrib", // optional dependency of pikaur
-                "pacseek",
-                "fwupd", // daemon to allow session software to update firmware
-                "pkgfile"
-            ],
-            "chroot-script": [
-                "systemctl enable pkgfiled"
-            ],
-            "files": [
-                "/etc/skel/.config/pacseek/config.json"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-pkgstats",
-            "dialog-name": "Repository & Package Management Configuration",
-            "short-description": "Contribute to Arch statistics",
-            "long-description": "Contribute to the Arch Linux package statistics. «pkgstats» anonymously submits a list of installed packages to the Arch Linux project every week. See https://pkgstats.archlinux.de",
-            "spdx-identifiers": "GPL-3.0-or-later",
-            "arch-packages": [
-                "pkgstats"
-            ],
-            "default-value": "`release-version AND NOT virtual-environment`"
-        },
-        {
-            "name": "enable-multilib",
-            "required-by-chroot": true,
-            "default-value": true
-        },
-        {
-            "name": "enable-chaotic-aur",
-            //"dialog-name": "Repository & Package Management Configuration",
-            //"short-description": "Enable autom. building repo \"Chaotic-AUR\"",
-            //"long-description": "Enable the automated building repo for AUR packages «Chaotic-AUR»: Chaotic-AUR provides a repository of pre-built packages from the AUR, saving time and computational resources by avoiding manual compilation. This is especially useful for users who frequently install or update AUR packages and prefer immediate access over building from source. Note that the installer will enable this for certain packages, but you can safely disable it.",
-            //"spdx-identifiers": "",
-            //"arch-packages": [
-            //    ""
-            //],
-            "required-by-chroot": true,
-            //"available": "`enable-multilib`",
-            // Temporary solution: Due to build issues of AUR package librewolf, we rely on chaotic-aur
-            // for desktop installations (i.e. package ditana-config-xfce).
-            // Future Ditana releases will offer browser selection (and ditana-config-xfce will be deprecated).
-            "default-value": "`install-desktop-environment`"
-            //"default-value": "`install-nomachine OR install-spotify OR install-expressvpn OR install-clion`"
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Network and Security Tools"
-        {
-            "name": "enable-network",
-            "dialog-name": "Network and Security Tools",
-            "short-description": "Enable network access",
-            "long-description": "Enable network access: Enables basic networking capabilities on your system. This includes configuration of DNSSEC and DNS over TLS for secure, encrypted DNS, fully integrated with systemd-resolved to ensure consistent and reliable name resolution. Additionally, it enables the Network Time Synchronization systemd service.",
-            "spdx-identifiers": "LGPL-2.1-or-later,GPL-2.0-or-later",
-            "arch-packages": [
-                "ditana-network"
-            ],
-            "chroot-script": [
-                "systemctl enable systemd-timesyncd",
-                "systemctl enable NetworkManager",
-                "systemctl enable systemd-resolved"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-network-tools",
-            "dialog-name": "Network and Security Tools",
-            "short-description": "Install basic network tools",
-            "long-description": "Install basic network tools:\n • net-tools: Provides commands like netstat and route.\n • nmap: Network exploration and security auditing tool.\n • mtr: Combines the functionality of traceroute and ping.\n • tcpdump: Captures and analyzes network traffic.\n • wget: Network utility to retrieve files from the Web",
-            "spdx-identifiers": "FOSS GPL-2.0-only,GPL3,BSD-3-Clause,Nmap",
-            "arch-packages": [
-                "net-tools",
-                "nmap",
-                "mtr",
-                "tcpdump",
-                "wget"
-            ],
-            "available": "`enable-network`",
-            "default-value": true
-        },
-        {
-            "name": "install-openssh",
-            "dialog-name": "Network and Security Tools",
-            "short-description": "Install and configure OpenSSH",
-            "long-description": "Install OpenSSH server with public key authentication, and creates an ed25519 SSH key pair for your user «$user-name».",
-            "spdx-identifiers": "BSD-2-Clause,BSD-3-Clause,ISC,MIT",
-            "arch-packages": [
-                "openssh"
-            ],
-            "chroot-script": [
-                "systemctl enable sshd",
-                "`su - {Settings.instance.get('user-name')} -c 'ssh-keygen -t ed25519 -N \"\" -f ~/.ssh/id_ed25519 -q'`",
-                "`su - {Settings.instance.get('user-name')} -c 'touch ~/.ssh/authorized_keys'`",
-                "`su - {Settings.instance.get('user-name')} -c 'chmod 600 ~/.ssh/authorized_keys'`"
-            ],
-            "available": "`enable-network`",
-            "default-value": true
-        },
-        {
-            "name": "install-firewalld",
-            "dialog-name": "Network and Security Tools",
-            "short-description": "Install and enable firewalld",
-            "long-description": "Install firewalld, a dynamically managed firewall with D-Bus interface. Key features include support for network zones, IPv4/IPv6, runtime/permanent configurations, and a rich language for complex rules. It utilizes nftables, the modern successor to iptables, offering improved performance and flexibility. firewalld allows easy integration for services and applications to modify firewall settings without service restarts. For desktop installations, a graphical configuration tool is included.",
-            "spdx-identifiers": "GPL-2.0-or-later",
-            "arch-packages": [
-                "firewalld"
-            ],
-            "chroot-script": [
-                "systemctl enable firewalld"
-            ],
-            "available": "`enable-network`",
-            "default-value": true
-        },
-        {
-            "name": "install-bubblejail",
-            "dialog-name": "Network and Security Tools",
-            "short-description": "Install Bubblejail",
-            "long-description": "Install Bubblejail, a sandboxing utility that provides application isolation without parallel packaging systems. It implements a resource-oriented permission model, enhanced by seccomp and D-Bus filtering. Key features include:\n • Fine-grained control over application permissions and resource access\n • X11/Wayland display server integration\n • Custom home directory isolation per application\n • User-friendly graphical interface for sandbox configuration",
-            "spdx-identifiers": "GPL-3.0-or-later",
-            "arch-packages": [
-                "bubblejail"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-protonvpn",
-            "dialog-name": "Network and Security Tools",
-            "short-description": "Install ProtonVPN",
-            "long-description": "Install ProtonVPN, a secure VPN service with strong privacy features and servers in over 110 countries. It offers NetShield Ad-blocker to filter ads, trackers, and malware before they reach your device. Features include high-speed connections via their 10 Gbps network with VPN Accelerator technology, strict no-logs policy backed by Swiss privacy laws, and Stealth protocol for bypassing censorship. An account from https://protonvpn.com is required for full functionality.",
-            "license-category": "CLOSED",
-            "arch-packages": [
-                "proton-vpn-gtk-app"
-            ],
-            "available": "`enable-network AND install-desktop-environment`",
-            "default-value": false
-        },
-        {
-            "name": "install-expressvpn",
-            "dialog-name": "Network and Security Tools",
-            "short-description": "Install ExpressVPN",
-            "long-description": "Install ExpressVPN, offering a robust VPN service with optional filtering of ads, trackers and malicious sites even before they arrive at your browser. An Activation Code from https://expressvpn.com is required to use ExpressVPN.",
-            "license-category": "CLOSED",
-            "aur-packages": [
-                "expressvpn"
-            ],
-            "available": "`enable-network`",
-            "default-value": false
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Maintenance Tools"
-        {
-            "name": "configure-automatic-snapshots",
-            "dialog-name": "System Maintenance Tools",
-            "short-description": "Configure Automatic System Snapshots",
-            "long-description": "Configure Automatic System Snapshots\nCreate automatic snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues. Depending on the selected file system, different tools are used to perform these snapshots:\n\n• ext4, xfs, btrfs: Timeshift is utilized to create snapshots. For btrfs, Timeshift performs atomic operations with minimal overhead, while for ext4 and xfs, it uses rsync, typically completing backups in under five seconds.\n• zfs: ZFS snapshots are created instead, providing the same reliable snapshot functionality.\n\nIn the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.",
-            "spdx-identifiers": "GPL-2.0-or-later,MIT",
-            "arch-packages": [
-                ""
-            ],
-            "required-by-chroot": true,
-            "default-value": true
-        },
-        {
-            "name": "configure-automatic-snapshots-zfs",
-            "arch-packages": [
-                "zfs-autosnap"
-            ],
-            "default-value": "`configure-automatic-snapshots AND zfs-filesystem`"
-        },
-        {
-            "name": "configure-automatic-snapshots-timeshift",
-            "arch-packages": [
-                "timeshift",
-                "timeshift-autosnap"
-            ],
-            "default-value": "`configure-automatic-snapshots AND NOT zfs-filesystem`"
-        },
-        {
-            "name": "install-logrotate",
-            "dialog-name": "System Maintenance Tools",
-            "short-description": "Install and enable logrotate",
-            "long-description": "Install and enable logrotate:\nLogrotate manages the automatic rotation and compression of various system and application log files across your Linux system. It prevents these logs from consuming excessive disk space by periodically archiving, compressing, or deleting old logs. When enabled, the logrotate.timer service runs this task at scheduled intervals, maintaining a balance between keeping necessary logs for troubleshooting and controlling their growth.",
-            "spdx-identifiers": "GPL",
-            "arch-packages": [
-                "logrotate"
-            ],
-            "chroot-script": [
-                "systemctl enable logrotate.timer"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "configure-lingering",
-            "dialog-name": "System Maintenance Tools",
-            "short-description": "Enable persistent user services",
-            "long-description": "Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                ""
-            ],
-            "chroot-script": [
-                "mkdir -p /var/lib/systemd/linger",
-                "`touch /var/lib/systemd/linger/{Settings.instance.get('user-name')}`"
-            ],
-            "default-value": "true"
-        },
-        {
-            "name": "install-rate-mirrors",
-            "dialog-name": "System Maintenance Tools",
-            "short-description": "Install rate-mirrors",
-            "long-description": "Install rate-mirrors:\nRate-mirrors optimizes your system’s package downloads by selecting the fastest repository mirrors. A daily systemd timer automatically re-evaluates mirror speeds, ensuring optimal download performance without manual intervention. This is especially beneficial for laptops that change geographic locations or when mirror configurations change. The tool tests mirror speeds based on your current network conditions and location, using data about submarine cable connections and inter-country network topologies.",
-            "spdx-identifiers": "CC-BY-NC-SA-3.0",
-            "arch-packages": [
-                "rate-mirrors"
-            ],
-            "files": [
-                "/etc/systemd/system/ditana-rate-mirrors.service",
-                "/etc/systemd/system/ditana-rate-mirrors.timer"
-            ],
-            "chroot-script": [
-                "systemctl enable ditana-rate-mirrors.timer"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "enable-auditd",
-            "dialog-name": "System Maintenance Tools",
-            "short-description": "Enable the Linux Audit Daemon",
-            "long-description": "Enable the Linux Audit Daemon:\nThe Linux Audit Daemon (auditd) monitors and logs critical system events, enhancing system security and integrity. It captures a wide range of activities, such as file accesses and user actions, making it invaluable for auditing and forensic analysis. Enabling auditd with its default configuration ensures comprehensive logging of system events. You can view summaries of these logs with «sudo aureport», providing essential insights into system behavior and potential security issues.",
-            "spdx-identifiers": "GPL-/LGPL-2.0-or-later",
-            "arch-packages": [
-                "audit"
-            ],
-            "chroot-script": [
-                "systemctl enable auditd"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "disable-core-dumps",
-            "dialog-name": "System Maintenance Tools",
-            "short-description": "Disable Core Dumps",
-            "long-description": "Disable Core Dumps:\nCore dumps capture the memory state of a program during crashes, which is useful for debugging but may inadvertently expose sensitive information. In Ditana, core dumps are disabled by default, safeguarding system integrity and user privacy. Advanced users can choose to enable core dumps temporarily in shell sessions or for specific systemd services, ensuring a secure default configuration while allowing flexibility for debugging needs.",
-            "spdx-identifiers": "AGPL-3.0-or-later",
-            "files": [
-                "/etc/security/limits.d/50-ditana.conf",
-                "/etc/systemd/system.conf.d/50-ditana-limits.conf"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "enable-fstrim",
-            "dialog-name": "System Maintenance Tools",
-            "short-description": "Weekly discarding of unuseds SSD blocks",
-            "long-description": "TRIM is a command that informs a solid-state drive (SSD) which blocks of data are no longer in use and can be wiped internally. For Linux systems, enabling the fstrim.timer service schedules a weekly TRIM operation on all mounted file systems that support it, optimizing free space management. This helps maintain SSD performance and extends the drive’s longevity by reducing wear during write operations. Unlike continuous TRIM methods, which can slightly degrade performance by issuing TRIM commands at every delete operation, scheduling TRIM operations weekly minimizes the impact on system performance and is less stressful on the SSD. The fstrim.timer is a safe and effective way to ensure your SSD’s health and efficiency. It activates only on partitions that support TRIM, making it a non-invasive and beneficial optimization for your system. This option is only available outside virtualization.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                ""
-            ],
-            "chroot-script": [
-                "systemctl enable fstrim.timer"
-            ],
-            "default-value": "`NOT virtual-environment`",
-            "available": "`NOT virtual-environment`"
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Terminal Tools and Utilities"
-        {
-            "name": "install-zsh",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install zsh and make it default",
-            "long-description": "Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting.",
-            "spdx-identifiers": "zsh",
-            "arch-packages": [
-                "zsh",
-                "zsh-syntax-highlighting",
-                "zsh-autosuggestions",
-                "zsh-history-substring-search",
-                "fzf",
-                "pkgfile"
-            ],
-            "chroot-script": [
-                "useradd -D -s \"$(which zsh)\"",
-                "`chsh -s \"\\$(which zsh)\" {Settings.instance.get('user-name')}`"
-            ],
-            "files": [
-                "/etc/skel/.zshrc"
-            ],
-            "default-value": true
-        },
-        //        {
-        //            "name": "install-kmscon",
-        //            "dialog-name": "Terminal Tools and Utilities",
-        //            "short-description": "Install kmscon userspace console emulator",
-        //            "long-description": "Install and configure kmscon, a modern userspace console emulator that replaces the kernel’s virtual terminal: kmscon provides enhanced features including full Unicode/UTF-8 support, internationalized keyboard handling, scalable fonts, and hardware-accelerated rendering. Unlike the traditional Linux console, kmscon supports modern typography and can display a wider range of characters and symbols. Ditana automatically configures kmscon with optimized settings, including fallback to framebuffer mode on NVIDIA graphics cards for better compatibility. Virtual terminals 2-5 will use kmscon, keeping on terminal 6 the default console.",
-        //            "spdx-identifiers": "MIT,LGPL-2.1-or-later,BSD-2-Clause",
-        //            "arch-packages": [
-        //                "kmscon"
-        //            ],
-        //            "available": "`install-desktop-environment`", // the configured font is only installed if desktop is installed
-        //            "default-value": "`install-desktop-environment`"
-        //        },
-        {
-            "name": "install-cron",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install cron and activate service",
-            "long-description": "Install cron and activate service: cron is a common service that allows for the scheduling of regular jobs directly from the terminal.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                "cronie"
-            ],
-            "chroot-script": [
-                "systemctl enable cronie"
-            ],
-            "default-value": "`install-backintime`"
-        },
-        {
-            "name": "install-terminal-utilities",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install essential terminal utilities like grep, rsync, bc...",
-            "long-description": "Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                "bat",
-                "bc",
-                "bind",
-                "ditana-print-system-infos",
-                "expect", // for unbuffer
-                "eza",
-                "fd",
-                "ffmpeg",
-                "fzf",
-                "git-lfs",
-                "jq",
-                "fakeroot",
-                "grep",
-                "htop",
-                "img2pdf",
-                "inotify-tools",
-                "less",
-                "lsof",
-                "lua",
-                "man-db",
-                "mediainfo",
-                "ncdu",
-                "neovim",
-                "perl-image-exiftool",
-                "ripgrep",
-                "rsync",
-                "shellcheck",
-                "sed",
-                "starship", // used by bash and zsh configuration (if installed)
-                "systemctl-tui",
-                "trash-cli",
-                "turbostat",
-                "zoxide",
-                "zellij"
-            ],
-            "files": [
-                "/etc/skel/.config/bat/config"
-            ],
-            "chroot-script": [
-                "`su - {Settings.instance.get('user-name')} -c 'git lfs install'`"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-micro",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install micro editor and set it as default",
-            "long-description": "Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:\n\n • Display git diff indicators next to lines\n • Save and restore cursor position when opening files\n • Retain undo history even after closing and reopening files\n • Use spaces for the tab key instead of tabs\n • Use a subtle visual indicator for indentations\n • Automatically remove trailing whitespace at the end of lines\n • Automatically re-use existing superuser privileges to save if possible\n • Automatically create missing parent directories when saving\n • Highlight all instances of searched text after a successful search\n • Open multiple files side-by-side in vertical splits\n • Wrap long lines at word boundaries (when softwrap is enabled)\n • Display a scroll bar",
-            "spdx-identifiers": "MIT",
-            "files": [
-                "/etc/skel/.config/micro/settings.json",
-                "/etc/profile.d/ditana-set-micro-as-default-editor.sh",
-                "/etc/environment.d/90-ditana-micro-editor.conf",
-                // Install the custom sudoers configuration to preserve the EDITOR and VISUAL environment variables in the sudo context,
-                // ensuring that 'micro' is used as the default editor even when elevated permissions are required.
-                "/etc/sudoers.d/10-ditana-micro"
-            ],
-            "arch-packages": [
-                "micro"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "configure-micro-for-xfce",
-            "files": [
-                // we overrule the default desktop shortcut to use exo-open --launch TerminalEmulator micro %F
-                "/etc/skel/.local/share/applications/micro.desktop"
-            ],
-            "default-value": "`install-micro AND install-desktop-environment`"
-        },
-        {
-            "name": "install-yazi",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install yazi terminal file manager including optional packages",
-            "long-description": "Install yazi, a blazing fast terminal file manager written in Rust, including optional packages for thumbnails, previews, searching, and clipboard support.",
-            "spdx-identifiers": "MIT",
-            "arch-packages": [
-                "yazi",
-                "chafa", // fallback ASCII image preview
-                "imagemagick", // for image and font preview
-                "poppler", // for PDF preview
-                "resvg" // for SVG preview
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-archivers",
-            "dialog-name": "Terminal Tools and Utilities",
-            "short-description": "Install various command line archivers like zip, unzip, 7z...",
-            "long-description": "Install various command line archivers: $packages.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                "7zip",
-                "arj",
-                "bzip2",
-                "cpio",
-                "gzip",
-                "lhasa",
-                "lrzip",
-                "lz4",
-                "lzip",
-                "lzop",
-                "tar",
-                "unarj",
-                "unrar",
-                "unzip",
-                "xz",
-                "zip",
-                "zstd"
-            ],
-            "default-value": true
-        },
-        // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Development Tools and Libraries"
-        {
-            "name": "install-localized-man-pages",
-            "chroot-script": [
-                "`MAIN_LOCALE={Settings.instance.get('main-locale')}`",
-                "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`",
-                "LOCALIZED_MAN_PAGES=\"man-pages-$LOWERCASE_LOCALE\"",
-                "if ! is_package_available \"$LOCALIZED_MAN_PAGES\"; then LOCALIZED_MAN_PAGES=\"man-pages-$MAIN_LOCALE\"; fi",
-                "if is_package_available \"$LOCALIZED_MAN_PAGES\"; then echo -e \"\\033[32m--- Installing $LOCALIZED_MAN_PAGES ---\\033[0m\"; runuser -u builduser -- pikaur -S \"$LOCALIZED_MAN_PAGES\" --noconfirm || true; fi"
-            ],
-            "default-value": "`NOT standardized-locale`"
-        },
-        {
-            "name": "standardized-locale",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Configure English Locale with Regional Settings",
-            "long-description": "By default, the locale you selected is used for everything, including\n\n • The output of terminal commands\n • The language of the Desktop Environment (if selected to install)\n • The names of the standard folders (generated by xdg-user-dirs-update)\n • Installation of man pages matching your chosen language\n\nBy activating this option, in contrast, an English-centric environment will be maintained while respecting your regional settings (like date and currency formats). This is achieved by setting the following locale categories to C.UTF-8, regardless of the main locale you chose:\n\n• Setting LC_COLLATE to C.UTF-8 ensures consistent sorting order across different languages. Affected C functions include strcoll and wcscoll.\n\n• LC_CTYPE set to C.UTF-8 guarantees consistent character classification and conversion, which is crucial for string manipulation and text processing. Affected C functions include isalpha, isdigit, isspace, toupper, and tolower.\n\n• LC_NUMERIC set to C.UTF-8 ensures numerical data is consistently formatted and parsed, for example, no thousands separator as in en_US.UTF-8 and period (.) as the decimal separator. Affected C functions include atof, strtod, printf, and scanf.\n\n• LC_MESSAGES set to C.UTF-8 provides consistent system messages in English, making it easier for developers to search for solutions to errors online. In addition, names of the XDG standard folders will be in English.\n\nThis standardized approach ensures uniform behavior across various C and C++ library functions, avoiding discrepancies that can arise from differing regional settings. It’s particularly useful for developers or users who prefer a consistent English interface while maintaining their regional preferences for date and currency formats. Both spell checkers will be installed (in case your locale is different from en_US).",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                ""
-            ],
-            "chroot-script": [
-                "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`",
-                "if [ \"$LOWERCASE_LOCALE\" != \"en_us\" ]; then echo -e \"\\033[32m--- Installing hunspell-en_us for English system output ---\\033[0m\"; runuser -u builduser -- pikaur -S hunspell-en_us --noconfirm || true; fi"
-            ],
-            "default-value": false
-        },
-        {
-            "name": "configure-git",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Configure Git with useful global settings",
-            "long-description": "Configure Git with useful global settings: default branch name (main), rebase behavior (false), credential storage (store), file protocol permissions (always) and push.autoSetupRemote (true).",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                ""
-            ],
-            "chroot-script": [
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global init.defaultBranch main'`",
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global pull.rebase false'`",
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global credential.helper store'`",
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global protocol.file.allow always'`",
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global push.autoSetupRemote true'`"
-            ],
-            "available": "`install-terminal-utilities`",
-            "default-value": true
-        },
-        {
-            "name": "install-vscode",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install Visual Studio Code (Open Source build)",
-            "long-description": "Install the Open Source build of Visual Studio Code, including marketplace support. Font ligatures will be switched on, using an appropriate font.",
-            "spdx-identifiers": "MIT",
-            "arch-packages": [
-                "code",
-                "code-marketplace"
-            ],
-            "files": [
-                "/etc/skel/.config/Code - OSS/User/settings.json"
-            ],
-            "available": "`install-desktop-environment`",
-            "default-value": false
-        },
-        {
-            "name": "install-diffuse",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install Diffuse and configure as git diff/merge tool",
-            "long-description": "Install Diffuse. A sophisticated graphical diff and merge tool. Features include advanced merge functionality, separate display of all versions (base, local, and remote), manual correction of misaligned lines, n-way merging capabilities, syntax highlighting, direct file editing during comparison, and easy block copying between windows.",
-            "spdx-identifiers": "GPL-2.0-only",
-            "arch-packages": [
-                "diffuse"
-            ],
-            "chroot-script": [
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global merge.tool diffuse'`",
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global diff.tool diffuse'`",
-                "`su - {Settings.instance.get('user-name')} -c 'git config --global difftool.prompt false'`"
-            ],
-            "session-setup-script": [
-                [
-                    "if command -v diffuse &> /dev/null; then",
-                    "    export DIFFPROG=diffuse",
-                    "fi"
-                ],
-                false
-            ],
-            "available": "`install-desktop-environment AND install-terminal-utilities`", // install-terminal-utilities provides git (through git-lfs)
-            "default-value": false
-        },
-        {
-            "name": "install-java-jdk",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Java development kit",
-            "long-description": "Install $packages and configure dynamic path variables to the current version.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                "jdk-openjdk",
-                "java-runtime-common"
-            ],
-            "files": [
-                "/etc/profile.d/ditana-java.sh"
-            ],
-            "default-value": true
-        },
-        {
-            "name": "install-general-dev",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install general development packages",
-            "long-description": "Install general development packages: $packages.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                "ltrace",
-                "binutils",
-                "perf",
-                "patchelf",
-                "strace",
-                "stress-ng",
-                "ditana-update-from-skel"
-            ],
-            "default-value": false
-        },
-        {
-            "name": "install-pacman-additional-tools",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install Tools for Arch package maintainers",
-            "long-description": "Install Tools for Arch package maintainers:\n• auracle: A flexible client for the Arch User Repository (AUR). It provides advanced features for managing and searching AUR packages (not installation).\n• devtools: Essential tools for building and maintaining official Arch repository packages, ensuring reproducible builds and standardized development workflows.\n• perl-locale-gettext: translation support in makepkg-template",
-            "spdx-identifiers": "GPL GPL-3.0-or-later PerlArtistic MIT",
-            "arch-packages": [
-                "auracle-git",
-                "devtools", // optional dependency of pikaur
-                "perl-locale-gettext" // translation support in makepkg-template
-            ],
-            "default-value": false
-        },
-        {
-            "name": "install-cpp-dev",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install C++ development packages",
-            "long-description": "Install C++ development packages: Equips your system with $packages.",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                "cmake",
-                "meson",
-                "gdb",
-                "lldb",
-                "gcc",
-                "clang",
-                "gtest",
-                "doxygen",
-                "vcpkg",
-                "libtool",
-                "pkgconf"
-            ],
-            "default-value": false
-        },
-        {
-            "name": "install-cpu-parallel-dev",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install CPU Parallel Programming Frameworks",
-            "long-description": "Install CPU Parallel Programming Frameworks:\n • blas-openblas: a Basic Linear Algebra Subprograms library for matrix operations\n • eigen: Lightweight C++ template library for vector and matrix math\n • openmp: a shared-memory multiprocessing library\n • openmpi: High performance message passing library\n • intel-oneapi-mkl: Intel’s Math Kernel Library\n • ispc: a compiler for high-performance SIMD programming on the CPU",
-            "spdx-identifiers": "",
-            "arch-packages": [
-                "blas-openblas",
-                "eigen",
-                "openmp",
-                "openmpi",
-                "intel-oneapi-mkl",
-                "ispc"
-            ],
-            "default-value": false
-        },
-        {
-            "name": "install-qt5",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install Qt5 development libraries",
-            "long-description": "Install Qt5 development libraries $packages.",
-            "spdx-identifiers": "Qt Dual license",
-            "arch-packages": [
-                "qt5-base",
-                "qt5-declarative",
-                "qt5-svg",
-                "qt5-tools",
-                "qt5-script"
-            ],
-            "default-value": false
-        },
-        {
-            "name": "install-clion",
-            "dialog-name": "Development Tools and Libraries",
-            "short-description": "Install CLion",
-            "long-description": "Install CLion: CLion is a powerful Integrated Development Environment (IDE) for C and C++ development, offering smart code analysis, advanced debugging, and support for CMake and other build systems. To ensure full compatibility, CLion and its specific tool versions (separate from those on your system) are installed. A free 30-day trial is available, and the full version can be purchased at https://www.jetbrains.com/clion.",
-            "license-category": "CLOSED",
-            "spdx-identifiers": "",
-            "aur-packages": [
-                "clion-jre",
-                "clion-cmake",
-                "clion-gdb",
-                "clion-lldb",
-                "clion"
-            ],
-            "available": "`install-desktop-environment`",
             "default-value": false
         },
         // Settings that correspond to the main installer logic

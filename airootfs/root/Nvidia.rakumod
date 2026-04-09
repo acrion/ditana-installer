@@ -183,7 +183,7 @@ sub check-nvidia($silent-exit-code, $reset-to-default) is export {
         }
     }
 
-    $s.modify-installation-step(('Configuration Categories', 'Expert Settings'), 'Hardware Support Options', 'instruction', $instruction);
+    $s.modify-installation-step(('Configuration Categories', 'Advanced Settings'), 'Hardware Support Options', 'instruction', $instruction);
 
     return $silent-exit-code
 }
