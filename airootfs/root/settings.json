@@ -945,7 +945,7 @@
                 "/usr/share/pixmaps/ditana-logo-tiny.png"
             ],
             "chroot-script": [
-                "mkdir /etc/xdg",
+                "mkdir -p /etc/xdg",
                 "echo kitty.desktop >/etc/xdg/xdg-terminals.list"
             ],
             "default-value": false
@@ -961,7 +961,7 @@
                 "/usr/share/pixmaps/ditana-logo-tiny.png"
             ],
             "chroot-script": [
-                "mkdir /etc/xdg",
+                "mkdir -p /etc/xdg",
                 "echo com.mitchellh.ghostty.desktop >/etc/xdg/xdg-terminals.list"
             ],
             "default-value": "`install-desktop-environment`"
