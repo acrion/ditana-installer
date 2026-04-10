@@ -28,13 +28,15 @@ _dirs_to_prepend=(
 )
 
 # Ruby gems: path varies by version, pick the first match
-for _gemdir in "$HOME/.local/share/gem/ruby/"*/bin; do
-    if [[ -d "$_gemdir" ]]; then
-        _dirs_to_prepend+=("$_gemdir")
-        break
-    fi
-done
-unset _gemdir
+if [[ -d "$HOME/.local/share/gem/ruby" ]]; then
+    for _gemdir in "$HOME/.local/share/gem/ruby/"*/bin; do
+        if [[ -d "$_gemdir" ]]; then
+            _dirs_to_prepend+=("$_gemdir")
+            break
+        fi
+    done
+    unset _gemdir
+fi
 
 for _dir in "${_dirs_to_prepend[@]}"; do
     if [[ -d "$_dir" ]]; then

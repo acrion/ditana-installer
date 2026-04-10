@@ -948,7 +948,7 @@
                 "mkdir -p /etc/xdg",
                 "echo kitty.desktop >/etc/xdg/xdg-terminals.list"
             ],
-            "default-value": false
+            "default-value": "`install-desktop-environment AND virtual-environment`"
         },
         {
             "name": "ghostty",
@@ -964,7 +964,12 @@
                 "mkdir -p /etc/xdg",
                 "echo com.mitchellh.ghostty.desktop >/etc/xdg/xdg-terminals.list"
             ],
-            "default-value": "`install-desktop-environment`"
+            // In VMs without GPU passthrough, Ghostty's OpenGL 4.3+ requirement
+            // (compute shaders, SSBOs) cannot be met: llvmpipe crashes due to an
+            // LLVM JIT bug (MGATHER instruction selection), and softpipe only
+            // supports OpenGL 3.3. Kitty works with OpenGL 3.3, so we use it as
+            // the default terminal in virtual environments instead.
+            "default-value": "`install-desktop-environment AND NOT virtual-environment`"
         },
         // Settings that correspond to the dialog "Configuration Categories" -> "Desktop Applications"
         {
