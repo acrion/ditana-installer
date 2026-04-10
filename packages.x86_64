@@ -33,6 +33,7 @@ fatresize
 fbida
 foot-terminfo
 fsarchiver
+ghostty-terminfo
 gpart
 gptfdisk
 grml-zsh-config
@@ -47,6 +48,7 @@ iw
 iwd
 jfsutils
 jq
+kitty-terminfo
 ldns
 less
 lftp
