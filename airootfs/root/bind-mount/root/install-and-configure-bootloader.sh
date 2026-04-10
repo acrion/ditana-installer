@@ -46,6 +46,17 @@ raku -MSparrow6::DSL -e "
 ";
 
 if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
+    # If the root partition is encrypted, embed the key file into the
+    # system initramfs. This allows the initramfs to unlock the pool
+    # automatically after ZFSBootMenu has already prompted once for
+    # the passphrase, avoiding a redundant second prompt. The key file
+    # /etc/zfs/ditana-root.key resides on the encrypted dataset itself
+    # and is therefore inaccessible without the passphrase.
+    if [[ "$ENCRYPT_ROOT_PARTITION" == "y" ]]; then
+        echo -e "\033[32m--- Embedding ZFS key file into initramfs for single-prompt boot ---\033[0m"
+        sed -i 's|^FILES=()|FILES=(/etc/zfs/ditana-root.key)|' /etc/mkinitcpio.conf
+    fi
+
     echo -e "\033[32m--- Installing Kernel modules for the Zettabyte File System (zfs-dkms) ---\033[0m"
     
     PACMAN_LOG_FILE=$(mktemp)
@@ -89,6 +100,16 @@ if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
     # boot, since the underlying firmware calls are non-functional.
     ZBM_BASE_URL="https://get.zfsbootmenu.org"
 
+    # Read the console keymap from vconsole.conf (written earlier by the
+    # installer) so we can pass it to ZFSBootMenu's own kernel command
+    # line. This ensures the correct keyboard layout is active when
+    # ZFSBootMenu prompts for an encryption passphrase.
+    CONSOLE_KEYMAP=$(grep '^KEYMAP=' /etc/vconsole.conf | cut -d= -f2)
+    ZBM_CMDLINE=""
+    if [[ -n "$CONSOLE_KEYMAP" ]]; then
+        ZBM_CMDLINE="rd.vconsole.keymap=$CONSOLE_KEYMAP"
+    fi
+
     if [[ "$UEFI" == "y" ]]; then
         echo -e "\033[32m--- Downloading prebuilt ZFSBootMenu EFI image ---\033[0m"
         mkdir -p /boot/efi/EFI/zbm
@@ -107,7 +128,7 @@ if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
                    --part "${BOOTLOADER_PARTITION_INDEX}" \
                    --label "Ditana Boot Menu" \
                    --loader "\\EFI\\zbm\\vmlinuz.EFI" \
-                   --unicode
+                   --unicode "$ZBM_CMDLINE"
 
         # Set boot menu timeout separately. Some firmware implementations lock
         # the Timeout EFI variable at runtime (SetVariable returns EFI_WRITE_PROTECTED),
@@ -160,12 +181,20 @@ LABEL zfsbootmenu
   MENU LABEL Ditana GNU/Linux
   KERNEL /zfsbootmenu/vmlinuz-bootmenu
   INITRD /zfsbootmenu/initramfs-bootmenu.img
-  APPEND zfsbootmenu quiet
+  APPEND zfsbootmenu quiet $ZBM_CMDLINE
 EOF
     fi # configured ZFSBootMenu for UEFI or BIOS
-           
+
     zfs set org.zfsbootmenu:commandline="rw $KERNEL_OPTIONS efi=noruntime" ditana-root/ROOT
     zfs get org.zfsbootmenu:commandline ditana-root/ROOT
+
+    # For encrypted pools, tell ZFSBootMenu where to find the key file
+    # so it can cache it after a single passphrase prompt and pass it
+    # through to the booted environment.
+    if [[ "$ENCRYPT_ROOT_PARTITION" == "y" ]]; then
+        echo -e "\033[32m--- Configuring ZFSBootMenu key source for single-prompt unlock ---\033[0m"
+        zfs set org.zfsbootmenu:keysource="ditana-root/ROOT/default" ditana-root
+    fi
     
     echo -e "\033[32m--- Enabling ZFS services ---\033[0m"
     systemctl enable zfs.target

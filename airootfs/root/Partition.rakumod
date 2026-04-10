@@ -221,7 +221,18 @@ sub format-and-mount-root-partition(Str $partition) {
         run-and-echo(|"zfs mount $load-encryption-key -a".words);
         
         if $s.get('encrypt-root-partition') {
-            run-and-echo('zfs', 'set', 'keylocation=prompt', 'ditana-root');
+            # Store the key file on the encrypted root dataset itself. This is
+            # safe because the key file is protected by the very encryption it
+            # unlocks: an attacker would need the passphrase to access the
+            # dataset containing the key. The key file will be embedded into
+            # the system initramfs (via FILES in mkinitcpio.conf), allowing
+            # the boot process to require only a single passphrase prompt in
+            # ZFSBootMenu rather than a second prompt from the initramfs.
+            # See: https://docs.zfsbootmenu.org/en/latest/general/native-encryption.html
+            run-and-echo('mkdir', '-p', '/mnt/etc/zfs');
+            run-and-echo('cp', $zfs-key-file, '/mnt/etc/zfs/ditana-root.key');
+            run-and-echo('chmod', '000', '/mnt/etc/zfs/ditana-root.key');
+            run-and-echo('zfs', 'set', 'keylocation=file:///etc/zfs/ditana-root.key', 'ditana-root');
             run-and-echo('shred', '-u', $zfs-key-file);
         }
         
