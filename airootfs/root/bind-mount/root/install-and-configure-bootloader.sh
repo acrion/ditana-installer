@@ -70,54 +70,35 @@ if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
     rm -f "$PACMAN_LOG_FILE"
     echo -e "\033[32m--- ZFS modules successfully installed and compiled ---\033[0m"
 
-    echo -e "\033[32m--- Installing zfsbootmenu ---\033[0m"
-    runuser -u builduser -- pikaur -S zfsbootmenu --noconfirm
-        
-    echo -e "\033[32m--- Content of /etc/zfsbootmenu/mkinitcpio.conf ---\033[0m"
-    cat /etc/zfsbootmenu/mkinitcpio.conf
-    echo -e "\033[32m--- End of content of /etc/zfsbootmenu/mkinitcpio.conf ---\033[0m"
-    
-    if ! grep -E '^HOOKS=.*\bkeymap\b' /etc/zfsbootmenu/mkinitcpio.conf > /dev/null; then
-        echo -e "\033[32m--- Adding keymap hook to HOOKS ---\033[0m"
-        sed -i '/^HOOKS=/ s/\<keyboard\>/keyboard keymap/' /etc/zfsbootmenu/mkinitcpio.conf
-        
-        echo -e "\033[32m--- Content of /etc/zfsbootmenu/mkinitcpio.conf after modification ---\033[0m"
-        cat /etc/zfsbootmenu/mkinitcpio.conf
-        echo -e "\033[32m--- End of content of /etc/zfsbootmenu/mkinitcpio.conf after modification ---\033[0m"
-    fi
-        
-    if [[ "$UEFI" == "y" ]]; then
-        cat <<EOF >/etc/zfsbootmenu/config.yaml
-Global:
-  ManageImages: true
-  BootMountPoint: /boot/efi
-  DracutConfDir: /etc/zfsbootmenu/dracut.conf.d
-  PreHooksDir: /etc/zfsbootmenu/generate-zbm.pre.d
-  PostHooksDir: /etc/zfsbootmenu/generate-zbm.post.d
-  InitCPIO: true
-  InitCPIOConfig: /etc/zfsbootmenu/mkinitcpio.conf
-Components:
-  ImageDir: /boot/efi/EFI/zbm
-  Versions: 3
-  Enabled: false
-  syslinux:
-    Config: /boot/syslinux/syslinux.cfg
-    Enabled: false
-EFI:
-  ImageDir: /boot/efi/EFI/zbm
-  Versions: false
-  Enabled: true
-Kernel:
-  CommandLine: ro $KERNEL_OPTIONS
-EOF
+    # Use the prebuilt ZFSBootMenu release image instead of building locally
+    # with generate-zbm. The prebuilt image ships its own Void Linux kernel
+    # and is therefore independent of the installed kernel. This avoids
+    # issues with hardened kernels that disable kexec (which generate-zbm
+    # built images would inherit).
+    #
+    # Because prebuilt ZFSBootMenu boots the target kernel via kexec, EFI
+    # Runtime Services are not carried over to the kexec'd kernel. The UEFI
+    # specification does not define behavior for runtime services after
+    # kexec, and firmware implementations do not preserve the necessary
+    # memory mappings. We therefore pass efi=noruntime on the target kernel
+    # command line (see the zfs set org.zfsbootmenu:commandline below).
+    # Without this, kernels that call into EFI runtime services early
+    # (e.g. linux-hardened via load_uefi_certs) will dereference invalid
+    # pointers and panic. The practical impact is negligible: efibootmgr
+    # and other EFI variable access would fail regardless after a kexec
+    # boot, since the underlying firmware calls are non-functional.
+    ZBM_BASE_URL="https://get.zfsbootmenu.org"
 
-        echo -e "\033[32m--- Generating ZFS Boot Menu Image ---\033[0m"
-        generate-zbm
+    if [[ "$UEFI" == "y" ]]; then
+        echo -e "\033[32m--- Downloading prebuilt ZFSBootMenu EFI image ---\033[0m"
+        mkdir -p /boot/efi/EFI/zbm
+        if ! curl -L -o /boot/efi/EFI/zbm/vmlinuz.EFI "$ZBM_BASE_URL/efi"; then
+            echo -e "\033[31m--- ERROR: Failed to download ZFSBootMenu EFI image ---\033[0m"
+            exit 1
+        fi
 
         echo -e "\033[32m--- Contents of /boot/efi/EFI/zbm ---\033[0m"
         ls -l /boot/efi/EFI/zbm
-        UEFI_IMAGE=$(find /boot/efi/EFI/zbm -type f -printf '%f\n' | head -n 1)
-        echo -e "\033[32m--- UEFI image file name: $UEFI_IMAGE ---\033[0m"
 
         echo -e "\033[32m--- Installing ZFSBootMenu on EFI System Partition disk ${BOOTLOADER_PARENT_DISK}, partition number ${BOOTLOADER_PARTITION_INDEX} ---\033[0m"
 
@@ -125,7 +106,7 @@ EOF
                    --disk "/dev/${BOOTLOADER_PARENT_DISK}" \
                    --part "${BOOTLOADER_PARTITION_INDEX}" \
                    --label "Ditana Boot Menu" \
-                   --loader "\\EFI\\zbm\\${UEFI_IMAGE}" \
+                   --loader "\\EFI\\zbm\\vmlinuz.EFI" \
                    --unicode
 
         # Set boot menu timeout separately. Some firmware implementations lock
@@ -138,7 +119,7 @@ EOF
         # implementations remove custom boot entries on reboot. The fallback
         # path /EFI/BOOT/BOOTX64.EFI is always recognized by compliant firmware.
         mkdir -p /boot/efi/EFI/BOOT
-        cp "/boot/efi/EFI/zbm/${UEFI_IMAGE}" /boot/efi/EFI/BOOT/BOOTX64.EFI
+        cp /boot/efi/EFI/zbm/vmlinuz.EFI /boot/efi/EFI/BOOT/BOOTX64.EFI
     else # BIOS systems
         mkdir -p "/boot/syslinux"
         cp /usr/lib/syslinux/bios/*.c32 "/boot/syslinux"
@@ -152,29 +133,19 @@ EOF
             dd if=/usr/lib/syslinux/bios/mbr.bin of="/dev/$BOOTLOADER_PARENT_DISK" conv=notrunc
         fi
 
-        cat >/etc/zfsbootmenu/config.yaml << EOF
-Global:
-  ManageImages: true
-  BootMountPoint: /boot/syslinux
-  PreHooksDir: /etc/zfsbootmenu/generate-zbm.pre.d
-  PostHooksDir: /etc/zfsbootmenu/generate-zbm.post.d
-  InitCPIO: true
-  InitCPIOConfig: /etc/zfsbootmenu/mkinitcpio.conf
-Components:
-  ImageDir: /boot/syslinux/zfsbootmenu
-  Versions: false
-  Enabled: true
-Kernel:
-  CommandLine: ro $KERNEL_OPTIONS
-EOF
+        echo -e "\033[32m--- Downloading prebuilt ZFSBootMenu component images ---\033[0m"
+        mkdir -p /boot/syslinux/zfsbootmenu
+        if ! curl -L -o /boot/syslinux/zfsbootmenu/vmlinuz-bootmenu "$ZBM_BASE_URL/vmlinuz"; then
+            echo -e "\033[31m--- ERROR: Failed to download ZFSBootMenu kernel ---\033[0m"
+            exit 1
+        fi
+        if ! curl -L -o /boot/syslinux/zfsbootmenu/initramfs-bootmenu.img "$ZBM_BASE_URL/initramfs"; then
+            echo -e "\033[31m--- ERROR: Failed to download ZFSBootMenu initramfs ---\033[0m"
+            exit 1
+        fi
 
-        echo -e "\033[32m--- Generating ZFS Boot Menu Image ---\033[0m"
-        generate-zbm
-        
         echo -e "\033[32m--- Contents of /boot/syslinux/zfsbootmenu ---\033[0m"
         ls -l /boot/syslinux/zfsbootmenu
-        BIOS_IMAGE=$(find /boot/syslinux/zfsbootmenu -type f -name '*bootmenu' -printf '%f\n' | head -n 1)
-        echo -e "\033[32m--- BIOS image file name: $BIOS_IMAGE ---\033[0m"
 
         cat > "/boot/syslinux/syslinux.cfg" << EOF
 UI menu.c32
@@ -187,13 +158,13 @@ DEFAULT zfsbootmenu
 
 LABEL zfsbootmenu
   MENU LABEL Ditana GNU/Linux
-  KERNEL /zfsbootmenu/$BIOS_IMAGE
+  KERNEL /zfsbootmenu/vmlinuz-bootmenu
   INITRD /zfsbootmenu/initramfs-bootmenu.img
   APPEND zfsbootmenu quiet
 EOF
     fi # configured ZFSBootMenu for UEFI or BIOS
            
-    zfs set org.zfsbootmenu:commandline="rw $KERNEL_OPTIONS" ditana-root/ROOT
+    zfs set org.zfsbootmenu:commandline="rw $KERNEL_OPTIONS efi=noruntime" ditana-root/ROOT
     zfs get org.zfsbootmenu:commandline ditana-root/ROOT
     
     echo -e "\033[32m--- Enabling ZFS services ---\033[0m"
