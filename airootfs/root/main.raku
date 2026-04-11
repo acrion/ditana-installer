@@ -364,6 +364,8 @@ sub debug-info() {
 sub main() {
     show-dialog-raw('--title', 'Ditana GNU/Linux Installer', "--infobox", "\nDetecting Hardware...", 10, 50);
 
+    Settings.instance.validate-referenced-files();
+
     if Settings.instance.get('tmux') {
         qx{tmux set -g status-position top};
     }

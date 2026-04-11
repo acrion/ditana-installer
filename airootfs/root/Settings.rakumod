@@ -216,6 +216,24 @@ class Settings {
         return @files;
     }
 
+    method validate-referenced-files() {
+        my @missing;
+        for %!settings.values -> $setting {
+            next unless $setting.files && $setting.files[0];
+            for @($setting.files[0]) -> $file {
+                next unless $file;
+                my $path = "folders{$file.Str}";
+                unless $path.IO.e {
+                    @missing.push("{$setting.name}: $path");
+                }
+            }
+        }
+        if @missing {
+            die "The following files referenced in settings.json are missing:\n"
+              ~ @missing.join("\n");
+        }
+    }
+    
     method !resolve-script-line(Str $line --> Str) {
         if self!is-code($line) {
             my $code = $line.substr(1, *-1);

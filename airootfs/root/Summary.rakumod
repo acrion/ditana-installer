@@ -78,6 +78,7 @@ sub get-kernel-params-description() {
     Logging.log("sysctl-bpf-disabled   = {$s.get('sysctl-bpf-disabled')}");
     Logging.log("sysctl-kexec-disabled = {$s.get('sysctl-kexec-disabled')}");
     Logging.log("sysctl-ptrace-restrict = {$s.get('sysctl-ptrace-restrict')}");
+    Logging.log("sysctl-ptrace-unrestricted = {$s.get('sysctl-ptrace-unrestricted')}");
     Logging.log("sysctl-net-hardening  = {$s.get('sysctl-net-hardening')}");
     Logging.log("sysctl-fs-protection  = {$s.get('sysctl-fs-protection')}");
     Logging.log("kernel-option-spec2 = {$s.get('kernel-option-spec2')}");
@@ -113,7 +114,8 @@ sub get-kernel-params-description() {
        $s.get('sysctl-dmesg-restrict') &&
        $s.get('sysctl-bpf-disabled') &&
        $s.get('sysctl-kexec-disabled') &&
-       !$s.get('sysctl-ptrace-restrict') &&
+       $s.get('sysctl-ptrace-restrict') == (not $s.get('install-desktop-environment')) &&
+       $s.get('sysctl-ptrace-unrestricted') == $s.get('install-desktop-environment') &&
        $s.get('sysctl-net-hardening') &&
        $s.get('sysctl-fs-protection') &&
        # CPU Vulnerability Mitigation Options
@@ -150,7 +152,8 @@ sub get-kernel-params-description() {
        $s.get('sysctl-dmesg-restrict') ||
        $s.get('sysctl-bpf-disabled') ||
        $s.get('sysctl-kexec-disabled') ||
-       $s.get('sysctl-ptrace-restrict') ||
+       $s.get('sysctl-ptrace-restrict') == (not $s.get('install-desktop-environment')) ||
+       $s.get('sysctl-ptrace-unrestricted') == $s.get('install-desktop-environment') ||
        $s.get('sysctl-net-hardening') ||
        $s.get('sysctl-fs-protection') ||
        # CPU Vulnerability Mitigation Options
