@@ -65,3 +65,14 @@ END
 
     "/mnt/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/keyboards.xml".IO.spurt($content);
 }
+
+sub modify-niri-config() is export {
+    my $keyboard-rate = Settings.instance.get("keyboard-rate");
+    my $keyboard-delay = Settings.instance.get("keyboard-delay");
+    my $config-file = "/mnt/etc/skel/.config/niri/config.kdl";
+
+    my $content = $config-file.IO.slurp;
+    $content ~~ s/('repeat-delay' \s+) \d+/$0$keyboard-delay/;
+    $content ~~ s/('repeat-rate' \s+) \d+/$0$keyboard-rate/;
+    $config-file.IO.spurt($content);
+}

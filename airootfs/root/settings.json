@@ -413,6 +413,11 @@
             "available": "`real-install AND install-desktop-environment`"
         },
         {
+            "name": "modify-niri-config",
+            "type": "procedure",
+            "available": "`real-install AND install-desktop-environment`"
+        },
+        {
             "name": "create-keyboard-service",
             "type": "procedure",
             "available": "`real-install AND NOT virtual-environment`"
