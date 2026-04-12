@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Lock screen",
+    "exec": "swaylock -f -c 000000",
+    "icon": "system-lock-screen"
+  },
+  {
+    "name": "Suspend",
+    "exec": "systemctl suspend",
+    "icon": "system-suspend"
+  },
+  {
+    "name": "Software Update",
+    "exec": "xdg-terminal-exec -e bash -c \"echo -e '\\033[32mDitana System Update\\033[0m'; echo; synar -Syu; echo; echo -e '\\033[33mPress any key to close this window\\033[0m'; read -n 1 -s -r -p ''\"",
+    "icon": "system-software-update"
+  },
+  {
+    "name": "System Logs",
+    "exec": "xdg-terminal-exec -e bash -c \"journalctl --priority=3 --follow --boot --no-hostname --catalog\"",
+    "icon": "system-utilities-logviewer"
+  },
+  {
+    "name": "Logout",
+    "exec": "wayland-logout",
+    "icon": "system-log-out"
+  },
+  {
+    "name": "Reboot",
+    "exec": "systemctl reboot",
+    "icon": "system-reboot"
+  },
+  {
+    "name": "Shutdown",
+    "exec": "systemctl -i poweroff",
+    "icon": "system-shutdown"
+  }
+]

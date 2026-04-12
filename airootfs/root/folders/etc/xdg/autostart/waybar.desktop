@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Waybar (Wayland)
+Comment=Highly customizable Wayland bar for Sway and Wlroots
+Exec=waybar
+Icon=preferences-system-windows
+Terminal=false
+Type=Application
+Categories=Utility;X-Wayland;
+OnlyShowIn=wlroots;
+NoDisplay=false
+StartupNotify=false

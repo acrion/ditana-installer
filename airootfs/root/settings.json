@@ -848,7 +848,6 @@
                 "/etc/nvidia/nvidia-application-profiles-rc.d/50-limit-free-buffer-pool-in-wayland-compositors.json",
                 // === Wayfire config (pre-installed for all DEs) ===
                 "/etc/skel/.config/wayfire.ini",
-                "/etc/skel/.config/wf-shell.ini",
                 // === Wayfire XDG autostart service ===
                 "/usr/lib/systemd/user/ditana-wayfire-xdg-autostart.service"
             ],

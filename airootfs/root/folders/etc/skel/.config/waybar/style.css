@@ -1,0 +1,322 @@
+* {
+  font-family: FontAwesome, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 18px;
+}
+
+window#waybar {
+  background-color: rgba(45, 45, 45, 0.85);
+  border-bottom: 2px solid rgba(80, 80, 80, 0.7);
+  color: #eff0f1;
+  transition-property: background-color;
+  transition-duration: .5s;
+}
+
+window#waybar.hidden {
+  opacity: 0.2;
+}
+
+window#waybar.termite,
+window#waybar.chromium {
+  background-color: #2d2d2d;
+  border: none;
+}
+
+button {
+  box-shadow: inset 0 -3px transparent;
+  border: none;
+  border-radius: 0;
+}
+
+button:hover {
+  background: inherit;
+  box-shadow: inset 0 -3px #5294e2;
+}
+
+#workspaces button {
+  padding: 0 5px;
+  background-color: transparent;
+  color: #eff0f1;
+}
+
+#workspaces button:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+#workspaces button.focused {
+  background-color: #4a4a4a;
+  box-shadow: inset 0 -3px #eff0f1;
+}
+
+#workspaces button.urgent {
+  background-color: #e04444;
+}
+
+#mode {
+  background-color: #4a4a4a;
+  box-shadow: inset 0 -3px #eff0f1;
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#wireplumber,
+#custom-media,
+#tray,
+#mode,
+#idle_inhibitor,
+#scratchpad,
+#power-profiles-daemon,
+#mpd {
+  padding: 0 12px;
+  color: #eff0f1;
+  background: linear-gradient(to bottom, #4f4f4f, #3a3a3a);
+  border-radius: 6px;
+  margin: 4px 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+#window,
+#workspaces {
+  margin: 0 4px;
+}
+
+.modules-left>widget:first-child>#workspaces {
+  margin-left: 0;
+}
+
+.modules-right>widget:last-child>#workspaces {
+  margin-right: 0;
+}
+
+#clock:hover,
+#cpu:hover,
+#memory:hover,
+#disk:hover,
+#pulseaudio:hover,
+#tray:hover,
+#idle_inhibitor:hover {
+  background: linear-gradient(to bottom, #5a5a5a, #454545);
+}
+
+#battery {
+  background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+  color: #2d2d2d;
+}
+
+#battery.charging,
+#battery.plugged {
+  color: #eff0f1;
+  background: linear-gradient(to bottom, #61c766, #4caf50);
+}
+
+@keyframes blink {
+  to {
+    background-color: #e04444;
+    color: #ffffff;
+  }
+}
+
+#battery.critical:not(.charging) {
+  background-color: #f53c3c;
+  color: #ffffff;
+  animation-name: blink;
+  animation-duration: 0.5s;
+  animation-timing-function: steps(12);
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+#power-profiles-daemon.performance {
+  background-color: #e04444;
+}
+
+#power-profiles-daemon.balanced {
+  background-color: #5294e2;
+}
+
+#power-profiles-daemon.power-saver {
+  background-color: #61c766;
+  color: #2d2d2d;
+}
+
+#network.disconnected {
+  background: linear-gradient(to bottom, #ff6b6b, #f53c3c);
+}
+
+#pulseaudio.muted {
+  background: linear-gradient(to bottom, #6e6e6e, #5a5a5a);
+  color: #9a9a9a;
+}
+
+#temperature.critical {
+  background: linear-gradient(to bottom, #ff6b6b, #eb4d4b);
+}
+
+#tray>.passive {
+  -gtk-icon-effect: dim;
+}
+
+#tray>.needs-attention {
+  -gtk-icon-effect: highlight;
+  background-color: #e04444;
+}
+
+#idle_inhibitor.activated {
+  background: linear-gradient(to bottom, #6e6e6e, #5a5a5a);
+  color: #9a9a9a;
+}
+
+#mpd.disconnected {
+  background: linear-gradient(to bottom, #ff6b6b, #f53c3c);
+}
+
+#mpd.stopped {
+  background: linear-gradient(to bottom, #6e6e6e, #5a5a5a);
+}
+
+#mpd.paused {
+  background: linear-gradient(to bottom, #5294e2, #3b7ac4);
+}
+
+#taskbar button {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  margin: 0 2px;
+  padding: 4px;
+  transition: all 0.2s ease;
+}
+
+#taskbar button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 -3px #5294e2;
+}
+
+#taskbar button.active {
+  background: rgba(82, 148, 226, 0.3);
+  border-bottom: 3px solid #5294e2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#taskbar button.minimized {
+  opacity: 0.5;
+}
+
+#custom-start {
+  background-image: url("/usr/share/icons/hicolor/scalable/apps/wayfire.svg");
+  background-size: 56px 56px;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-width: 64px;
+  font-size: 0;
+
+  background-color: #3a3a3a;
+  border-radius: 6px;
+  margin: 4px 10px 4px 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+#custom-start:hover {
+  background-color: #4f4f4f;
+}
+
+#custom-shutdown {
+  background-color: #3a3a3a;
+  background-image: url("/usr/share/icons/kora-yellow/apps/scalable/system-shutdown.svg");
+  background-size: 64px 64px;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-width: 64px;
+  font-size: 0;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  margin: 4px 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: background-color 0.3s ease;
+}
+
+#custom-shutdown:hover {
+  background-color: #4f4f4f;
+}
+
+#custom-power {
+  background: linear-gradient(to bottom, #4f4f4f, #3a3a3a);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  margin: 4px 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+#custom-power:hover {
+  background: linear-gradient(to bottom, #5a5a5a, #454545);
+}
+
+#custom-power:active {
+  background: linear-gradient(to bottom, #303030, #3a3a3a);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+#language,
+#keyboard-state,
+#scratchpad {
+  padding: 0 12px;
+  color: #eff0f1;
+  background: linear-gradient(to bottom, #4f4f4f, #3a3a3a);
+  border-radius: 6px;
+  margin: 4px 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+#language:hover,
+#keyboard-state:hover,
+#scratchpad:hover {
+  background: linear-gradient(to bottom, #5a5a5a, #454545);
+}
+
+#keyboard-state>label.locked {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  padding: 0 5px;
+}
+
+#scratchpad.empty {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#privacy {
+  padding: 0;
+  margin: 4px 3px;
+}
+
+#privacy-item {
+  padding: 0 8px;
+  margin: 0 2px;
+  color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+#privacy-item.screenshare {
+  background-color: #cf5700;
+}
+
+#privacy-item.audio-in {
+  background-color: #1ca000;
+}
+
+#privacy-item.audio-out {
+  background-color: #0069d4;
+}

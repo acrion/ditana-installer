@@ -1,0 +1,24 @@
+window {
+  background-color: #080D15;
+  color: #C0C1C6;
+}
+
+treeview.view {
+  background-color: #080D15;
+  color: #C0C1C6;
+}
+
+.view:selected {
+  background-color: #FFBB00;
+  color: #000000;
+}
+
+*:hover {
+  background-color: #FFBB00;
+  color: #000000;
+}
+
+selection {
+  background-color: #FFBB00;
+  color: #000000;
+}
