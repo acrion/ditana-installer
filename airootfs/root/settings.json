@@ -44,18 +44,6 @@
             "type": "procedure"
         },
         {
-            "name": "keyboard-delay",
-            "type": "ask-for-setting",
-            "validation": "integer",
-            "extra-validation": "$_ ∈ 200..500",
-            "instruction": "Please enter the key repeat delay in milliseconds.\n\nPlease enter a value between 200 and 500. A smaller value will result in a faster repeat start, while a larger value will delay the repeat start."
-        },
-        {
-            "name": "set-keymap-and-delay-rate",
-            "type": "procedure",
-            "available": "`real-install`"
-        },
-        {
             "name": "test-keymap",
             "type": "procedure"
         },
@@ -197,6 +185,13 @@
                             "instruction": "Sudo password timeout in minutes.\n\nThis sets how long sudo remembers your password before asking again. The default (5 minutes) is a common balance between security and convenience.\n\n• 0 means sudo will ask for the password every time.\n• Higher values are more convenient but less secure, as any process running in your terminal can use the cached credentials.\n\nIf unsure, it's recommended to keep the default value."
                         },
                         {
+                            "name": "keyboard-delay",
+                            "type": "ask-for-setting",
+                            "validation": "integer",
+                            "extra-validation": "$_ ∈ 200..500",
+                            "instruction": "Please enter the key repeat delay in milliseconds.\n\nPlease enter a value between 200 and 500. A smaller value will result in a faster repeat start, while a larger value will delay the repeat start."
+                        },
+                        {
                             "name": "user-id",
                             "type": "ask-for-setting",
                             "validation": "integer",
@@ -324,6 +319,11 @@
             "extra-validation": "$_ ∈ 102..185",
             "instruction": "Virtual Environment Detected: Please enter the DPI of your display.\n\nDitana automatically scales your desktop based on your main display’s DPI, ensuring optimal visuals when changing resolutions or display connections. This setting allows Ditana to provide the same seamless experience in your virtual setup as it would on physical hardware.\n\nNote: Enter the DPI value of your host display, not the virtual\n      environment’s.",
             "available": "`virtual-environment AND install-desktop-environment`"
+        },
+        {
+            "name": "set-keymap-and-delay-rate",
+            "type": "procedure",
+            "available": "`real-install`"
         },
         {
             "name": "format-nvme",
