@@ -175,6 +175,12 @@ if [[ "$current_branch" != "main" ]]; then
     LABEL+="-Testing"
 fi
 
+echo "Building Rust tools..."
+pushd rust
+cargo build --release
+popd
+cp rust/target/release/json-kdl-converter airootfs/root/
+
 mkdir -p airootfs/root/.raku
 zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
 

@@ -68,8 +68,10 @@ class Settings {
         %!settings = InsertionOrderedHash.new;
         %!installation-steps = InsertionOrderedHash.new;
         $!modified-settings = SetHash.new;
-        my $json = slurp 'settings.json';
-        my $data = from-json($json, :allow-jsonc);
+
+        my $converter = $*PROGRAM.parent.child('json-kdl-converter').resolve.absolute;
+        my $json = run($converter, 'kdl2json', 'settings.kdl', :out).out.slurp(:close);
+        my $data = from-json($json);
 
         Logging.log("Loading installation steps...");
 

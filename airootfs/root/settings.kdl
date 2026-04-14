@@ -1,0 +1,2141 @@
+installation-steps {
+    - name="welcome" type="procedure" text="""
+                             Welcome to Ditana GNU/Linux $version
+______________________________________________________________________________________________
+
+To learn more about Ditana, visit our website at:
+
+                                       https://ditana.org
+
+To view the source code and contribute to the development of Ditana,
+visit our main Git repository (hub for all Ditana-specific repos) at:
+
+                           https://github.com/acrion/ditana-installer
+______________________________________________________________________________________________
+
+Navigate through the settings dialogs using your mouse or these keys:
+
+  - ENTER to confirm selections and proceed to the next dialog
+  - ESCAPE to go back to the previous dialog to review or alter settings
+  - CURSOR KEYS and TAB to navigate between options and buttons, e.g. < Help >
+  - SPACE to toggle an option
+
+No changes will be made to your system until you confirm in the final dialog.
+
+                               A Note on Software Licenses
+
+In the following installation dialogs, we categorize software as either «FOSS» (Free and Open
+Source Software) or «CLOSED» (non-open source software). After this category, the specific
+license identifier for each package is provided, see https://spdx.org/licenses for details.
+
+Please note that some software, including FOSS, may be dual-licensed, but commercial use or
+distribution is still permitted under the FOSS license as long as its terms are met. If you
+plan to use dual-licensed software in a commercial setting, reviewing its full license details
+may offer additional flexibility and benefits.
+
+Enjoy customizing Ditana to your preferences!
+"""
+    - name="display-size" type="ask-for-setting" validation="number" instruction="""
+Enter the screen diagonal in inches (only the used area).
+
+This is used to determine the terminal font size.
+""" available="`virtual-terminal AND NOT installing-over-ssh AND NOT set-font-hook-exists`"
+    - name="update-terminal-font" type="procedure" available="`virtual-terminal AND NOT installing-over-ssh`"
+    - name="keymap-layout" type="procedure"
+    - name="keymap-variant" type="procedure"
+    - name="test-keymap" type="procedure"
+    - name="choose-region-or-timezone" type="procedure"
+    - name="choose-specific-timezone" type="procedure"
+    - name="choose-main-locale" type="procedure"
+    - name="choose-sub-locale" type="procedure"
+    - name="host-name" type="ask-for-setting" validation="name" instruction="""
+Computer name for new system
+
+Enter a lowercase name for your computer. While DNS servers don’t distinguish case, using lowercase simplifies system management and prevents potential conflicts.
+"""
+    - name="user-name" \
+      type="ask-for-setting" \
+      validation="name" \
+      extra-validation="!$_.starts-with('systemd-') && $_ ∉ <alpm avahi bin colord cups daemon dbus ftp fwupd games gdm geoclue git http koboldcpp lightdm mail named news nobody nvidia-persistenced passim polkitd root rtkit sync sys transmission tss uuidd>" \
+      instruction="""
+User name for new system
+
+Enter a login name in lowercase letters only (this is not your real name, but a system identifier). Using lowercase letters ensures consistency across system components and avoids potential issues with case sensitivity in command-line operations and configuration files.
+"""
+    - name="select-disk" type="procedure"
+    - name="check_efi" type="procedure"
+    - name="confirm-nvme-format" type="procedure"
+    - name="encrypt-root-partition" type="ask-for-yes-no" instruction="""
+Would you like to encrypt the root partition?
+
+This is recommended, especially for laptops. Please note that if you lose your encryption passphrase, all data will be irretrievably lost.
+"""
+    - name="select-swap-size" type="procedure"
+    - name="add-repos-and-sync" type="procedure" available="`real-install`"
+    - name="adjust-mtu-if-needed" type="procedure" available="`real-install`"
+    - name="update-keyring" type="procedure" available="`real-install`"
+    - name="update-mirrorlist" type="procedure" available="`real-install`"
+    - name="rate-mirrors" type="procedure" available="`real-install`"
+    - name="check-nvidia" type="procedure" available="`nvidia-pci-id`"
+    - name="Configuration Categories" type="categories" {
+        categories {
+            - name="Desktop Environment" type="checklist" instruction="Choose desktop environments to install:" help-intro="Select one or more desktop environments. If you leave all options unchecked, Ditana will be installed as a headless system without a graphical interface, suitable for servers or remote-only usage." help-note="""
+For further information, please consult the following URLs:
+ • https://wiki.archlinux.org/title/Xfce (XFCE)
+ • https://wayfire.org (Wayfire)
+ • https://github.com/YaLTeR/niri (Niri)
+"""
+            - name="Desktop Applications" type="checklist" instruction="Choose desktop options:" help-intro="" help-note=""
+            - name="Multimedia Applications" type="checklist" instruction="Choose multimedia options:" help-intro="" help-note=""
+            - name="AI Tools and Libraries" type="checklist" instruction="If Ditana Assistant is enabled by default, it means that your hardware supports running a local AI (CPU with AVX2 & sufficient RAM). Ditana Assistant relies on KoboldCpp to handle AI interactions locally, ensuring your privacy and data security. If your hardware does not support running KoboldCpp, it will not be available in this list. You can still activate Ditana Assistant, but you will need to configure it in the installed system to use an external LLM API (see documentation)." help-intro="" help-note=""
+            - name="Advanced Settings" type="categories" {
+                categories {
+                    - name="File System" type="radiolist" instruction="Select the file system for your root partition using the [SPACE] key. If you are unsure, leave it at the default." help-intro="Choose the appropriate file system for your root partition." help-note="Note: Timeshift is enabled by default for BTRFS, XFS, and EXT4. For ZFS, a native snapshot solution is pre-configured instead of using Timeshift. You can configure automatic system snapshots in the Advanced Settings → System Maintenance Tools menu, available for selection later."
+                    - name="Storage & File System Options" type="checklist" instruction="Choose Storage & File System Options:" help-intro="" help-note=""
+                    - name="sudo-timeout" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 0..480" instruction="""
+Sudo password timeout in minutes.
+
+This sets how long sudo remembers your password before asking again. The default (5 minutes) is a common balance between security and convenience.
+
+• 0 means sudo will ask for the password every time.
+• Higher values are more convenient but less secure, as any process running in your terminal can use the cached credentials.
+
+If unsure, it's recommended to keep the default value.
+"""
+                    - name="keyboard-delay" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 200..500" instruction="""
+Please enter the key repeat delay in milliseconds.
+
+Please enter a value between 200 and 500. A smaller value will result in a faster repeat start, while a larger value will delay the repeat start.
+"""
+                    - name="user-id" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 1000..60000" instruction="""
+ID of user «$user-name».
+
+The user ID (UID) is a unique number assigned to each user on a Linux system. The default value (1000) is suitable for most cases and ensures compatibility with standard system settings.
+
+You might want to change this if:
+
+• You’re mounting existing Linux-formatted drives with data owned by a user with a different UID.
+• You’re setting up a multi-user system and want to align UIDs with an existing network structure.
+
+If unsure, it’s recommended to keep the default value.
+"""
+                    - name="user-group" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 1000..60000" instruction="""
+Group of user «$user-name».
+
+In Linux, every user belongs to at least one group. Groups help manage permissions for shared resources. The default value (1000) creates a private group for the user, which is suitable for most personal systems.
+
+You might want to change this if:
+
+• You’re integrating this system into an existing network with predefined group structures.
+• You’re mounting drives with data owned by a specific group and want to maintain access permissions.
+• You’re setting up a multi-user system and want to implement a specific group-based access control.
+
+If unsure, it’s recommended to keep the default value.
+"""
+                    - name="Kernel Selection" type="radiolist" instruction="Choose kernel:" help-intro="You may choose one of the following kernels:" help-note="""
+For further information, please consult the following URLs:
+ • https://www.kernel.org (Default Kernel)
+ • https://github.com/anthraxx/linux-hardened (Hardened Kernel)
+ • https://wiki.linuxfoundation.org/realtime/start (Realtime Kernel)
+ • https://github.com/zen-kernel/zen-kernel/wiki/Detailed-Feature-List (Zen Kernel)
+"""
+                    - name="Boot Init System" type="radiolist" instruction="Here you can select the boot initialization system. If you are unsure, it is recommended to keep the default option." help-intro="""
+The boot initialization system, used during the early stages of the boot process, is responsible for preparing the system to start. This choice only affects how the system boots in the initial phase, specifically by loading the necessary modules and scripts from a temporary root file system (called initramfs). After that, the system uses systemd to manage all processes and services, regardless of the choice made here.
+
+Both BusyBox and systemd are installed, as they are required by other parts of the system, but here you can choose which one to use as the boot initialization system:
+""" help-note=""
+                    - name="Hardware Support Options" \
+                      type="checklist" \
+                      instruction="" \ // this text may be changed by check-nvidia()
+                      help-intro="" \
+                      help-note=""
+                    - name="Repository & Package Management Configuration" type="checklist" instruction="" help-intro="" help-note=""
+                    - name="Network and Security Tools" type="checklist" instruction="Choose network options:" help-intro="" help-note=""
+                    - name="System Maintenance Tools" type="checklist" instruction="Choose system maintenance options:" help-intro="" help-note=""
+                    - name="Terminal Tools and Utilities" type="checklist" instruction="Choose terminal options:" help-intro="" help-note=""
+                    - name="Development Tools and Libraries" type="checklist" instruction="Choose development options:" help-intro="" help-note=""
+                }
+              }
+            - name="Expert Settings" type="categories" {
+                categories {
+                    - name="Umask Configuration" \
+                      type="radiolist" \
+                      instruction="Choose umask:" \
+                      help-intro="The umask determines default file permissions for newly created files and directories. A more restrictive umask enhances privacy by limiting access for other users on the system." \
+                      help-note="""
+For further information, please consult the following URL:
+ • https://wiki.archlinux.org/title/Umask
+"""
+                    - name="General Kernel Configuration" \
+                      type="checklist" \
+                      instruction="The checked items indicate modifications to the default kernel configurations. If you prefer to adhere to established standards for security and stability, you may wish to uncheck all items and retain the standard Linux kernel configurations. These modifications have been carefully selected and are further explained in the Help page." \
+                      help-intro="" \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://docs.kernel.org/next/admin-guide/sysctl
+ • https://docs.kernel.org/next/admin-guide/kernel-parameters.html
+""" suppress-license=#true
+                    - name="System Hardening" \
+                      type="checklist" \
+                      instruction="Select system hardening options:" \
+                      help-intro="These settings harden the system against common attack vectors by restricting access to kernel internals, reducing the attack surface, protecting the network stack, and securing the file system. All selected options are written to /etc/sysctl.d/ditana.conf." \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://wiki.archlinux.org/title/Security
+ • https://www.kernel.org/doc/html/latest/admin-guide/sysctl/
+ • https://madaidans-insecurities.github.io/guides/linux-hardening.html
+"""
+                    - name="CPU Vulnerability Mitigation Options" \
+                      type="checklist" \
+                      instruction="""
+The options listed below are mitigations for CPU vulnerabilities detected on your system. These mitigations are enabled by default to enhance security. You can adjust these settings as needed. Please note that modifying these settings may impact system performance or security.
+
+If you choose to uncheck all mitigations, the kernel will revert to its standard vulnerability management strategy. However, it is important to note that the standard kernel settings may introduce security vulnerabilities. The purpose of this dialog is to present you with the most secure kernel settings available, allowing you to make an informed decision based on the provided documentation. While some users may prioritize potential performance improvements, it is generally recommended to maintain the default mitigations to ensure robust security.
+
+For more information about each mitigation, click the Help button below. Comprehensive details are also available at ditana.org/mitigations.
+""" \
+                      help-intro="" \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln
+ • https://docs.kernel.org/next/admin-guide/kernel-parameters.html
+""" \
+                      suppress-license=#true
+                    - name="System Allocator" \
+                      type="radiolist" \
+                      instruction="Choose system memory allocator:" \
+                      help-intro="The system memory allocator handles all dynamic memory requests from applications. Replacing the default glibc allocator can improve performance, security, or both." \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://github.com/microsoft/mimalloc (mimalloc)
+ • https://github.com/GrapheneOS/hardened_malloc (hardened_malloc)
+"""
+                }
+            }
+            - name="review-summary-and-start-installation" type="procedure"
+        }
+      }
+    - name="host-dpi" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 102..185" instruction="""
+Virtual Environment Detected: Please enter the DPI of your display.
+
+Ditana automatically scales your desktop based on your main display’s DPI, ensuring optimal visuals when changing resolutions or display connections. This setting allows Ditana to provide the same seamless experience in your virtual setup as it would on physical hardware.
+
+Note: Enter the DPI value of your host display, not the virtual
+      environment’s.
+""" available="`virtual-environment AND install-desktop-environment`"
+    - name="set-keymap-and-delay-rate" type="procedure" available="`real-install`"
+    - name="format-nvme" type="procedure" available="`real-install`"
+    - name="partition-drive" type="procedure" available="`real-install`"
+    - name="create-kernel-configuration" type="procedure" available="`real-install`"
+    - name="mount-bootimage-partition" type="procedure" available="`real-install AND NOT zfs-filesystem`"
+    - name="mount-bootloader-partition" type="procedure" available="`real-install`"
+    - name="enable-swap-partition" type="procedure" available="`real-install`"
+    - name="set-host-dpi" type="procedure" available="`real-install AND virtual-environment`"
+
+    // Copy system files that should not be part of packages into the chroot before pacstrap. This
+    // includes /usr/lib/os-release, which contains distribution-specific release information
+    // (VERSION and VERSION_ID fields). This file must be present before pacstrap, as it is required
+    // by DKMS modules (provided by e.g. nvidia-dkms) during their installation process (related
+    // error message: "Error! System is missing os-release file.").
+    - name="copy-files-into-chroot-before-pacstrap" type="procedure" available="`real-install`"
+
+    - name="add-version" type="procedure" available="`real-install`"
+    - name="copy-console-keyboard-configuration" type="procedure" available="`real-install`"
+    - name="configure-terminal-font" type="procedure" available="`real-install AND virtual-terminal AND NOT installing-over-ssh`"
+    - name="pacstrap" type="procedure" available="`real-install`"
+
+    // Copy system files that should not be part of packages into the chroot after pacstrap. This
+    // includes /etc/lsb-release, overriding the version that was installed by package lsb-release.
+    - name="copy-files-into-chroot-after-pacstrap" type="procedure" available="`real-install`"
+
+    - name="apply-locale" type="procedure" available="`real-install`"
+    - name="copy-xorg-keyboard-configuration" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="create-xfce-keyboard-xml" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="modify-niri-config" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="create-keyboard-service" type="procedure" available="`real-install AND NOT virtual-environment`"
+    - name="create-hostid" type="procedure" available="`real-install`"
+    - name="genfstab" type="procedure" available="`real-install`"
+    - name="curate-chroot-files" type="procedure" available="`real-install`"
+    - name="create-mimeapps-list" type="procedure" available="`real-install`"
+    - name="generate-aur-package-installation-script" type="procedure"
+    - name="generate-chroot-script" type="procedure"
+    - name="generate-root-script" type="procedure" available="`real-install`"
+    - name="generate-session-setup" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="generate-session-setup-script" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="generate-autostart-entries" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="patch-lightdm-conf" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="generate-chroot-settings-file" type="procedure"
+    - name="configure-bind-mounts" type="procedure" available="`real-install`"
+    - name="chroot-installation" type="procedure" available="`real-install`"
+    - name="cleanup-mounts" type="procedure" available="`real-install`"
+    - name="reboot" type="procedure" available="`real-install`"
+}
+settings {
+    // Settings that are detected based on the properties of the system:
+    - name="uefi" detect="'/sys/firmware/efi'.IO.e" required-by-chroot=#true
+    - name="total-ram-gib" detect="('/proc/meminfo'.IO.lines.grep(/MemTotal/).first.words[1] / 1024 / 1024).ceiling"
+    - name="avx2-available" detect="'/proc/cpuinfo'.IO.lines.first(*.contains('flags')).contains('avx2').so"
+    - name="has-bluetooth" detect="qx{lsusb}.lines.grep(*.contains(/:i bluetooth/)).so || qx{lspci}.lines.grep(*.contains(/:i bluetooth/)).so || 'sys/class/bluetooth'.IO.e"
+    - name="amd-gpu-pci-id" detect=#"qx{lspci -nn}.lines.grep(/:i 'vga' .* 'amd'/).&{ $_ ?? .first.match(/\w+':' (\w+) ']'/).[0].Str !! '' }"#
+    - name="nvidia-pci-id" detect=#"qx{lspci -nn}.lines.grep(/:i 'vga'.*'nvidia'/).&{ $_ ?? .first.match(/\w+':' (\w+) ']'/).[0].Str !! '' }"#
+    - name="has-hybrid-nvidia-gpu" detect="my @gpus = qx{lspci -d ::0300}.lines.grep(*.chars > 0); @gpus > 1 && @gpus.any.contains(/:i nvidia/) && !@gpus.all.contains(/:i nvidia/)"
+    - name="b43-required" detect="qx{journalctl -k}.grep(rx/«b43 .* Loading/).so"
+    - name="cpu-name" detect=#"'/proc/cpuinfo'.IO.lines.grep(/^model\sname\s*\:/).unique.map({ .split(':')[1].trim }).first"#
+    - name="intel-cpu" detect="'/proc/cpuinfo'.IO.lines.first(* ~~ /vendor_id/).contains('GenuineIntel')"
+    - name="amd-cpu" detect="'/proc/cpuinfo'.IO.lines.first(* ~~ /vendor_id/).contains('AuthenticAMD')"
+    - name="virtual-environment" detect="run('systemd-detect-virt', '-q').exitcode eq 0"
+    - name="virtualbox" detect="qx{lspci}.contains(/:i virtualbox/)"
+    - name="display-hardware-in-use" detect="%*ENV<DISPLAY>.defined && %*ENV<DISPLAY>.chars > 0"
+    - name="installing-over-ssh" detect="%*ENV<SSH_CONNECTION>.defined && %*ENV<SSH_CONNECTION>.chars > 0"
+    - name="virtual-terminal" detect="(%*ENV<TERM>.defined && %*ENV<TERM> eq 'linux') || (%*ENV<PARENT_TERM>.defined && %*ENV<PARENT_TERM> eq 'linux')"
+    - name="release-version" detect="run('pacman', '-Qs', 'ditana-mirrorlist', :out(False), :err(False)).exitcode == 0"
+    - name="real-install" detect="$*USER eq 'root'"
+    - name="is-spectre-v2-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/spectre_v2'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-l1tf-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/l1tf'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-mds-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/mds'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-taa-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/tsx_async_abort'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-meltdown-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/meltdown'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-mmio-stale-data-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/mmio_stale_data'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-retbleed-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/retbleed'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-srso-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/spec_rstack_overflow'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-gds-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/gather_data_sampling'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="is-rfds-vulnerable" detect="given '/sys/devices/system/cpu/vulnerabilities/reg_file_data_sampling'.IO { .e && .slurp.chomp ne 'Not affected' }"
+    - name="set-font-hook-exists" detect="'/tmp/ditana-set-font.sh'.IO.e"
+    - name="display-size" detect="%*ENV<DISPLAY_SIZE>.defined ?? %*ENV<DISPLAY_SIZE> !! 11"
+    - name="terminal-columns" detect="%*ENV<TERMINAL_COLUMNS>.defined ?? %*ENV<TERMINAL_COLUMNS> !! 0"
+    - name="terminal-lines" detect="%*ENV<TERMINAL_LINES>.defined ?? %*ENV<TERMINAL_LINES> !! 0"
+    - name="tmux" detect="%*ENV<TMUX>.so"
+    // Non-configurable settings that define the installation of packages determined by
+    // default values, which are derived from the installation logic.
+    - name="intel-microcode" default-value="`intel-cpu`" {
+        arch-packages "intel-ucode"
+      }
+    - name="amd-microcode" default-value="`amd-cpu`" {
+        arch-packages "amd-ucode"
+      }
+    - name="firmware" default-value=#true {
+        // should match those packages of `packages.x86_64` that install into `/usr/lib/firmware`, with the exception of amd-ucode, intel-ucode and b43-firmware
+        arch-packages "linux-atm" \
+                      "linux-firmware" \
+                      "linux-firmware-marvell" \
+                      "sof-firmware" \
+                      "wireless-regdb"
+      }
+    - name="b43-firmware" default-value="`b43-required`" {
+        // we separate this from the rest of the firmware packages and install it only if it is required, because it requires a specific kernel
+        arch-packages "b43-firmware"
+      }
+    - name="install-syslinux" default-value="`zfs-filesystem AND NOT uefi`" {
+        arch-packages "syslinux"
+      }
+    - name="install-grub" default-value="`NOT zfs-filesystem`" {
+        arch-packages "grub"
+      }
+    - name="install-efibootmgr" default-value="`uefi`" {
+        arch-packages "efibootmgr"
+      }
+    - name="ditana-base" default-value=#true {
+        arch-packages "base" \              // Minimal package set to define a basic Arch Linux installation.
+                      "base-devel" \        // Provides various essential tools like sudo. Optional dependency of pacman, required to use makepkg.
+                      "dialog" \            // Utilized in chroot-install.sh to prompt for the user password.
+                      "bash" \              // Required for chroot-install.sh.
+                      "ditana-filesystem" \ // Base Ditana GNU/Linux files, based on the original 'filesystem' package from Arch Linux.
+                      "glibc-locales" \     // Required for localized output and locale-dependent functions in various applications (even for users who choose en_US.UTF-8 for LC_MESSAGES).
+                      "libpwquality" \      // Provides pwscore which we use in chroot-install.sh to validate user passwort quality
+                      "lsb-release" \       // Provides the lsb_release command, as referenced at https://refspecs.linuxfoundation.org/lsb.shtml.
+                      "os-prober" \         // See https://wiki.archlinux.org/title/GRUB/Detecting_other_operating_systems
+                      "pikaur" \            // Ditana’s chosen AUR helper for enhanced security
+                      "python-defusedxml" \ // Enables pikaur to safeguard against XML-related vulnerabilities.
+                      "python-pysocks" \    // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
+                      "rakudo-bin" \        // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
+                      "terminus-font" \     // The terminal font that will be configured.
+                      "util-linux" \        // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
+                      "ditana-keyring"      // Provides keyring update for the Ditana Arch repo
+        files "/etc/lsb-release" \
+              "/etc/systemd/system/ditana-initialize-system.service" \
+              "/etc/profile.d/ditana-java.sh" \
+              "/etc/profile.d/ditana-system-paths.sh" \
+              "/etc/profile.d/ditana-bash-setup.sh" \
+              "/usr/share/ditana/create-debug-user.sh" \
+              "/etc/skel/.bashrc_ditana" \
+              "/etc/skel/.shellrc" \
+              "/etc/skel/.shell.d/readme.md"
+        chroot-script "echo COLORTERM=truecolor >>/etc/environment"
+      }
+    - name="ditana-mirrorlist" default-value="`release-version`" {
+        arch-packages "ditana-mirrorlist"
+      }
+    - name="ditana-testing-mirrorlist" default-value="`NOT release-version`" {
+        arch-packages "ditana-testing-mirrorlist"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" → "Desktop Environment"
+    - name="install-desktop-environment" default-value="`install-xfce OR install-wayfire OR install-niri`" {
+        arch-packages \ // === Fonts ===
+                      "adobe-source-serif-fonts" \
+                      "otf-comicshanns-nerd" \
+                      "otf-font-awesome" \
+                      "terminus-font" \
+                      "ttf-jetbrains-mono-nerd" \
+                      "noto-fonts" \
+                      "noto-fonts-cjk" \
+                      "noto-fonts-extra" \
+                      "noto-fonts-emoji" \
+                      "ttf-twemoji" \
+                      \ // === Theming ===
+                      "dracula-gtk-theme" \
+                      "kora-yellow-icon-theme" \
+                      \ // === LightDM ===
+                      "lightdm" \
+                      "lightdm-settings" \
+                      \ // === XDG utilities ===
+                      "xdg-user-dirs" \
+                      "xdg-utils" \
+                      \ // === Key management ===
+                      "seahorse" \
+                      \ // === Bluetooth (GUI) ===
+                      "blueman" \
+                      \ // === Audio ===
+                      "pavucontrol" \
+                      \ // === Network tray ===
+                      "network-manager-applet" \
+                      \ // === Security updates indicator ===
+                      "arch-audit-gtk" \
+                      \ // === GPU diagnostics ===
+                      "mesa-utils" \
+                      "libva-utils" \
+                      "intel-gpu-tools" \
+                      \ // === Color picker ===
+                      "gpick" \
+                      \ // === System resources monitor ===
+                      "resources" \
+                      \ // === Disk management ===
+                      "gnome-disk-utility" \
+                      \ // === Printing ===
+                      "system-config-printer" \
+                      "cups-pk-helper" \
+                      "python-pysmbc" \
+                      \ // === Media ===
+                      "ristretto" \
+                      "vlc" \
+                      \ // === PDF viewer ===
+                      "xreader" \
+                      \ // === Browser ===
+                      "librewolf" \
+                      "speech-dispatcher" \
+                      \ // === On-screen keyboard ===
+                      "onboard" \
+                      \ // === File manager ===
+                      "thunar" \
+                      "catfish" \
+                      "gvfs" \
+                      "thunar-archive-plugin" \
+                      "thunar-media-tags-plugin" \
+                      "thunar-volman" \
+                      "tumbler" \
+                      \ // === Archive manager ===
+                      "engrampa" \
+                      \ // === Tumbler plugin dependencies ===
+                      "libgepub" \
+                      "libopenraw" \
+                      "libgsf"
+        files \ // Marker file for first-login detection. If this file exists when the user logs in,
+              \ // session-setup scripts marked with once=true (see "session-setup" below) are executed,
+              \ // and the file is then deleted. See generate-session-setup() in Chroot.rakumod.
+              "/etc/skel/.config/ditana/trigger-first-login" \
+              \ // === Fontconfig ===
+              "/etc/skel/.config/fontconfig/fonts.conf" \
+              \ // === GTK customization ===
+              "/etc/skel/.config/gtk-3.0/gtk.css" \
+              \ // === Thunar custom actions ===
+              "/etc/skel/.config/Thunar/uca.xml" \
+              \ // === LightDM greeter config ===
+              "/etc/lightdm/slick-greeter.conf" \
+              \ // === LibreWolf config ===
+              "/etc/skel/.librewolf/librewolf.overrides.cfg" \
+              \ // === Ditana helper scripts ===
+              "/usr/share/ditana/open-disk-manager.sh" \
+              "/usr/share/ditana/copy-path-to-clipboard.sh" \
+              \ // === Pacseek launcher ===
+              "/usr/share/applications/pacseek-desktop.desktop" \
+              \ // === Logos ===
+              "/usr/share/pixmaps/ditana-logo-small.png" \
+              "/usr/share/pixmaps/ditana-shakehands.png" \
+              \ // === Autostart desktop files (with OnlyShowIn entries) ===
+              "/etc/skel/.config/autostart/xapp-sn-watcher.desktop" \
+              "/etc/xdg/autostart/kanshi.desktop" \
+              "/etc/xdg/autostart/waybar.desktop" \
+              "/etc/xdg/autostart/kalu.desktop" \
+              \ // === Waybar config (pre-installed for all DEs) ===
+              "/etc/skel/.config/waybar/config.jsonc" \
+              "/etc/skel/.config/waybar/style.css" \
+              \ // === nwg-launchers config ===
+              "/etc/skel/.config/nwg-launchers/nwggrid/terminal" \
+              "/etc/skel/.config/nwg-launchers/nwgbar/bar.json" \
+              \ // === Niri config (pre-installed for all DEs) ===
+              "/etc/skel/.config/niri/config.kdl" \
+              \ // === NVIDIA Niri fix ===
+              "/etc/nvidia/nvidia-application-profiles-rc.d/50-limit-free-buffer-pool-in-wayland-compositors.json" \
+              \ // === Wayfire config (pre-installed for all DEs) ===
+              "/etc/skel/.config/wayfire.ini" \
+              \ // === Wayfire XDG autostart service ===
+              "/usr/lib/systemd/user/ditana-wayfire-xdg-autostart.service"
+        chroot-script "systemctl enable lightdm.service" \
+                      "fc-cache -fv" \
+                      "cat <<'DITANA_ENV' >> /etc/environment" \
+                      "# Fallback for apps not picking up the theme via gsettings" \
+                      "GTK_THEME=Dracula" \
+                      "DITANA_ENV" \
+                      "if [ -f /usr/lib/librewolf/distribution/policies.json ]; then" \
+                      #"    sed -i 's/"Default": *"[^"]*"/"Default": "StartPage"/g' /usr/lib/librewolf/distribution/policies.json"# \
+                      #"    sed -i '/"Remove": \[/,/\]/{ /"Google",/d }' /usr/lib/librewolf/distribution/policies.json"# \
+                      "fi"
+      }
+    - name="install-xfce" \
+      dialog-name="Desktop Environment" \
+      short-description="XFCE (Xorg)" \
+      long-description="XFCE: A mature, lightweight desktop environment running on Xorg (X11). XFCE offers a traditional desktop paradigm with a panel, application menu, and window management. It is highly customizable, resource-efficient, and has broad hardware and software compatibility. Ditana ships a preconfigured XFCE setup with the Dracula theme, Kitty or Ghostty terminal, and curated panel plugins." \
+      spdx-identifiers="GPL-2.0-or-later" \
+      default-value=#false {
+        arch-packages \ // === group xfce4 without xfce4-terminal ===
+                      "exo" \
+                      "garcon" \
+                      "xfce4-appfinder" \
+                      "xfce4-panel" \
+                      "xfce4-power-manager" \
+                      "xfce4-session" \
+                      "xfce4-settings" \
+                      "xfconf" \
+                      "xfdesktop" \
+                      "xfwm4" \
+                      \ // === XFCE plugins ===
+                      "xfce4-screenshooter" \
+                      "xfce4-screensaver" \
+                      "xfce4-notifyd" \
+                      \ // === XFCE panel plugins ===
+                      "xfce4-docklike-plugin" \
+                      "xfce4-genmon-plugin" \
+                      "xfce4-notes-plugin" \
+                      "xfce4-weather-plugin" \
+                      "xfce4-whiskermenu-plugin" \
+                      "xfce4-xkb-plugin" \
+                      "xfce4-pulseaudio-plugin" \
+                      \ // === X11 utilities ===
+                      "xclip" \
+                      "xsel" \
+                      "xorg-xev" \
+                      "xorg-xkill" \
+                      "xorg-xrandr" \
+                      "xorg-xhost" \
+                      "lxsession" \
+                      \ // === XFCE fixes ===
+                      "mugshot" \
+                      "gnome-keyring" \
+                      \ // === XDG Desktop Portal ===
+                      "xdg-desktop-portal-gtk" \
+                      \ // === XFCE Ditana specific ===
+                      "xfce-display-config-observer" \
+                      "ditana-print-system-load" \
+                      "xfce-wallpaper-overlay" \
+                      "kalu" \
+                      "pciutils" \
+                      \ // === Script dependencies ===
+                      "xmlstarlet" \
+                      "bc" \
+                      "zenity"
+        files \ // === XFCE configuration ===
+              "/etc/skel/.config/xfce4/helpers.rc" \
+              "/etc/skel/.config/xfce4/panel/docklike-2.rc" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-terminal.xml" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" \
+              "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml" \
+              "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-1.txt" \
+              "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-2.txt" \
+              "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-3.txt" \
+              "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-4.txt" \
+              \ // === Kalu config ===
+              "/etc/skel/.config/kalu/kalu.conf" \
+              \ // === Desktop shortcuts ===
+              "/etc/skel/Desktop/Donate to Ditana.desktop" \
+              "/etc/skel/Desktop/Best Practices.desktop" \
+              \ // === LibreWolf XFCE helper ===
+              "/etc/skel/.local/share/xfce4/helpers/librewolf.desktop" \
+              \ // === XDG dirs init script ===
+              "/etc/X11/xinit/xinitrc.d/55-ditana-xdg-dirs.sh" \
+              \ // === Ditana XFCE helper scripts ===
+              "/usr/share/ditana/pre-xfce-first-login.sh" \
+              "/usr/share/ditana/xfce-first-login.sh" \
+              \ // === Wallpapers ===
+              "/usr/share/backgrounds/xfce/ditana-wallpaper.jpg" \
+              "/usr/share/backgrounds/xfce/ditana-blue.png"
+        chroot-script "cat <<'DITANA_ENV' >> /etc/environment" \
+                      "# https://wiki.archlinux.org/title/HiDPI#Qt_5" \
+                      "# https://doc.qt.io/qt-5/highdpi.html" \
+                      "QT_AUTO_SCREEN_SCALE_FACTOR=1" \
+                      "QT_ENABLE_HIGHDPI_SCALING=1" \
+                      "DITANA_ENV"
+        session-setup {
+            - "/usr/share/ditana/pre-xfce-first-login.sh" #true
+        }
+        autostart {
+            - "XFCE;" "/usr/share/ditana/xfce-first-login.sh"
+        }
+      }
+    - name="install-wayfire" \
+      dialog-name="Desktop Environment" \
+      short-description="Wayfire (Wayland)" \
+      long-description="Wayfire: A modular Wayland compositor inspired by Compiz. Wayfire provides a stacking/floating window management experience on the modern Wayland display protocol, offering smooth animations, 3D effects, and a plugin-based architecture. It is a good choice for users who want a visually rich desktop without the legacy constraints of Xorg." \
+      spdx-identifiers="MIT" \
+      default-value=#true {
+        arch-packages "wayfire" \
+                      "wayfire-plugins-extra" \
+                      "wf-msg-git" \
+                      "wlr-protocols" \
+                      "wlr-randr" \
+                      "wdisplays-persistent" \
+                      "wcm" \
+                      "wf-config" \
+                      "xapp" \
+                      "xdg-desktop-portal-wlr" \
+                      "xorg-xwayland" \
+                      "grim"
+      }
+    - name="install-niri" \
+      dialog-name="Desktop Environment" \
+      short-description="Niri (Wayland)" \
+      long-description="Niri: A scrollable-tiling Wayland compositor. Instead of arranging windows in a fixed grid, Niri places them in an infinite horizontal strip that you scroll through, similar to a panoramic workspace. It is well-suited for keyboard-driven workflows and users who prefer automatic window tiling without manual layout management." \
+      spdx-identifiers="GPL-3.0-or-later" \
+      default-value=#false {
+        arch-packages "xwayland-satellite" "swaybg"
+      }
+    - name="install-wayland" \
+      default-value="`install-niri OR install-wayfire`" {
+        arch-packages "xdg-desktop-portal-gtk" \
+                      "wayland-display-info" \
+                      "wayland-font-dpi" \
+                      "rofi" \
+                      "wl-clipboard" \
+                      "waybar" \
+                      "nwg-launchers" \
+                      "swaylock" \
+                      "hyprpolkitagent" \
+                      "mako"
+      }
+    - name="kitty" \
+      default-value="`install-desktop-environment AND virtual-environment`" {
+        arch-packages "kitty" \
+                      "imagemagick" \
+                      "python-pygments" \
+                      "libcanberra" \
+                      "xdg-terminal-exec-git"
+        files "/etc/skel/.config/kitty/kitty.conf" \
+              "/usr/share/pixmaps/ditana-logo-tiny.png"
+        chroot-script "mkdir -p /etc/xdg" "echo kitty.desktop >/etc/xdg/xdg-terminals.list"
+      }
+    - name="ghostty" \
+      \ // In VMs without GPU passthrough, Ghostty's OpenGL 4.3+ requirement
+      \ // (compute shaders, SSBOs) cannot be met: llvmpipe crashes due to an
+      \ // LLVM JIT bug (MGATHER instruction selection), and softpipe only
+      \ // supports OpenGL 3.3. Kitty works with OpenGL 3.3, so we use it as
+      \ // the default terminal in virtual environments instead.
+      default-value="`install-desktop-environment AND NOT virtual-environment`" {
+        arch-packages "ghostty" \
+                      "xdg-terminal-exec-git"
+        files "/etc/skel/.config/ghostty/config" \
+              "/usr/share/pixmaps/ditana-logo-tiny.png"
+        chroot-script "mkdir -p /etc/xdg" "echo com.mitchellh.ghostty.desktop >/etc/xdg/xdg-terminals.list"
+      }
+    - name="install-libreoffice" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Libre Office" \
+      long-description="LibreOffice is a powerful open-source office suite that includes applications for word processing, spreadsheets, presentations, vector graphics, databases, and more. It provides a wide range of tools and features, making it a versatile alternative to proprietary office software. With comprehensive file format compatibility and robust support for extensions, LibreOffice is ideal for users seeking a complete office solution. The appropriate language pack for your system will be installed." \
+      spdx-identifiers="LGPL-3.0-or-later" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages ""
+        chroot-script "`MAIN_LOCALE={Settings.instance.get('main-locale')}`" \
+                      #"LIBREOFFICE="libreoffice-still-$MAIN_LOCALE""# \
+                      #"if ! is_package_available "$LIBREOFFICE"; then"# \
+                      #"    if [ "$MAIN_LOCALE" != "en" ]; then"# \
+                      #"        echo -e "\033[33m--- Unable to localize Libre Office for $MAIN_LOCALE ---\033[0m""# \
+                      "    fi" \
+                      #"    LIBREOFFICE="libreoffice-still""# \
+                      "fi" \
+                      #"echo -e "\033[32m--- Installing $LIBREOFFICE ---\033[0m""# \
+                      #"runuser -u builduser -- pikaur -S "$LIBREOFFICE" --noconfirm || true"#
+      }
+    - name="install-betterbird" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Betterbird" \
+      long-description="Betterbird is an enhanced version of the popular Thunderbird email client, offering additional features and bug fixes not found in Thunderbird. It includes advanced functionalities such as a multi-line view, vertical tabs, enhanced sorting options, and improved search capabilities, making email management more efficient and customizable. Betterbird also addresses many long-standing issues and user requests, offering a smoother, more reliable email experience. The appropriate language pack for your system will be installed." \
+      spdx-identifiers="MPL-2" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages ""
+        chroot-script "`MAIN_LOCALE={Settings.instance.get('main-locale')}`" \
+                      #"BETTERBIRD="betterbird-$MAIN_LOCALE-bin""# \
+                      #"if ! is_package_available "$BETTERBIRD"; then"# \
+                      #"    if [ "$MAIN_LOCALE" != "en" ]; then"# \
+                      #"        echo -e "\033[33m--- Unable to localize Betterbird for $MAIN_LOCALE ---\033[0m""# \
+                      "    fi" \
+                      #"    BETTERBIRD="betterbird-bin""# \
+                      "fi" #"echo -e "\033[32m--- Installing $BETTERBIRD ---\033[0m""# \
+                      #"runuser -u builduser -- pikaur -S "$BETTERBIRD" --noconfirm || true"#
+      }
+    - name="install-backintime" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Back In Time" \
+      long-description="Back In Time is a straightforward backup tool that provides an easy-to-use interface for restoring previously saved snapshots of your file system. This also ensures that cron is installed, as Back In Time can automatically create a cron job to run periodic backups." \
+      spdx-identifiers="GPL" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "backintime"
+      }
+    - name="install-pdfarranger" \
+      dialog-name="Desktop Applications" \
+      short-description="Install PDF Arranger" \
+      long-description="PDF Arranger is a versatile tool designed for modifying PDF files. It enables users to merge, split, rotate, rearrange, and crop PDF pages, providing an intuitive interface for managing PDF documents." \
+      spdx-identifiers="GPL-3.0-or-later" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "pdfarranger"
+      }
+    - name="install-xournalpp" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Xournal++" \
+      long-description="Xournal++ is an application for sketching, keeping a journal using a stylus, and annotating PDFs. It’s particularly useful for interactive work with PDF documents, including writing into non-form based PDFs." \
+      spdx-identifiers="GPL-2.0-or-later" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "xournalpp"
+      }
+    - name="install-font-manager" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Font Manager" \
+      long-description="Font Manager provides an intuitive interface for installing, removing, and organizing fonts on your system. The application allows users to preview fonts, group them into collections, and manage font activation/deactivation." \
+      spdx-identifiers="GPL-3.0-only" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "font-manager"
+      }
+    - name="install-etcher" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Etcher" \
+      long-description="Etcher: Flash OS images to SD cards & USB drives, safely and easily." \
+      spdx-identifiers="Apache" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        aur-packages "etcher-bin"
+      }
+    - name="install-bitwarden" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Bitwarden" \
+      long-description="Bitwarden is a free and open-source password management service that stores sensitive information such as website credentials in an encrypted vault." \
+      spdx-identifiers="GPL3" \
+      available="`install-desktop-environment`" \
+      default-value=#false {
+        arch-packages "bitwarden"
+      }
+    - name="install-nomachine" \
+      dialog-name="Desktop Applications" \
+      short-description="Install NoMachine" \
+      long-description="NoMachine is a remote desktop application that uses NX technology to provide a highly efficient and low-latency remote desktop experience. It supports multimedia capabilities, including audio and video streaming, USB forwarding, and file transfer. NoMachine is platform-independent and ensures secure connections through SSH encryption, making it suitable for both personal and professional remote access needs." \
+      license-category="CLOSED" \
+      spdx-identifiers="NoMachine EULA" \
+      available="`install-desktop-environment`" \
+      default-value=#false {
+        aur-packages "nomachine"
+      }
+    - name="install-fluffychat" \
+      dialog-name="Desktop Applications" \
+      short-description="Install FluffyChat" \
+      long-description="FluffyChat is a cute and user-friendly Matrix client that provides secure end-to-end encrypted instant messaging. It supports all major Matrix features including group chats, file sharing, voice messages, and video calls. It is able to manage multiple Matrix accounts within the same window, allowing users to conveniently switch between different accounts without opening separate instances. The application offers a modern, intuitive interface that makes Matrix messaging accessible to users of all technical levels. FluffyChat connects to the decentralized Matrix network, ensuring your communications remain private and under your control." \
+      spdx-identifiers="AGPL-3.0-only" \
+      available="`install-desktop-environment`" \
+      default-value=#false {
+        arch-packages "fluffychat"
+      }
+    - name="install-variety" \
+      dialog-name="Desktop Applications" \
+      short-description="Install Variety" \
+      long-description="Variety is a wallpaper changer that automatically downloads and switches wallpapers on your desktop. It offers a wide range of customization options, allowing users to display random quotes, apply effects, and use images from various online sources." \
+      spdx-identifiers="GPL3" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "variety" \
+                      "python-setuptools"
+        files "/etc/skel/.config/variety/variety.conf" \
+              "/etc/skel/.config/autostart/variety.desktop"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Multimedia Applications"
+    - name="install-phoronix" \
+      dialog-name="Multimedia Applications" \
+      short-description="Install Phoronix Test Suite" \
+      long-description="Install the Phoronix Test Suite, the most comprehensive benchmarking platform for Linux. Example: To run the UNIGINE Superposition GPU benchmark, use 'phoronix-test-suite install unigine-super' followed by 'phoronix-test-suite run unigine-super'." \
+      spdx-identifiers="GPL-3.0-or-later" \
+      available="`install-desktop-environment`" \
+      default-value=#false {
+        arch-packages "phoronix-test-suite"
+      }
+    - name="install-audacity" \
+      dialog-name="Multimedia Applications" \
+      short-description="Install Audacity" \
+      long-description="Install Audacity, a versatile audio editing program that allows you to record and manipulate digital audio files with ease. Whether you’re mixing music, processing podcasts, or editing sound effects, Audacity offers a robust set of tools for precise audio control and effects." \
+      spdx-identifiers="GPL3,BSD" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "audacity"
+      }
+    - name="install-spotify" \
+      dialog-name="Multimedia Applications" \
+      short-description="Install Spotify" \
+      long-description="Install Spotify: Opt to install Spotify, a widely popular music streaming service that offers instant access to a vast library of songs, playlists, and podcasts." \
+      license-category="CLOSED" \
+      spdx-identifiers="" \
+      available="`install-desktop-environment`" \
+      default-value=#false {
+        aur-packages "spotify"
+      }
+    - name="install-pinta" dialog-name="Multimedia Applications" short-description="Install Pinta image editor" long-description="Install Pinta image editor: Choose to install Pinta, a user-friendly raster graphics editor that resembles Windows’ Paint .NET application. Pinta offers a straightforward interface with essential image editing tools like layers, adjustments, and effects. It’s ideal for quick edits, creating simple graphics, or touching up photos without the complexity of more advanced software like GIMP." spdx-identifiers="MIT" available="`install-desktop-environment`" default-value="`install-desktop-environment`" {
+        arch-packages "pinta"
+      }
+    - name="install-inkscape" \
+      dialog-name="Multimedia Applications" \
+      short-description="Install Inkscape" \
+      long-description="Install Inkscape, a professional vector graphics editor. Inkscape supports SVG format natively and brings advanced features like markers, clones, and alpha blending, which are essential for graphic designers." \
+      spdx-identifiers="GPL,LGPL" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "inkscape"
+      }
+    - name="install-mypaint" \
+      dialog-name="Multimedia Applications" \
+      short-description="Install MyPaint" \
+      long-description="Install MyPaint: Opt for the installation of MyPaint, allowing the software to respond to different pressure levels and strokes from a digital pen or stylus. This feature enhances your drawing experience by mimicking the natural variations in line thickness, opacity, and texture that you would get with real paintbrushes on canvas." \
+      spdx-identifiers="GPL" \
+      available="`install-desktop-environment`" \
+      default-value="`install-desktop-environment`" {
+        arch-packages "mypaint"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "AI Tools and Libraries"
+    - name="install-ditana-assistant" \
+      dialog-name="AI Tools and Libraries" \
+      short-description="Install Ditana Assistant" \
+      long-description="""
+Install Ditana Assistant AI: Offers both a graphical user interface and a terminal command to simplify everyday Linux tasks through natural language interaction, e.g.
+
+ • Quick execution of common terminal commands through simple language inputs
+ • Assistance with file operations, system queries, and basic troubleshooting
+ • Ability to launch desktop applications or perform Internet searches
+
+Ditana Assistant respects your privacy by running locally and asks for confirmation before executing any command.
+""" \
+      spdx-identifiers="AGPL-3.0-or-later" \
+      default-value="`avx2-available AND total-ram-gib>=12`" {
+        arch-packages "ditana-assistant"
+      }
+    - name="install-ollama" \
+      dialog-name="AI Tools and Libraries" \
+      short-description="Install Ollama Local AI" \
+      long-description="Install Ollama: Provide a local AI runtime on your computer with the pre-configured phi4-mini language model. Ollama runs as a systemd service, ensuring that applications like Ditana Assistant and Logseq have constant access to advanced language capabilities such as text generation and code completion. By handling all AI processing locally, Ollama ensures your privacy and data security without relying on external services. You can also interact directly with Ollama through the command line or integrate it with other tools. Enjoy the benefits of a robust AI backend integrated into your Ditana system." \
+      spdx-identifiers="MIT" \
+      available="`total-ram-gib>=3`" \
+      default-value="`avx2-available AND total-ram-gib>=12`" {
+        arch-packages "ollama"
+        chroot-script "systemctl enable ollama" \
+                      "runuser -u ollama -- env HOME=/var/lib/ollama OLLAMA_MODELS=/var/lib/ollama ollama serve > /dev/null 2>&1 &" \
+                      "OLLAMA_PID=$!" \
+                      #"echo "Waiting for Ollama to start...""# \
+                      "for i in $(seq 1 30); do ollama list > /dev/null 2>&1 && break; sleep 1; done" \
+                      #"echo -e "\033[32m--- Pulling phi4-mini model ---\033[0m""# \
+                      "ollama pull phi4-mini" \
+                      "kill $OLLAMA_PID 2>/dev/null || true" \
+                      "wait $OLLAMA_PID 2>/dev/null || true"
+        files "/etc/systemd/system/ollama.service.d/override.conf"
+      }
+    - name="install-ollama-cuda" \
+      default-value="`install-ollama AND nvidia-pci-id AND (install-nvidia-opensource OR install-nvidia-proprietary)`" {
+        arch-packages "ollama-cuda"
+      }
+    - name="install-ollama-rocm" \
+      default-value="`install-ollama AND amd-gpu-pci-id`" {
+        arch-packages "ollama-rocm"
+      }
+    - name="install-logseq" \
+      dialog-name="AI Tools and Libraries" \
+      short-description="Install Logseq" \
+      long-description="Logseq: More than just a note-taking app, Logseq serves as a comprehensive platform for organizing thoughts, managing tasks, and building knowledge databases. In Ditana, Logseq is specially configured to leverage the local AI powered by Ollama. This integration enables AI-assisted note-taking, content generation, and knowledge management, all while maintaining privacy and security. Ideal for anyone looking to enhance their intellectual workflow with the power of AI, without compromising on data privacy." \
+      spdx-identifiers="AGPL-3.0-or-later" \
+      available="`install-desktop-environment AND total-ram-gib>=3 AND install-ollama`" \
+      default-value="`install-desktop-environment AND avx2-available AND total-ram-gib>=12`" {
+        arch-packages "logseq-desktop-bin"
+        chroot-script "pacman -S --noconfirm --needed npm git" \
+                      "cd /tmp" \
+                      "git clone --branch v1.14.2 --depth 1 https://github.com/briansunter/logseq-plugin-gpt3-openai.git" \
+                      "cd logseq-plugin-gpt3-openai" \
+                      #"sed -i 's/return response\.data\[0\]\.url;/return response.data![0].url;/' src/lib/openai.ts"# \
+                      #"sed -i 's/engine.startsWith("gpt-3.5") || engine.startsWith("gpt-4")/true/' src/lib/openai.ts"# \
+                      "npm install" \
+                      "npm run build" \
+                      "mkdir -p /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai" \
+                      "install -Dm644 LICENSE /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/LICENSE" \
+                      "install -Dm644 package.json /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/package.json" \
+                      "cp -r dist /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/dist" \
+                      "rm -rf /tmp/logseq-plugin-gpt3-openai"
+        files "/etc/skel/.logseq/settings/logseq-plugin-gpt3-openai.json" \
+              "/etc/skel/.logseq/config/plugins.edn"
+      }
+    - name="install-stable-diffusion" \
+      dialog-name="AI Tools and Libraries" \
+      short-description="Install Stable Diffusion" \
+      long-description="Install Stable Diffusion: Stable Diffusion is a powerful tool for generating high-quality images from textual descriptions. By installing this tool, you can create stunning visual content by simply providing text prompts. It’s useful for artists, designers, and anyone interested in AI-powered image generation." \
+      spdx-identifiers="easydiffusion" \
+      available="`install-desktop-environment AND avx2-available AND total-ram-gib>=6`" \
+      default-value=#false {
+        aur-packages "stable-diffusion-ui"
+        files "/usr/share/applications/stable-diffusion.desktop"
+      }
+    - name="install-codegpt" \
+      dialog-name="AI Tools and Libraries" \
+      short-description="Install codegpt" \
+      long-description="Install codegpt to write git commit messages or do a code review for you using ChatGPT. For this, you need to copy your OpenAI API Key from https://platform.openai.com/api-keys to ~/.shell.d/openai.sh" \
+      spdx-identifiers="MIT" \
+      default-value=#false {
+        aur-packages "codegpt-bin"
+        files "/etc/skel/.shell.d/openai.sh"
+        session-setup-script {
+            - "chmod 600 $HOME/.shell.d/openai.sh"
+            - #true
+        }
+      }
+    - name="install-gpu-libraries" \
+      dialog-name="AI Tools and Libraries" \
+      short-description="Install GPU libraries" \
+      long-description="""
+Install high-performance GPU computing libraries: This option installs a suite of libraries optimized for AI/ML workloads. These libraries provide essential functionality for GPU acceleration and efficient execution of AI/ML models across various hardware platforms:
+
+ • clblast: a tuned OpenCL BLAS library for GPU-accelerated linear algebra
+ • cuda: NVIDIA’s parallel computing platform and API model for GPU-accelerated computing
+ • cudnn: NVIDIA’s Deep Neural Network library, optimized for deep learning operations
+ • hipblas: AMD’s ROCm BLAS marshalling library for GPU computations
+ • hip-runtime-amd: AMD’s Heterogeneous-compute Interface for Portability
+ • ocl-icd, opencl-clhpp: Implementations of the Open Computing Language standard for heterogeneous computing
+ • onednn: an optimized Deep Neural Network library for efficient deep learning operations
+
+For NVIDIA GPU users, the following packages will be installed in addition:
+
+ • nccl: Library for NVIDIA multi-GPU and multi-node collective communication primitives
+""" \
+      license-category="CLOSED/FOSS" \
+      spdx-identifiers="CUDA,BSD,Apache-2.0,MIT,BSD-3-Clause,MPICH" \
+      available="`avx2-available`" \
+      default-value=#false {
+        arch-packages "clblast" \
+                      "cuda" \
+                      "cudnn" \
+                      "hipblas" \
+                      "hip-runtime-amd" \
+                      "ocl-icd" \
+                      "intel-compute-runtime" \
+                      "opencl-clhpp" \
+                      "onednn"
+      }
+    - name="install-gpu-libraries-nvidia" \
+      default-value="`install-gpu-libraries AND nvidia-pci-id`" {
+        arch-packages "nccl"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "File System"
+    - name="zfs-filesystem" \
+      dialog-name="File System" \
+      short-description="ZFS   - Snapshots, Self-Healing Storage & RAID-Z Support" \
+      long-description="ZFS: Supports atomic snapshots with a pre-configured snapshot solution instead of Timeshift. Designed for high data integrity with automatic self-healing. The installer will switch to the recommended Long-Term Support Kernel automatically, because ZFS requires DKMS modules (see Expert Settings → Kernel Selection menu available for selection later)." \
+      spdx-identifiers="CDDL" \
+      required-by-chroot=#true \
+      \ // We restrict ZFS to LTS kernel only for maximum stability. OpenZFS typically supports new kernel versions
+      \ // within days/weeks of release, see https://github.com/openzfs/zfs/releases for current status.
+      available="`install-standard-lts-kernel OR install-hardened-lts-kernel`" \
+      default-value="`install-standard-lts-kernel OR install-hardened-lts-kernel`" {
+        arch-packages "zfs-utils"
+      }
+    - name="btrfs-filesystem" \
+      dialog-name="File System" \
+      short-description="Btrfs - Snapshots, Flexible Subvolumes & Online Management" \
+      long-description="BTRFS: Supports atomic snapshots and ensures data integrity. Ideal for systems using Timeshift for reliable restoration and reducing SSD wear through data compression. Flexible management of subvolumes online without downtime." \
+      spdx-identifiers="GPL-2.0-only" \
+      required-by-chroot=#true default-value="`NOT (install-standard-lts-kernel OR install-hardened-lts-kernel)`" {
+        arch-packages "btrfs-progs" "compsize"
+      }
+    - name="xfs-filesystem" \
+      dialog-name="File System" \
+      short-description="XFS   - High-Performance, Scalability & Efficient Metadata" \
+      long-description="XFS: Optimized for high performance with large files and data sets. Supports a high number of concurrent operations, ideal e.g. for streaming video workloads. Uses Timeshift in rsync mode for snapshot functionality." \
+      spdx-identifiers="GPL-2.0-only et al." \
+      default-value=#false {
+        arch-packages "xfsprogs"
+      }
+    - name="ext4-filesystem" \
+      dialog-name="File System" \
+      short-description="EXT4  - Reliable, Standard & Proven Stability" \
+      long-description="EXT4: A widely supported standard file system suitable for general-purpose use. Offers proven stability with Timeshift running in rsync mode for snapshots." \
+      spdx-identifiers="GPL-2.0-only et al." \
+      default-value=#false {
+        arch-packages "e2fsprogs"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Storage & File System Options"
+    - name="disable-atimes" \
+      dialog-name="Storage & File System Options" \
+      short-description="Disable File Access Time Recording" \
+      long-description="""
+Disable File Access Time Recording: Enable the «noatime» option when mounting the root file system to prevent the recording of the last access time of files. This configuration offers several benefits:
+
+• Performance Improvement: Reduces the overhead associated with updating access times on each file read operation, leading to faster file system performance.
+• Reduced Wear on Storage Devices: Minimizes write operations, which is particularly advantageous for SSDs by extending their lifespan.
+• Optimized for Btrfs: Enhances snapshot performance by reducing the number of write operations required during snapshot creation and management.
+• Enhanced Security: Prevents exposure of file access patterns, reducing potential information leakage.
+
+While «noatime» is beneficial for most users, it can be disabled if specific applications rely on access time information.
+""" \
+      spdx-identifiers="" \
+      default-value=#true
+    - name="install-zram" \
+      dialog-name="Storage & File System Options" \
+      short-description="Install ZRAM" \
+      long-description="Install ZRAM: ZRAM is enabled by default to optimize memory usage, creating a compressed swap space in RAM that reduces wear on storage devices (SSDs and HDDs) and enhances system responsiveness under memory pressure. ZRAM is managed by the zram-generator, which efficiently configures and activates ZRAM without manual setup. Keeping ZRAM enabled balances performance and minimizes storage usage. Only consider disabling ZRAM if you are certain the system will not encounter high memory demand." \
+      spdx-identifiers="MIT" \
+      default-value=#true {
+        arch-packages "zram-generator"
+        files "/etc/systemd/zram-generator.conf"
+      }
+    - name="install-ramdisk" \
+      dialog-name="Storage & File System Options" \
+      short-description="Install RAM Disk" \
+      long-description="""
+Make a RAM Disk available: This option creates a dedicated RAM Disk mounted within the user’s runtime directory and symlinked to their home directory, making it easily accessible. Key features include:
+
+• A clean, user-exclusive space for temporary data, free from system files, unlike $XDG_RUNTIME_DIR and /tmp.
+• Accessible only to the user, offering a controlled and secure temporary storage.
+• Set up with the $RAMDISK environment variable for easy reference in the terminal.
+
+Ideal for tasks needing fast, temporary storage, such as video processing or caching, the RAM Disk integrates with the file manager on desktops and clears automatically upon logout.
+""" \
+      spdx-identifiers="AGPL-3.0-or-later" \
+      default-value=#true {
+        files \ // Install the systemd user service to launch the RAM disk script located at /usr/share/ditana/ramdisk.sh
+              "/etc/systemd/user/ditana-ramdisk.service" \
+              \ // Install the main RAM disk script that creates and manages the RAM disk directory
+              "/usr/share/ditana/ramdisk.sh" \
+              \ // Install the environment configuration for systemd context to ensure the RAMDISK variable is available
+              "/etc/environment.d/90-ditana-ramdisk.conf" \
+              \ // Install the profile script to export the RAMDISK variable for user shell sessions
+              "/etc/profile.d/ditana-ramdisk.sh"
+        chroot-script "systemctl --global enable ditana-ramdisk.service"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "sudo-timeout"
+    - name="sudo-timeout" \
+      category="system" \
+      dialog-name="Advanced Settings" \
+      short-description="Sudo password timeout (minutes)" \
+      long-description="Configure how many minutes sudo remembers the password before prompting again. Creates a sudoers override file in /etc/sudoers.d/ with correct permissions." \
+      spdx-identifiers="ISC" \
+      default-value=5 {
+        chroot-script "`echo 'Defaults timestamp_timeout={Settings.instance.get('sudo-timeout')}' > /etc/sudoers.d/99-timeout`" \
+                      "chmod 440 /etc/sudoers.d/99-timeout" \
+                      "chown root:root /etc/sudoers.d/99-timeout"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Kernel Selection"
+    - name="install-standard-stable-kernel" dialog-name="Kernel Selection" short-description="Standard Kernel (Stable)" long-description="Standard Kernel (linux) [Stable]: The standard kernel offers balanced performance and stability for a wide range of hardware and use cases. It is maintained as a stable release, receiving bug fixes and security patches regularly to ensure reliability." spdx-identifiers="GPL-2.0-only" default-value="`b43-required`" {
+        arch-packages "linux" "linux-headers"
+      }
+    - name="install-standard-lts-kernel" \
+      dialog-name="Kernel Selection" \
+      short-description="Standard Kernel (LTS)" \
+      long-description="Standard Kernel (linux-lts) [LTS]: The Long-Term Support kernel provides extended support and stability, making it ideal for users who prioritize reliability and long-term maintenance over the latest features. It is recommended for systems utilizing DKMS modules (e.g., ZFS) to ensure compatibility and reduce maintenance overhead." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT b43-required`" \
+      default-value=#false {
+        arch-packages "linux-lts" \
+                      "linux-lts-headers"
+      }
+    - name="install-hardened-stable-kernel" \
+      dialog-name="Kernel Selection" \
+      short-description="Hardened Kernel (Stable)" \
+      long-description="Hardened Kernel (linux-hardened) [Stable]: This kernel emphasizes security by applying a set of hardening patches and security-focused compile-time options. It offers enhanced protection against exploits and vulnerabilities but may reduce compatibility with certain software, such as «throttled»." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT b43-required`" \
+      default-value=#false {
+        arch-packages "linux-hardened" \
+                      "linux-hardened-headers"
+      }
+    - name="install-hardened-lts-kernel" \
+      dialog-name="Kernel Selection" \
+      short-description="Hardened Kernel (LTS)" \
+      long-description="Hardened Kernel (linux-hardened-lts) [LTS]: Combining the security enhancements of the Hardened Kernel with long-term support, this kernel is ideal for users seeking both increased security and extended maintenance." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT b43-required`" \
+      default-value="`NOT b43-required`" {
+        arch-packages "linux-hardened-lts" \
+                      "linux-hardened-lts-headers"
+      }
+    - name="install-zen-kernel" \
+      dialog-name="Kernel Selection" \
+      short-description="Zen Kernel (Stable)" \
+      long-description="Zen Kernel (linux-zen) [Stable]: Tailored for desktop usage, this kernel offers performance enhancements and tweaks like a modified CPU scheduler. Note that there is no LTS version of this kernel. While it may improve desktop performance, frequent updates can require rebuilding DKMS modules more often. It usually works well with the NVIDIA DKMS driver but may not be ideal for systems relying heavily on DKMS modules like «zfs-dkms»." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT b43-required`" \
+      default-value=#false {
+        arch-packages "linux-zen" \
+                      "linux-zen-headers"
+      }
+    - name="install-realtime-lts-kernel" \
+      dialog-name="Kernel Selection" \
+      short-description="Realtime Kernel (LTS)" \
+      long-description="Realtime Kernel (linux-rt-lts) [LTS]: Optimized for applications demanding strict real-time requirements, providing predictable response times with the PREEMPT_RT patch. Ideal for audio/video production, live performance, and industrial control systems." \
+      spdx-identifiers="various, incl GPL-1.0-or-later,BSD-3-Clause-Clear" \
+      available="`NOT b43-required`" \
+      default-value=#false {
+        arch-packages "linux-rt-lts" \
+                      "linux-rt-lts-headers"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Boot Init System"
+    - name="use-init-busybox" \
+      dialog-name="Boot Init System" \
+      short-description="BusyBox" \
+      long-description="BusyBox provides a suite of Unix utilities in a single executable. It combines various common commands and system functions into one binary, optimizing the size and complexity of the boot process." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`zfs-filesystem`"
+    - name="use-init-systemd" \
+      dialog-name="Boot Init System" \
+      short-description="systemd" \
+      long-description="""
+systemd integrates several boot and process management functions into one framework. It is designed to handle system initialization, service management, and logging in a unified way, with built-in parallelization and dependency management. systemd offers a modular architecture where different components work together to manage the system’s lifecycle from boot to shutdown.
+
+Note that using systemd with a ZFS root filesystem is presently only possible if the root partition is not encrypted. As a result, Ditana does not currently support the use of systemd with ZFS.
+""" \
+      spdx-identifiers="GPL-2.0-only" \
+      required-by-chroot=#true \
+      \ // Using systemd init system for ZFS requires https://github.com/dasJ/sd-zfs, but this project does not yet support
+      \ // ZFS encryption (which we configure when encrypt-root-partition is true). We could still support this, but currently
+      \ // do not.ZFS encryption (which we configure when encrypt-root-partition is true). We could still support this, but currently do not.
+      available="`NOT zfs-filesystem`" \
+      default-value="`NOT zfs-filesystem`"
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Hardware Support Options"
+    - name="install-audio" \
+      dialog-name="Hardware Support Options" \
+      short-description="Install Audio support" \
+      long-description="Install Audio Support: Installs PipeWire with PulseAudio and ALSA compatibility layers, and adds the user «$user-name» to the «audio» group to enable access to audio devices." \
+      spdx-identifiers="MIT LGPL-2.1-or-later" \
+      default-value=#true {
+        arch-packages "pipewire" \
+                      "pipewire-alsa" \
+                      "pipewire-pulse" \
+                      "wireplumber"
+        chroot-script "`usermod -aG audio {Settings.instance.get('user-name')}`"
+      }
+    - name="install-bluetooth" \
+      dialog-name="Hardware Support Options" \
+      short-description="Install Bluetooth support" \
+      long-description="Install Bluetooth Support: Installs the necessary Bluetooth components (protocol stack, management tools, OBEX for file transfer, and mesh services) and enables the Bluetooth service in the system. Bluetooth allows wireless connection to various devices such as keyboards, mice, headsets, smartphones, and other Bluetooth-capable devices. The Bluetooth service will be automatically started at system boot, making Bluetooth devices immediately available. This entry is enabled by default if Bluetooth hardware is detected in the system." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`has-bluetooth`" {
+        arch-packages \ // see https://wiki.archlinux.org/title/Bluetooth
+                      "bluez" \
+                      "bluez-utils" \
+                      "bluez-obex" \
+                      "bluez-mesh"
+        chroot-script "systemctl enable bluetooth"
+      }
+    - name="install-nvidia-opensource" \
+      dialog-name="Hardware Support Options" \
+      short-description="Install open-source NVIDIA kernel modules" \
+      long-description="""
+Install the open-source NVIDIA kernel modules (nvidia-open-dkms): These kernel modules, developed by NVIDIA and published as open source, are now the default NVIDIA driver in Arch Linux since driver version 590 (December 2025). They integrate natively with the Linux kernel, resulting in better system stability, improved power management, and full Wayland support.
+
+This driver supports Turing (RTX 20xx, GTX 16xx) and newer GPUs.
+
+For older GPUs (Maxwell, Pascal, Volta, Kepler), the open-source kernel modules are NOT available. These GPUs require a legacy proprietary driver or the Nouveau driver.
+
+Note: Like the proprietary driver, the open kernel modules still rely on the proprietary NVIDIA userspace utilities (nvidia-utils).
+
+For more information, visit: https://github.com/NVIDIA/open-gpu-kernel-modules
+""" \
+      spdx-identifiers="" \
+      license-category="CLOSED/FOSS" \
+      required-by-chroot=#true available="`nvidia-pci-id`" \
+      default-value=#false { // this default is set by check-nvidia()
+        arch-packages "nvidia-open-dkms"
+        files "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf" \
+              "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
+      }
+    - name="install-nvidia-proprietary" \
+      dialog-name="Hardware Support Options" \
+      short-description="Install proprietary NVIDIA legacy driver" \
+      long-description="""
+Install the proprietary NVIDIA legacy driver: This driver provides support for older NVIDIA GPUs that are not compatible with the open-source NVIDIA kernel modules. Since driver version 590 (December 2025), the main Arch Linux NVIDIA packages have switched to open kernel modules, which only support Turing and newer GPUs.
+
+For Maxwell (GTX 900), Pascal (GTX 10xx), and Volta GPUs, the nvidia-580xx-dkms legacy driver is required. This driver will receive security updates through October 2028.
+
+For Kepler (GTX 600/700) GPUs, the nvidia-470xx-dkms legacy driver is required. Note that this driver is no longer receiving updates.
+
+The specific legacy driver package for your GPU is determined automatically by the installer.
+
+For detailed driver information, please visit: https://www.nvidia.com/en-us/drivers/unix
+""" \
+      license-category="CLOSED" \
+      spdx-identifiers="" \
+      required-by-chroot=#true \
+      available="`nvidia-pci-id`" \ // this availability is set by function check-nvidia()
+      \ // the value of arch-packages for this component is set by check-nvidia()
+      default-value=#false {
+        files "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf" \
+              "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
+      }
+    - name="install-nouveau" \
+      dialog-name="Hardware Support Options" \
+      short-description="Install open-source Nouveau NVIDIA driver" \
+      long-description="""
+Install the Nouveau open-source NVIDIA graphics card driver: Nouveau is a community-developed, fully open-source driver for NVIDIA graphics cards. It offers the following benefits:
+
+• Broad support for older NVIDIA hardware, including GPUs not supported by NVIDIA's own drivers.
+• Unlike NVIDIA's open kernel modules and the proprietary legacy drivers, Nouveau does not depend on any proprietary NVIDIA components, making it the only truly open-source NVIDIA driver.
+• For first-generation Maxwell GPUs (GTX 750 series), Nouveau provides good support including GPU re-clocking.
+
+Limitations:
+• For GPUs from GTX 900 series onwards, signed firmware requirements limit Nouveau's power management and performance capabilities.
+• Modern Nouveau development focuses on GPUs with the NVIDIA GPU System Processor (GSP), i.e., GTX 1600/RTX 2000 and newer, via the upcoming NOVA driver.
+
+Default Recommendation: Nouveau is recommended for very old GPUs (requiring drivers older than version 470), where running outdated proprietary drivers would pose compatibility or security risks.
+
+For more detailed information, visit: https://nouveau.freedesktop.org
+""" \
+      spdx-identifiers="MIT" \
+      available="`nvidia-pci-id`" \
+      default-value=#false { // this default is set by check-nvidia()
+        arch-packages "xf86-video-nouveau"
+      }
+    - name="install-nvidia-prime" \
+      default-value="`has-hybrid-nvidia-gpu AND install-desktop-environment AND (install-nvidia-proprietary OR install-nvidia-opensource)`" {
+        arch-packages "nvidia-prime" \
+                      "switcheroo-control"
+        chroot-script "systemctl enable switcheroo-control"
+      }
+    - name="install-virtualbox-guest" \
+    dialog-name="Hardware Support Options" \
+    short-description="Install the VirtualBox Guest Additions" \
+    long-description="""
+Install the VirtualBox Guest Additions: These enhance the integration and performance of Ditana in a VirtualBox environment, including better graphics performance, shared clipboard, drag & drop functionality, and automatic window resizing.
+
+For more information, visit: https://www.virtualbox.org/manual/ch04.html
+
+Please note that although the actual package is licensed under the FOSS GPL2, it will automatically install additional components that are closed-source. These are licensed under the VirtualBox Extension Pack Personal Use and Evaluation Licence, see https://www.virtualbox.org/wiki/VirtualBox_PUEL
+""" \
+      license-category="CLOSED" \
+      spdx-identifiers="PUEL" \
+      available="`virtualbox`" \
+      default-value="`virtualbox`" {
+        arch-packages "virtualbox-guest-iso"
+        root-script #"echo "Installing VirtualBox guest additions...""# \
+        "mkdir -p /tmp/virtualbox-guest" \
+        "mount -o loop /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso /tmp/virtualbox-guest/" \
+        "pushd /tmp/virtualbox-guest/" \
+        "./VBoxLinuxAdditions.run" \
+        "`USER_NAME={Settings.instance.get('user-name')}`" \
+        #"usermod -aG vboxsf "$USER_NAME""# \
+        #"echo "VirtualBox guest additions installed successfully.""# \
+        "popd" \
+        "umount /tmp/virtualbox-guest/" \
+        "rmdir /tmp/virtualbox-guest" \
+        #"echo "Finished installing VirtualBox guest additions.""#
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Repository & Package Management Configuration"
+    - name="install-pacman-core-tools" \
+      dialog-name="Repository & Package Management Configuration" \
+      short-description="Install package management tools" \
+      long-description="""
+Install core package management tools:
+
+• arch-audit: A security tool that checks installed packages for known vulnerabilities. It uses data from the Arch Security Team, helping to keep your system secure.
+• pacman-contrib: This package includes various useful scripts and tools to enhance the functionality of the pacman package manager. Tools such as pacdiff for managing configuration file changes and checkupdates for checking package updates are included.
+• pacseek: A convenient text-based graphical interface that supports quick browsing of available installation packages (including AUR) and their installation. For AUR, pikaur is configured, which is the default AUR helper on Ditana.
+• fwupd: Simple daemon to allow session software to update firmware.
+• pkgfile: A utility to search for files across all packages in the repositories, not just installed ones. It is particularly useful for identifying which package a specific file belongs to, even if the package is not currently installed on the system.
+""" \
+      spdx-identifiers="MIT GPL-2.0-or-later GPL-3.0-only LGPL-2.1-or-later" \
+      default-value=#true {
+        arch-packages "arch-audit" \
+                      "pacman-contrib" \ // optional dependency of pikaur
+                      "pacseek" \
+                      "fwupd" \ // daemon to allow session software to update firmware
+                      "pkgfile"
+        chroot-script "systemctl enable pkgfiled"
+        files "/etc/skel/.config/pacseek/config.json"
+      }
+    - name="install-pkgstats" \
+      dialog-name="Repository & Package Management Configuration" \
+      short-description="Contribute to Arch statistics" \
+      long-description="Contribute to the Arch Linux package statistics. «pkgstats» anonymously submits a list of installed packages to the Arch Linux project every week. See https://pkgstats.archlinux.de" \
+      spdx-identifiers="GPL-3.0-or-later" \
+      default-value="`release-version AND NOT virtual-environment`" {
+        arch-packages "pkgstats"
+      }
+    - name="enable-multilib" required-by-chroot=#true default-value=#true
+    - name="enable-chaotic-aur" required-by-chroot=#true default-value="`install-desktop-environment`"
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Network and Security Tools"
+    - name="enable-network" \
+      dialog-name="Network and Security Tools" \
+      short-description="Enable network access" \
+      long-description="Enable network access: Enables basic networking capabilities on your system. This includes configuration of DNSSEC and DNS over TLS for secure, encrypted DNS, fully integrated with systemd-resolved to ensure consistent and reliable name resolution. Additionally, it enables the Network Time Synchronization systemd service." \
+      spdx-identifiers="LGPL-2.1-or-later,GPL-2.0-or-later" \
+      default-value=#true {
+        arch-packages "ditana-network"
+        chroot-script "systemctl enable systemd-timesyncd" \
+                      "systemctl enable NetworkManager" \
+                      "systemctl enable systemd-resolved"
+      }
+    - name="install-network-tools" \
+      dialog-name="Network and Security Tools" \
+      short-description="Install basic network tools" \
+      long-description="""
+Install basic network tools:
+ • net-tools: Provides commands like netstat and route.
+ • nmap: Network exploration and security auditing tool.
+ • mtr: Combines the functionality of traceroute and ping.
+ • tcpdump: Captures and analyzes network traffic.
+ • wget: Network utility to retrieve files from the Web
+""" \
+      spdx-identifiers="FOSS GPL-2.0-only,GPL3,BSD-3-Clause,Nmap" \
+      available="`enable-network`" \
+      default-value=#true {
+        arch-packages "net-tools" \
+                      "nmap" \
+                      "mtr" \
+                      "tcpdump" \
+                      "wget"
+      }
+    - name="install-openssh" \
+      dialog-name="Network and Security Tools" \
+      short-description="Install and configure OpenSSH" \
+      long-description="Install OpenSSH server with public key authentication, and creates an ed25519 SSH key pair for your user «$user-name»." \
+      spdx-identifiers="BSD-2-Clause,BSD-3-Clause,ISC,MIT" \
+      available="`enable-network`" \
+      default-value=#true {
+        arch-packages "openssh"
+        chroot-script "systemctl enable sshd" \
+                      #"`su - {Settings.instance.get('user-name')} -c 'ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519 -q'`"# \
+                      "`su - {Settings.instance.get('user-name')} -c 'touch ~/.ssh/authorized_keys'`" \
+                      "`su - {Settings.instance.get('user-name')} -c 'chmod 600 ~/.ssh/authorized_keys'`"
+      }
+    - name="install-firewalld" \
+      dialog-name="Network and Security Tools" \
+      short-description="Install and enable firewalld" \
+      long-description="Install firewalld, a dynamically managed firewall with D-Bus interface. Key features include support for network zones, IPv4/IPv6, runtime/permanent configurations, and a rich language for complex rules. It utilizes nftables, the modern successor to iptables, offering improved performance and flexibility. firewalld allows easy integration for services and applications to modify firewall settings without service restarts. For desktop installations, a graphical configuration tool is included." \
+      spdx-identifiers="GPL-2.0-or-later" \
+      available="`enable-network`" \
+      default-value=#true {
+        arch-packages "firewalld"
+        chroot-script "systemctl enable firewalld"
+      }
+    - name="install-bubblejail" \
+      dialog-name="Network and Security Tools" \
+      short-description="Install Bubblejail" \
+      long-description="""
+Install Bubblejail, a sandboxing utility that provides application isolation without parallel packaging systems. It implements a resource-oriented permission model, enhanced by seccomp and D-Bus filtering. Key features include:
+ • Fine-grained control over application permissions and resource access
+ • X11/Wayland display server integration
+ • Custom home directory isolation per application
+ • User-friendly graphical interface for sandbox configuration
+""" \
+      spdx-identifiers="GPL-3.0-or-later" \
+      default-value=#true {
+        arch-packages "bubblejail"
+      }
+    - name="install-protonvpn" \
+      dialog-name="Network and Security Tools" \
+      short-description="Install ProtonVPN" \
+      long-description="Install ProtonVPN, a secure VPN service with strong privacy features and servers in over 110 countries. It offers NetShield Ad-blocker to filter ads, trackers, and malware before they reach your device. Features include high-speed connections via their 10 Gbps network with VPN Accelerator technology, strict no-logs policy backed by Swiss privacy laws, and Stealth protocol for bypassing censorship. An account from https://protonvpn.com is required for full functionality." \
+      license-category="CLOSED" \
+      available="`enable-network AND install-desktop-environment`" \
+      default-value=#false {
+        arch-packages "proton-vpn-gtk-app"
+      }
+    - name="install-expressvpn" \
+      dialog-name="Network and Security Tools" \
+      short-description="Install ExpressVPN" \
+      long-description="Install ExpressVPN, offering a robust VPN service with optional filtering of ads, trackers and malicious sites even before they arrive at your browser. An Activation Code from https://expressvpn.com is required to use ExpressVPN." \
+      license-category="CLOSED" \
+      available="`enable-network`" \
+      default-value=#false {
+        aur-packages "expressvpn"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "System Maintenance Tools"
+    - name="configure-automatic-snapshots" \
+      dialog-name="System Maintenance Tools" \
+      short-description="Configure Automatic System Snapshots" \
+      long-description="""
+Configure Automatic System Snapshots
+Create automatic snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues. Depending on the selected file system, different tools are used to perform these snapshots:
+
+• ext4, xfs, btrfs: Timeshift is utilized to create snapshots. For btrfs, Timeshift performs atomic operations with minimal overhead, while for ext4 and xfs, it uses rsync, typically completing backups in under five seconds.
+• zfs: ZFS snapshots are created instead, providing the same reliable snapshot functionality.
+
+In the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.
+""" \
+      spdx-identifiers="GPL-2.0-or-later,MIT" \
+      required-by-chroot=#true default-value=#true {
+        arch-packages ""
+      }
+    - name="configure-automatic-snapshots-zfs" \
+      default-value="`configure-automatic-snapshots AND zfs-filesystem`" {
+        arch-packages "zfs-autosnap"
+      }
+    - name="configure-automatic-snapshots-timeshift" \
+      default-value="`configure-automatic-snapshots AND NOT zfs-filesystem`" {
+        arch-packages "timeshift" \
+                      "timeshift-autosnap"
+      }
+    - name="install-logrotate" \
+      dialog-name="System Maintenance Tools" \
+      short-description="Install and enable logrotate" \
+      long-description="""
+Install and enable logrotate:
+Logrotate manages the automatic rotation and compression of various system and application log files across your Linux system. It prevents these logs from consuming excessive disk space by periodically archiving, compressing, or deleting old logs. When enabled, the logrotate.timer service runs this task at scheduled intervals, maintaining a balance between keeping necessary logs for troubleshooting and controlling their growth.
+""" \
+      spdx-identifiers="GPL" \
+      default-value=#true {
+        arch-packages "logrotate"
+        chroot-script "systemctl enable logrotate.timer"
+      }
+    - name="configure-lingering" dialog-name="System Maintenance Tools" short-description="Enable persistent user services" long-description="Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks." spdx-identifiers="" default-value="true" {
+        arch-packages ""
+        chroot-script "mkdir -p /var/lib/systemd/linger" \
+                      "`touch /var/lib/systemd/linger/{Settings.instance.get('user-name')}`"
+      }
+    - name="install-rate-mirrors" \
+      dialog-name="System Maintenance Tools" \
+      short-description="Install rate-mirrors" \
+      long-description="""
+Install rate-mirrors:
+Rate-mirrors optimizes your system’s package downloads by selecting the fastest repository mirrors. A daily systemd timer automatically re-evaluates mirror speeds, ensuring optimal download performance without manual intervention. This is especially beneficial for laptops that change geographic locations or when mirror configurations change. The tool tests mirror speeds based on your current network conditions and location, using data about submarine cable connections and inter-country network topologies.
+""" \
+      spdx-identifiers="CC-BY-NC-SA-3.0" \
+      default-value=#true {
+        arch-packages "rate-mirrors"
+        files "/etc/systemd/system/ditana-rate-mirrors.service" \
+              "/etc/systemd/system/ditana-rate-mirrors.timer"
+        chroot-script "systemctl enable ditana-rate-mirrors.timer"
+      }
+    - name="enable-auditd" \
+      dialog-name="System Maintenance Tools" \
+      short-description="Enable the Linux Audit Daemon" \
+      long-description="""
+Enable the Linux Audit Daemon:
+The Linux Audit Daemon (auditd) monitors and logs critical system events, enhancing system security and integrity. It captures a wide range of activities, such as file accesses and user actions, making it invaluable for auditing and forensic analysis. Enabling auditd with its default configuration ensures comprehensive logging of system events. You can view summaries of these logs with «sudo aureport», providing essential insights into system behavior and potential security issues.
+""" \
+      spdx-identifiers="GPL-/LGPL-2.0-or-later" \
+      default-value=#true {
+        arch-packages "audit"
+        chroot-script "systemctl enable auditd"
+      }
+    - name="disable-core-dumps" \
+      dialog-name="System Maintenance Tools" \
+      short-description="Disable Core Dumps" \
+      long-description="""
+Disable Core Dumps:
+Core dumps capture the memory state of a program during crashes, which is useful for debugging but may inadvertently expose sensitive information. In Ditana, core dumps are disabled by default, safeguarding system integrity and user privacy. Advanced users can choose to enable core dumps temporarily in shell sessions or for specific systemd services, ensuring a secure default configuration while allowing flexibility for debugging needs.
+""" \
+      spdx-identifiers="AGPL-3.0-or-later" \
+      default-value=#true {
+        files "/etc/security/limits.d/50-ditana.conf" \
+              "/etc/systemd/system.conf.d/50-ditana-limits.conf"
+      }
+    - name="enable-fstrim" \
+      dialog-name="System Maintenance Tools" \
+      short-description="Weekly discarding of unuseds SSD blocks" \
+      long-description="TRIM is a command that informs a solid-state drive (SSD) which blocks of data are no longer in use and can be wiped internally. For Linux systems, enabling the fstrim.timer service schedules a weekly TRIM operation on all mounted file systems that support it, optimizing free space management. This helps maintain SSD performance and extends the drive’s longevity by reducing wear during write operations. Unlike continuous TRIM methods, which can slightly degrade performance by issuing TRIM commands at every delete operation, scheduling TRIM operations weekly minimizes the impact on system performance and is less stressful on the SSD. The fstrim.timer is a safe and effective way to ensure your SSD’s health and efficiency. It activates only on partitions that support TRIM, making it a non-invasive and beneficial optimization for your system. This option is only available outside virtualization." \
+      spdx-identifiers="" \
+      default-value="`NOT virtual-environment`" \
+      available="`NOT virtual-environment`" {
+        arch-packages ""
+        chroot-script "systemctl enable fstrim.timer"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Terminal Tools and Utilities"
+    - name="install-zsh" \
+      dialog-name="Terminal Tools and Utilities" \
+      short-description="Install zsh and make it default" \
+      long-description="Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting." \
+      spdx-identifiers="zsh" \
+      default-value=#true {
+        arch-packages "zsh" \
+                      "zsh-syntax-highlighting" \
+                      "zsh-autosuggestions" \
+                      "zsh-history-substring-search" \
+                      "fzf" \
+                      "pkgfile"
+        chroot-script #"useradd -D -s "$(which zsh)""# \
+                      #"`chsh -s "\$(which zsh)" {Settings.instance.get('user-name')}`"#
+        files "/etc/skel/.zshrc"
+      }
+    - name="install-cron" \
+      dialog-name="Terminal Tools and Utilities" \
+      short-description="Install cron and activate service" \
+      long-description="Install cron and activate service: cron is a common service that allows for the scheduling of regular jobs directly from the terminal." \
+      spdx-identifiers="" \
+      default-value="`install-backintime`" {
+        arch-packages "cronie"
+        chroot-script "systemctl enable cronie"
+      }
+    - name="install-terminal-utilities" \
+      dialog-name="Terminal Tools and Utilities" \
+      short-description="Install essential terminal utilities like grep, rsync, bc..." \
+      long-description="Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting." \
+      spdx-identifiers="" \
+      default-value=#true {
+        arch-packages "bat" \
+        "bc" \
+        "bind" \
+        "ditana-print-system-infos" \
+        "expect" \ // for unbuffer
+        "eza" \
+        "fd" \
+        "ffmpeg" \
+        "fzf" \
+        "git-lfs" \
+        "jq" \
+        "fakeroot" \
+        "grep" \
+        "htop" \
+        "img2pdf" \
+        "inotify-tools" \
+        "less" \
+        "lsof" \
+        "lua" \
+        "man-db" \
+        "mediainfo" \
+        "ncdu" \
+        "neovim" \
+        "perl-image-exiftool" \
+        "ripgrep" \
+        "rsync" \
+        "shellcheck" \
+        "sed" \
+        "starship" \ // used by bash and zsh configuration (if installed)
+        "systemctl-tui" \
+        "trash-cli" \
+        "turbostat" \
+        "zoxide" \
+        "zellij"
+        files "/etc/skel/.config/bat/config"
+        chroot-script "`su - {Settings.instance.get('user-name')} -c 'git lfs install'`"
+      }
+    - name="install-micro" \
+      dialog-name="Terminal Tools and Utilities" \
+      short-description="Install micro editor and set it as default" \
+      long-description="""
+Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:
+
+ • Display git diff indicators next to lines
+ • Save and restore cursor position when opening files
+ • Retain undo history even after closing and reopening files
+ • Use spaces for the tab key instead of tabs
+ • Use a subtle visual indicator for indentations
+ • Automatically remove trailing whitespace at the end of lines
+ • Automatically re-use existing superuser privileges to save if possible
+ • Automatically create missing parent directories when saving
+ • Highlight all instances of searched text after a successful search
+ • Open multiple files side-by-side in vertical splits
+ • Wrap long lines at word boundaries (when softwrap is enabled)
+ • Display a scroll bar
+""" \
+      spdx-identifiers="MIT" \
+      default-value=#true {
+        files "/etc/skel/.config/micro/settings.json" \
+              "/etc/profile.d/ditana-set-micro-as-default-editor.sh" \
+              "/etc/environment.d/90-ditana-micro-editor.conf" \
+              \ // Install the custom sudoers configuration to preserve the EDITOR and VISUAL environment variables in the sudo context,
+              \ // ensuring that 'micro' is used as the default editor even when elevated permissions are required.
+              "/etc/sudoers.d/10-ditana-micro"
+        arch-packages "micro"
+      }
+    - name="configure-micro-for-xfce" \
+      default-value="`install-micro AND install-desktop-environment`" {
+        \ // under XFCE, we overrule the default desktop shortcut to use exo-open --launch TerminalEmulator micro %F
+        files "/etc/skel/.local/share/applications/micro.desktop"
+      }
+    - name="install-yazi" \
+      dialog-name="Terminal Tools and Utilities" \
+      short-description="Install yazi terminal file manager including optional packages" \
+      long-description="Install yazi, a blazing fast terminal file manager written in Rust, including optional packages for thumbnails, previews, searching, and clipboard support." \
+      spdx-identifiers="MIT" \
+      default-value=#true {
+        arch-packages "yazi" \
+                      "chafa" \ // fallback ASCII image preview
+                      "imagemagick" \ // for image and font preview
+                      "poppler" \ // for PDF preview
+                      "resvg" // for SVG preview
+      }
+    - name="install-archivers" \
+      dialog-name="Terminal Tools and Utilities" \
+      short-description="Install various command line archivers like zip, unzip, 7z..." \
+      long-description="Install various command line archivers: $packages." \
+      spdx-identifiers="" \
+      default-value=#true {
+        arch-packages "7zip" \
+                      "arj" \
+                      "bzip2" \
+                      "cpio" \
+                      "gzip" \
+                      "lhasa" \
+                      "lrzip" \
+                      "lz4" \
+                      "lzip" \
+                      "lzop" \
+                      "tar" \
+                      "unarj" \
+                      "unrar" \
+                      "unzip" \
+                      "xz" \
+                      "zip" \
+                      "zstd"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Development Tools and Libraries"
+    - name="install-localized-man-pages" \
+      default-value="`NOT standardized-locale`" {
+        chroot-script "`MAIN_LOCALE={Settings.instance.get('main-locale')}`" \
+                      "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`" \
+                      #"LOCALIZED_MAN_PAGES="man-pages-$LOWERCASE_LOCALE""# \
+                      #"if ! is_package_available "$LOCALIZED_MAN_PAGES"; then LOCALIZED_MAN_PAGES="man-pages-$MAIN_LOCALE"; fi"# \
+                      #"if is_package_available "$LOCALIZED_MAN_PAGES"; then echo -e "\033[32m--- Installing $LOCALIZED_MAN_PAGES ---\033[0m"; runuser -u builduser -- pikaur -S "$LOCALIZED_MAN_PAGES" --noconfirm || true; fi"#
+      }
+    - name="standardized-locale" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Configure English Locale with Regional Settings" \
+      long-description="""
+By default, the locale you selected is used for everything, including
+
+ • The output of terminal commands
+ • The language of the Desktop Environment (if selected to install)
+ • The names of the standard folders (generated by xdg-user-dirs-update)
+ • Installation of man pages matching your chosen language
+
+By activating this option, in contrast, an English-centric environment will be maintained while respecting your regional settings (like date and currency formats). This is achieved by setting the following locale categories to C.UTF-8, regardless of the main locale you chose:
+
+• Setting LC_COLLATE to C.UTF-8 ensures consistent sorting order across different languages. Affected C functions include strcoll and wcscoll.
+
+• LC_CTYPE set to C.UTF-8 guarantees consistent character classification and conversion, which is crucial for string manipulation and text processing. Affected C functions include isalpha, isdigit, isspace, toupper, and tolower.
+
+• LC_NUMERIC set to C.UTF-8 ensures numerical data is consistently formatted and parsed, for example, no thousands separator as in en_US.UTF-8 and period (.) as the decimal separator. Affected C functions include atof, strtod, printf, and scanf.
+
+• LC_MESSAGES set to C.UTF-8 provides consistent system messages in English, making it easier for developers to search for solutions to errors online. In addition, names of the XDG standard folders will be in English.
+
+This standardized approach ensures uniform behavior across various C and C++ library functions, avoiding discrepancies that can arise from differing regional settings. It’s particularly useful for developers or users who prefer a consistent English interface while maintaining their regional preferences for date and currency formats. Both spell checkers will be installed (in case your locale is different from en_US).
+""" \
+      spdx-identifiers="" \
+      default-value=#false {
+        arch-packages ""
+        chroot-script "`LOWERCASE_LOCALE={Settings.instance.get('locale').lc}`" \
+                      #"if [ "$LOWERCASE_LOCALE" != "en_us" ]; then echo -e "\033[32m--- Installing hunspell-en_us for English system output ---\033[0m"; runuser -u builduser -- pikaur -S hunspell-en_us --noconfirm || true; fi"#
+      }
+    - name="configure-git" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Configure Git with useful global settings" \
+      long-description="Configure Git with useful global settings: default branch name (main), rebase behavior (false), credential storage (store), file protocol permissions (always) and push.autoSetupRemote (true)." \
+      spdx-identifiers="" \
+      available="`install-terminal-utilities`" \
+      default-value=#true {
+        arch-packages ""
+        chroot-script "`su - {Settings.instance.get('user-name')} -c 'git config --global init.defaultBranch main'`" \
+                      "`su - {Settings.instance.get('user-name')} -c 'git config --global pull.rebase false'`" \
+                      "`su - {Settings.instance.get('user-name')} -c 'git config --global credential.helper store'`" \
+                      "`su - {Settings.instance.get('user-name')} -c 'git config --global protocol.file.allow always'`" \
+                      "`su - {Settings.instance.get('user-name')} -c 'git config --global push.autoSetupRemote true'`"
+      }
+    - name="install-vscode" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install Visual Studio Code (Open Source build)" \
+      long-description="Install the Open Source build of Visual Studio Code, including marketplace support. Font ligatures will be switched on, using an appropriate font." \
+      spdx-identifiers="MIT" \
+      available="`install-desktop-environment`" \
+      default-value=#false {
+        arch-packages "code" \
+                      "code-marketplace"
+        files "/etc/skel/.config/Code - OSS/User/settings.json"
+      }
+    - name="install-diffuse" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install Diffuse and configure as git diff/merge tool" \
+      long-description="Install Diffuse. A sophisticated graphical diff and merge tool. Features include advanced merge functionality, separate display of all versions (base, local, and remote), manual correction of misaligned lines, n-way merging capabilities, syntax highlighting, direct file editing during comparison, and easy block copying between windows." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`install-desktop-environment AND install-terminal-utilities`" \ // install-terminal-utilities provides git (through git-lfs)
+      default-value=#false {
+        arch-packages "diffuse"
+        chroot-script "`su - {Settings.instance.get('user-name')} -c 'git config --global merge.tool diffuse'`" \
+                      "`su - {Settings.instance.get('user-name')} -c 'git config --global diff.tool diffuse'`" \
+                      "`su - {Settings.instance.get('user-name')} -c 'git config --global difftool.prompt false'`"
+        session-setup-script {
+            - "if command -v diffuse &> /dev/null; then" \
+              "    export DIFFPROG=diffuse" \
+              "fi"
+            - #false
+        }
+      }
+    - name="install-java-jdk" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Java development kit" \
+      long-description="Install $packages and configure dynamic path variables to the current version." \
+      spdx-identifiers="" \
+      default-value=#true {
+        arch-packages "jdk-openjdk" \
+                      "java-runtime-common"
+        files "/etc/profile.d/ditana-java.sh"
+      }
+    - name="install-general-dev" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install general development packages" \
+      long-description="Install general development packages: $packages." \
+      spdx-identifiers="" \
+      default-value=#false {
+        arch-packages "ltrace" \
+                      "binutils" \
+                      "perf" \
+                      "patchelf" \
+                      "strace" \
+                      "stress-ng" \
+                      "ditana-update-from-skel"
+      }
+    - name="install-pacman-additional-tools" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install Tools for Arch package maintainers" \
+      long-description="""
+Install Tools for Arch package maintainers:
+• auracle: A flexible client for the Arch User Repository (AUR). It provides advanced features for managing and searching AUR packages (not installation).
+• devtools: Essential tools for building and maintaining official Arch repository packages, ensuring reproducible builds and standardized development workflows.
+• perl-locale-gettext: translation support in makepkg-template
+""" \
+      spdx-identifiers="GPL GPL-3.0-or-later PerlArtistic MIT" \
+      default-value=#false {
+        arch-packages "auracle-git" \
+                      "devtools" \ // optional dependency of pikaur
+                      "perl-locale-gettext" // translation support in makepkg-template
+      }
+    - name="install-cpp-dev" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install C++ development packages" \
+      long-description="Install C++ development packages: Equips your system with $packages." \
+      spdx-identifiers="" \
+      default-value=#false {
+        arch-packages "cmake" \
+                      "meson" \
+                      "gdb" \
+                      "lldb" \
+                      "gcc" \
+                      "clang" \
+                      "gtest" \
+                      "doxygen" \
+                      "vcpkg" \
+                      "libtool" \
+                      "pkgconf"
+      }
+    - name="install-cpu-parallel-dev" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install CPU Parallel Programming Frameworks" \
+      long-description="""
+Install CPU Parallel Programming Frameworks:
+ • blas-openblas: a Basic Linear Algebra Subprograms library for matrix operations
+ • eigen: Lightweight C++ template library for vector and matrix math
+ • openmp: a shared-memory multiprocessing library
+ • openmpi: High performance message passing library
+ • intel-oneapi-mkl: Intel’s Math Kernel Library
+ • ispc: a compiler for high-performance SIMD programming on the CPU
+""" \
+      spdx-identifiers="" \
+      default-value=#false {
+        arch-packages "blas-openblas" \
+                      "eigen" \
+                      "openmp" \
+                      "openmpi" \
+                      "intel-oneapi-mkl" \
+                      "ispc"
+      }
+    - name="install-qt5" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install Qt5 development libraries" \
+      long-description="Install Qt5 development libraries $packages." \
+      spdx-identifiers="Qt Dual license" \
+      default-value=#false {
+        arch-packages "qt5-base" \
+                      "qt5-declarative" \
+                      "qt5-svg" \
+                      "qt5-tools" \
+                      "qt5-script"
+      }
+    - name="install-clion" \
+      dialog-name="Development Tools and Libraries" \
+      short-description="Install CLion" \
+      long-description="Install CLion: CLion is a powerful Integrated Development Environment (IDE) for C and C++ development, offering smart code analysis, advanced debugging, and support for CMake and other build systems. To ensure full compatibility, CLion and its specific tool versions (separate from those on your system) are installed. A free 30-day trial is available, and the full version can be purchased at https://www.jetbrains.com/clion." \
+      license-category="CLOSED" \
+      spdx-identifiers="" \
+      available="`install-desktop-environment`" \
+      default-value=#false {
+        aur-packages "clion-jre" \
+                     "clion-cmake" \
+                     "clion-gdb" \
+                     "clion-lldb" \
+                     "clion"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "Umask Configuration"
+    - name="umask-027" \
+      dialog-name="Umask Configuration" \
+      short-description="Restrictive (027) — Ditana Default" \
+      long-description="Restrictive Umask (027): New files are created with permissions 640 (owner: read/write, group: read, others: none) and new directories with 750 (owner: full, group: read/execute, others: none). This prevents other users on the system from accessing your files while still allowing group members to read them. Recommended for most users." \
+      spdx-identifiers="" \
+      required-by-chroot=#true \
+      default-value=#true
+    - name="umask-077" \
+      dialog-name="Umask Configuration" \
+      short-description="Private (077)" \
+      long-description="Private Umask (077): New files are created with permissions 600 (owner: read/write only) and new directories with 700 (owner: full access only). No other user, including group members, can access newly created files. This provides maximum privacy but may cause issues with services or applications that expect group-readable files." \
+      spdx-identifiers="" \
+      required-by-chroot=#true default-value=#false
+    - name="umask-022" \
+      dialog-name="Umask Configuration" \
+      short-description="Permissive (022) — Linux Default" \
+      long-description="Permissive Umask (022): New files are created with permissions 644 (owner: read/write, others: read) and new directories with 755 (owner: full, others: read/execute). This is the standard Linux default and allows all users on the system to read your files. Choose this if you rely on software that expects world-readable files or if you are the only user on the system." \
+      spdx-identifiers="" \
+      default-value=#false
+    - name="kernel-option-sysrq" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Enable Magic SysRq Keys (kernel.sysrq=1)" \
+      long-description="Enable Magic System Request Keys: Enables the SysRq (commonly «Print Screen») key for emergency recovery actions, such as Alt+SysRq+B to reboot." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true {
+        chroot-script "echo 'kernel.sysrq=1 # Enable Magic SysRq Keys' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-vfsca" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Reduce background reclaiming of file system cache (vm.vfs_cache_pressure 100 -> 50)" \
+      long-description="Reduce background reclaiming of file system cache: Retains more file system metadata in memory for faster access, increasing RAM usage." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`total-ram-gib >= 24`" {
+        chroot-script "echo 'vm.vfs_cache_pressure=50 # Reduce background reclaiming of file system cache' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-compa" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Minimize background memory compaction (vm.compaction_proactiveness 20/100 → 1/100)" \
+      long-description="Minimize background memory compaction: Reduces effort spent on memory compaction in the background, which may decrease CPU load at the cost of increased RAM consumption." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`total-ram-gib >= 24`" {
+        chroot-script "echo 'vm.compaction_proactiveness=1 # Minimize background memory compaction' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-swapp" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Optimize swap file and ZRAM usage (vm.swappiness)" \
+      long-description="Optimize swap file and ZRAM usage: If you have left ZRAM enabled (default), this setting changes swappiness from the default of 60 to the recommended value of 180. If you have ZRAM disabled, this setting changes swappiness to 1, which conserves RAM for active applications to improve system responsiveness, but leaves less RAM available for kernel operations such as caching file system metadata and managing network buffers." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`install-zram OR total-ram-gib >= 24`"
+    - name="kernel-option-zswap" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Disable Zswap Cache Layer (zswap.enabled=0)" \
+      long-description="Disable Zswap Cache Layer: Disables Zswap’s intermediary cache, allowing direct use of swap devices like ZRAM." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`install-zram`"
+    - name="kernel-option-pagec" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Disable Swap Readahead (vm.page-cluster 3 → 0)" \
+      long-description="Disable Swap Readahead: The system reads only one page at a time from swap, potentially reducing initial latency when accessing swapped-out pages. This is advantageous when using ZRAM, as ZRAM provides fast access to swap space. Reading only the required pages can improve performance without the overhead of prefetching additional pages." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`install-zram`" {
+        \ // # https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+        chroot-script "echo 'vm.page-cluster=0 # Disable Swap Readahead - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-wmboo" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Disable Extra Memory Reclaim (vm.watermark_boost_factor 15000 → 0)" \
+      long-description="Disable Extra Memory Reclaim: This reduces reclaim activity during memory fragmentation when high-order memory allocations are less critical. This can optimize memory management for systems using ZRAM. Since ZRAM reduces the need for high-order memory allocations, the extra memory reclaim becomes unnecessary, improving overall performance." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`install-zram`" {
+        \ // https: //wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+        chroot-script "echo 'vm.watermark_boost_factor=0 # Disable Extra Memory Reclaim - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-wmsca" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Maintain free memory (vm.watermark_scale_factor 10/3000 → 125/3000)" \
+      long-description="Maintain free memory: Make the Kernel Swap Thread more aggressive in maintaining free memory. This helps prevent applications from entering direct memory reclaim, enhancing system responsiveness under memory pressure. This is particularly beneficial for systems with ZRAM, because it allows the system to better utilize ZRAM’s fast swap capabilities by maintaining more free memory and reducing allocation stalls." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value="`install-zram`" {
+        \ // https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+        chroot-script "echo 'vm.watermark_scale_factor=125 # Maintain free memory - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-fwdpe" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Order device init & power tasks (fw_devlink=permissive)" \
+      long-description="Order Device Initialization & Power Tasks: Facilitates the correct sequence of device initialization and power management tasks based on firmware information. This ensures a stable system operation by prioritizing the initialization of supplier devices before consumers and managing power states effectively during suspend/resume cycles." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true
+    - name="kernel-option-perf1" \
+        dialog-name="General Kernel Configuration" \
+        short-description="Allow normal users to access performance profiling tools (perf_event_paranoid=1)" \
+        long-description="Allow normal users to access performance profiling tools: This is particularly useful for developers who need to analyze application performance in a more secure way without needing full root privileges." \
+        spdx-identifiers="GPL-2.0-only" \
+        default-value=#true {
+        \ // https://docs.kernel.org/admin-guide/sysctl/kernel.html#perf-event-paranoid
+        chroot-script "echo 'kernel.perf_event_paranoid=1 # Allow normal users to access performance profiling tools' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-duurn" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Disable unprivileged user namespaces (unprivileged_userns_clone=0)" \
+      long-description="Disable unprivileged user namespaces: Enhances system security by preventing local privilege escalation attacks through user namespace exploitation. However, this will break application sandboxing tools that rely on unprivileged user namespaces, including Bubblejail, certain containerization tools, and communication software. Consider leaving this disabled if you plan to use these security tools." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT (install-bubblejail OR install-hardened-stable-kernel OR install-hardened-lts-kernel)`" \
+      default-value=#false {
+        \ // https://wiki.archlinux.org/title/Security#Sandboxing_applications
+        chroot-script "echo 'kernel.unprivileged_userns_clone=0 # Disable unprivileged user namespaces' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="kernel-option-inita" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Automatically fill allocated memory with 0 (init_on_alloc=1)" \
+      long-description="Fill Allocated Memory with 0: Increases security by zeroing out newly allocated memory." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true
+    - name="kernel-option-initf" \
+      dialog-name="General Kernel Configuration" \
+      short-description="Automatically fill deallocated memory with 0 (init_on_free=1)" \
+      long-description="Fill Deallocated Memory with 0: Aids in preventing data leakage by clearing freed memory." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true
+    // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Hardening"
+    - name="sysctl-kptr-restrict" \
+      dialog-name="System Hardening" \
+      short-description="Hide kernel pointers (kernel.kptr_restrict=2)" \
+      long-description="Hide Kernel Pointers: Prevents all users, including root, from reading kernel symbol addresses via /proc/kallsyms. These addresses can help attackers develop exploits targeting specific kernel functions. This setting has no impact on normal system operation." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true {
+        chroot-script "echo 'kernel.kptr_restrict=2 # hide kernel pointers' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="sysctl-dmesg-restrict" \
+      dialog-name="System Hardening" \
+      short-description="Restrict kernel log access to root (kernel.dmesg_restrict=1)" \
+      long-description="Restrict Kernel Log Access: Prevents unprivileged users from reading kernel log messages via dmesg. The kernel log can reveal hardware details, loaded modules, and error messages that help attackers map out the system. Administrators can still access logs via journalctl or by running dmesg as root." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true {
+        chroot-script "echo 'kernel.dmesg_restrict=1 # restrict dmesg to root' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="sysctl-bpf-disabled" \
+      dialog-name="System Hardening" \
+      short-description="Disable unprivileged BPF (kernel.unprivileged_bpf_disabled=1)" \
+      long-description="Disable Unprivileged BPF: Restricts the BPF JIT compiler to root. BPF is a powerful in-kernel virtual machine that can be abused for attacks such as heap spraying. Normal users and applications rarely need direct BPF access." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true {
+        chroot-script "echo 'kernel.unprivileged_bpf_disabled=1 # restrict BPF to root' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="sysctl-kexec-disabled" \
+      dialog-name="System Hardening" \
+      short-description="Disable kexec (kernel.kexec_load_disabled=1)" \
+      long-description="Disable kexec: Prevents loading a replacement kernel at runtime via the kexec system call. An attacker with sufficient privileges could use kexec to boot a malicious kernel, bypassing Secure Boot and other boot-time protections. Once set to 1 at runtime, this cannot be changed back without a reboot." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true {
+        chroot-script "echo 'kernel.kexec_load_disabled=1 # disable kexec' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="sysctl-ptrace-restrict" \
+      dialog-name="System Hardening" \
+      short-description="Restrict ptrace to root (kernel.yama.ptrace_scope=2)" \
+      long-description="Restrict ptrace to Root: Limits the ptrace system call to processes running as root. ptrace allows inspecting and modifying the memory of running processes, which can be used to extract passwords or inject code. This setting will prevent non-root users from using debuggers such as gdb and strace. Developers who need debugging tools should disable this option. The Linux default (0) allows unrestricted ptrace between processes of the same user." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT sysctl-ptrace-unrestricted" \
+      default-value="`NOT install-desktop-environment`" {
+        chroot-script "echo 'kernel.yama.ptrace_scope=2 # restrict ptrace to root' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="sysctl-ptrace-unrestricted" \
+      dialog-name="System Hardening" \
+      short-description="Unrestrict ptrace for developers (kernel.yama.ptrace_scope=0)" \
+      long-description="""
+Allow unrestricted ptrace: Sets kernel.yama.ptrace_scope=0 and completely disables Yama restrictions.
+
+This restores the classic Linux behavior where any process of the same user can debug or trace other processes of that user. **This setting is particularly important for developers** – it enables full functionality of debugging and profiling tools such as gdb, lldb, strace, perf, rr, Valgrind, SystemTap and IDE debuggers. Without this option most of these tools will fail with «Operation not permitted» or «Permission denied» when trying to attach to another process.
+""" \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT sysctl-ptrace-restrict" \
+      default-value="`install-desktop-environment`" {
+        chroot-script "echo 'kernel.yama.ptrace_scope=0 # unrestricted ptrace - important for developers' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="sysctl-net-hardening" \
+      dialog-name="System Hardening" \
+      short-description="Harden network stack (syncookies, no redirects, no source routing, rp_filter)" \
+      long-description="""
+Harden Network Stack: Applies several network protections in a single setting:
+
+• SYN flood protection via TCP syncookies.
+• Reject ICMP redirects to prevent man-in-the-middle attacks (IPv4 and IPv6).
+• Disable source routing, which allows senders to dictate the packet path through the network.
+• Enable reverse-path filtering to drop packets with spoofed source addresses.
+
+These settings are broadly recommended and unlikely to cause compatibility issues.
+""" \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true {
+        chroot-script "echo 'net.ipv4.tcp_syncookies=1 # SYN flood protection' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv4.conf.all.accept_redirects=0 # reject ICMP redirects' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv6.conf.all.accept_redirects=0 # reject ICMP redirects (IPv6)' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv4.conf.all.accept_source_route=0 # disable source routing' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv4.conf.all.rp_filter=1 # reverse-path filtering' >> /etc/sysctl.d/ditana.conf"
+      }
+    - name="sysctl-fs-protection" \
+      dialog-name="System Hardening" \
+      short-description="Protect FIFOs and regular files in sticky directories (fs.protected_fifos/regular=2)" \
+      long-description="Protect FIFOs and Regular Files in Sticky Directories: Prevents users from writing to FIFOs or regular files they do not own in world-writable sticky directories such as /tmp. This mitigates a class of privilege escalation attacks where an attacker creates or replaces files in shared directories to trick privileged processes into reading or writing attacker-controlled data. The Linux default protects hardlinks and symlinks (fs.protected_hardlinks=1, fs.protected_symlinks=1) but leaves FIFOs and regular files unprotected." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#true {
+        chroot-script "echo 'fs.protected_fifos=2 # protect FIFOs in sticky dirs' >> /etc/sysctl.d/ditana.conf" "echo 'fs.protected_regular=2 # protect regular files in sticky dirs' >> /etc/sysctl.d/ditana.conf"
+      }
+    // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "CPU Vulnerability Mitigation Options".
+    // These correspond to kernel mitigations for which the kernel does not perform the maximum mitigation by default. These are set
+    // by default to True if the CPU has the corresponding vulnerability.
+    - name="kernel-option-spec2" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce Spectre Variant 2 Mitigation (spectre_v2=on)" \
+      long-description="Enforce Spectre Variant 2 Mitigation: This vulnerability allows attackers to exploit speculative execution to access sensitive data. Enabling this option forces the kernel to apply full mitigations for Spectre Variant 2, potentially enhancing security." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-spectre-v2-vulnerable`"
+    - name="kernel-option-l1tff" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce L1 Terminal Fault Mitigation (l1tf=full,force)" \
+      long-description="Enforce L1 Terminal Fault Mitigation: Affects Intel CPUs, allowing unauthorized access to data in the Level 1 cache. This option enforces full mitigation, which may involve more aggressive cache flushing." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-l1tf-vulnerable`"
+    - name="kernel-option-mdsfu" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce MDS Mitigation (mds=full,nosmt)" \
+      long-description="Enforce MDS (Microarchitectural Data Sampling) mitigation: Allows attackers to sample data from CPU buffers. Enabling this enforces full mitigations and may disable Hyperthreading if necessary." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-mds-vulnerable`"
+    - name="kernel-option-tsxaa" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce TSX Async Abort Mitigation (tsx_async_abort=full,nosmt)" \
+      long-description="Enforce TSX Async Abort Mitigation: Affects CPUs with Transactional Synchronization Extensions (TSX). This option enables full mitigation and may disable Hyperthreading if required." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-taa-vulnerable`"
+    - name="kernel-option-meltd" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce Meltdown Mitigation (l1d_flush=on)" \
+      long-description="Enforce Meltdown Mitigation: Exploits speculative execution to read kernel memory. Enabling this forces the kernel to flush the Level 1 data cache to mitigate Meltdown." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-meltdown-vulnerable`"
+    - name="kernel-option-mmios" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce MMIO Stale Data Mitigation (mmio_stale_data=full,nosmt)" \
+      long-description="Enforce MMIO Stale Data Mitigatio: Allows leakage of data from Memory-Mapped I/O. This enforces full mitigations and may disable SMT if needed." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-mmio-stale-data-vulnerable`"
+    - name="kernel-option-retbl" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce Retbleed Mitigation (retbleed=auto,nosmt)" \
+      long-description="Enforce Retbleed Mitigation: A speculative execution attack that can leak return addresses. This option enables automatic mitigation and may disable SMT." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-retbleed-vulnerable`"
+    - name="kernel-option-srsom" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce SRSO Mitigation (spec_rstack_overflow=ibpb spectre_v2-user=on)" \
+      long-description="Enforce SRSO Mitigation: Leads to speculative execution attacks via the return stack buffer. Enabling this applies mitigations and may impact performance." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-srso-vulnerable`"
+    - name="kernel-option-gdsfo" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce Gather Data Sampling Mitigation (gather_data_sampling=force)" \
+      long-description="Enforce Gather Data Sampling Mitigation: Affects AVX instructions. This option forces microcode mitigations or disables AVX if the microcode is unavailable." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-gds-vulnerable`"
+    - name="kernel-option-rfdso" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Enforce RFDS Mitigation (reg_file_data_sampling=on)" \
+      long-description="Enforce RFDS Mitigation: Allows sampling of data from CPU registers. Enabling this activates mitigations to protect against RFDS." \
+      spdx-identifiers="GPL-2.0-only" \
+      available="`NOT kernel-option-mitof`" \
+      default-value="`is-rfds-vulnerable`"
+    // The following two are to switch off mitigations
+    - name="kernel-option-ibtof" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Disable Intel BTI Mitigation - Security Risk! Undocumented! (ibt=off)" \
+      long-description="Disable Mitigation for Intel Branch Target Injection: Disables the Intel BTI mitigation to increase system performance. Warning: This exposes the system to certain types of speculative execution attacks like Spectre." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#false
+    - name="kernel-option-mitof" \
+      dialog-name="CPU Vulnerability Mitigation Options" \
+      short-description="Disable all Mitigations - Security Risk! (mitigations=off)" \
+      long-description="Disable all Mitigations: This option differs from unchecking all mitigations in the list: It disables all kernel-based security mitigations against speculative execution vulnerabilities such as Spectre, Meltdown, MDS, and others. This option maximizes system performance by avoiding the overhead of security patches, but it significantly increases the risk of exposure to these vulnerabilities. Use this setting only if you fully understand the implications and are confident that your system is not at risk from these types of attacks." \
+      spdx-identifiers="GPL-2.0-only" \
+      default-value=#false
+    // Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Allocator"
+    - name="allocator-mimalloc" \
+      dialog-name="System Allocator" \
+      short-description="mimalloc — Ditana Default" \
+      long-description="mimalloc (Microsoft Research): A high-performance general-purpose allocator that excels in multi-threaded workloads. It provides faster allocation and deallocation than glibc's default allocator, with reduced fragmentation and better scalability across CPU cores. Recommended for both desktop and server use." \
+      spdx-identifiers="MIT" \
+      default-value=#true {
+        arch-packages "mimalloc"
+        chroot-script "echo /usr/lib/libmimalloc.so > /etc/ld.so.preload"
+      }
+    - name="allocator-hardened" \
+      dialog-name="System Allocator" \
+      short-description="hardened_malloc (Full)" \
+      long-description="hardened_malloc (GrapheneOS, Full): A security-focused allocator designed to make exploitation of heap vulnerabilities significantly harder. It provides strong protections including guard pages, randomized allocation, and strict size class isolation. This comes at the cost of higher memory usage and reduced allocation performance compared to mimalloc or glibc. Not available when Xorg is in use, as Xorg is incompatible with hardened_malloc." \
+      spdx-identifiers="MIT" \
+      available="`NOT install-desktop-environment`" \
+      default-value=#false {
+        arch-packages "hardened_malloc"
+        chroot-script "echo /usr/lib/libhardened_malloc.so > /etc/ld.so.preload"
+      }
+    - name="allocator-hardened-light" \
+      dialog-name="System Allocator" \
+      short-description="hardened_malloc (Light)" \
+      long-description="hardened_malloc Light (GrapheneOS, Light): A less aggressive variant of hardened_malloc that reduces memory overhead while retaining most of its security properties. It uses smaller guard regions and less strict isolation than the full variant, making it more suitable for memory-constrained environments. Not available when Xorg is in use, as Xorg is incompatible with hardened_malloc." \
+      spdx-identifiers="MIT" \
+      available="`NOT install-desktop-environment`" \
+      default-value=#false {
+        arch-packages "hardened_malloc"
+        chroot-script "echo /usr/lib/libhardened_malloc-light.so > /etc/ld.so.preload"
+      }
+    - name="allocator-glibc" \
+      dialog-name="System Allocator" \
+      short-description="glibc Default — Linux Default" \
+      long-description="glibc Default Allocator: The standard memory allocator provided by the GNU C Library. It is well-tested, compatible with all software, and requires no additional packages. While it does not offer the performance benefits of mimalloc or the security hardening of hardened_malloc, it is the most conservative and universally compatible choice." \
+      spdx-identifiers="LGPL-2.1-or-later" \
+      default-value=#false
+    // Settings that correspond to the main installer logic
+    - name="keymap-layout" default-value=""
+    - name="keymap-variant" default-value=""
+    - name="keyboard-rate" default-value=50
+    - name="keyboard-delay" default-value=250
+    - name="install-disk" required-by-chroot=#true default-value=""
+    - name="install-disk-description" default-value=""
+    - name="boot-device" default-value=""
+    - name="current-bootloader-partition" default-value="" // an EFI-Partition that existed prior installation (or the empty string)
+    - name="overwrite-efi" default-value=#false // user confirmed to overwrite the existing current-bootloader-partition
+    - name="bootloader-partition" default-value="" // either the EFI or the BIOS partition, depending on the system
+    - name="bootimage-partition" default-value="" // the partition that will be mounted at /boot
+    - name="enable-os-prober" required-by-chroot=#true default-value=#false
+    - name="change-nvme-lba-format" default-value=#false
+    - name="optimal-lba-format-index" default-value=-1
+    - name="encrypt-root-partition" required-by-chroot=#true default-value=#true
+    - name="swap-partition" default-value=""
+    - name="timezone" default-value=""
+    - name="locale" required-by-chroot=#true default-value=""
+    - name="main-locale" required-by-chroot=#true default-value=""
+    - name="main-locale-description" default-value=""
+    - name="host-name" default-value=""
+    - name="user-name" required-by-chroot=#true default-value=""
+    - name="user-id" required-by-chroot=#true default-value=1000
+    - name="user-group" required-by-chroot=#true default-value=1000
+    - name="host-dpi" default-value=""
+    - name="kernel-options" required-by-chroot=#true default-value=""
+    - name="bootloader-parent-disk" required-by-chroot=#true default-value=""
+    - name="bootloader-partition-index" required-by-chroot=#true default-value=""
+    - name="root-partition" required-by-chroot=#true default-value=""
+    - name="terminal-font" required-by-chroot=#true default-value=""
+}

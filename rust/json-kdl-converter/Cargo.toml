@@ -1,0 +1,12 @@
+[package]
+name = "json-kdl-converter"
+version = "0.1.0"
+edition = "2024"
+description = "Bidirectional JSON ↔ KDL converter producing idiomatic, human-readable output"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/acrion/json-kdl-converter"
+
+[dependencies]
+kdl = "6"
+serde_json = { version = "1", features = ["preserve_order"] }
+clap = { version = "4", features = ["derive"] }

@@ -12,3 +12,4 @@ airootfs/root/bind-mount/root/settings.sh
 *.cache
 *.tom
 nohup.out
+airootfs/root/json-kdl-converter
