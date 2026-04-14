@@ -13,3 +13,10 @@ airootfs/root/bind-mount/root/settings.sh
 *.tom
 nohup.out
 airootfs/root/json-kdl-converter
+# Downloaded configuration archive (from ditana-config repo)
+airootfs/root/ditana-config.tar.gz
+
+# Extracted configuration (by Settings.rakumod at install/simulation time)
+airootfs/root/installation-steps.kdl
+airootfs/root/settings/
+airootfs/root/folders/

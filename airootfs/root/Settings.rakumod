@@ -70,6 +70,23 @@ class Settings {
         $!modified-settings = SetHash.new;
 
         my $converter = $*PROGRAM.parent.child('json-kdl-converter').resolve.absolute;
+        my $config-dir = $*PROGRAM.parent;
+        my $config-archive = $config-dir.child('ditana-config.tar.gz');
+
+        # Try to download latest configuration at install time
+        my $config-url = 'https://github.com/acrion/ditana-config/releases/download/latest/ditana-config.tar.gz';
+        my $download = run('curl', '-fsSL', $config-url, '-o', '/tmp/ditana-config.tar.gz', :out, :err);
+        if $download.exitcode == 0 {
+            copy('/tmp/ditana-config.tar.gz', $config-archive);
+            unlink '/tmp/ditana-config.tar.gz';
+            Logging.log("Downloaded latest configuration from GitHub.");
+        } else {
+            Logging.log("Using bundled configuration (download failed).");
+        }
+
+        # Extract configuration (either freshly downloaded or ISO-bundled)
+        run('tar', 'xzf', $config-archive, '-C', $config-dir);
+
         my $json = run($converter, 'kdlset2json', '.', :out).out.slurp(:close);
         my $data = from-json($json);
 

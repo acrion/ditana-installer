@@ -175,6 +175,16 @@ if [[ "$current_branch" != "main" ]]; then
     LABEL+="-Testing"
 fi
 
+# Download latest configuration archive
+DITANA_CONFIG_URL="https://github.com/acrion/ditana-config/releases/download/latest/ditana-config.tar.gz"
+echo "Downloading Ditana configuration..."
+if curl -fSL "$DITANA_CONFIG_URL" -o airootfs/root/ditana-config.tar.gz; then
+    echo "Configuration downloaded."
+else
+    echo "ERROR: Failed to download configuration."
+    exit 1
+fi
+
 echo "Building Rust tools..."
 pushd rust
 cargo build --release
