@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 chmod +x main.raku
+chmod +x json-kdl-converter
 chmod +x bind-mount/root/enable-chaotic-aur.sh
 chmod +x bind-mount/root/enable-ditana.sh
 chmod +x bind-mount/root/chroot-install.sh
