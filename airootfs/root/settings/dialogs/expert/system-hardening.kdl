@@ -1,0 +1,80 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Hardening"
+- name="sysctl-kptr-restrict" \
+  dialog-name="System Hardening" \
+  short-description="Hide kernel pointers (kernel.kptr_restrict=2)" \
+  long-description="Hide Kernel Pointers: Prevents all users, including root, from reading kernel symbol addresses via /proc/kallsyms. These addresses can help attackers develop exploits targeting specific kernel functions. This setting has no impact on normal system operation." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true {
+    chroot-script "echo 'kernel.kptr_restrict=2 # hide kernel pointers' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="sysctl-dmesg-restrict" \
+  dialog-name="System Hardening" \
+  short-description="Restrict kernel log access to root (kernel.dmesg_restrict=1)" \
+  long-description="Restrict Kernel Log Access: Prevents unprivileged users from reading kernel log messages via dmesg. The kernel log can reveal hardware details, loaded modules, and error messages that help attackers map out the system. Administrators can still access logs via journalctl or by running dmesg as root." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true {
+    chroot-script "echo 'kernel.dmesg_restrict=1 # restrict dmesg to root' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="sysctl-bpf-disabled" \
+  dialog-name="System Hardening" \
+  short-description="Disable unprivileged BPF (kernel.unprivileged_bpf_disabled=1)" \
+  long-description="Disable Unprivileged BPF: Restricts the BPF JIT compiler to root. BPF is a powerful in-kernel virtual machine that can be abused for attacks such as heap spraying. Normal users and applications rarely need direct BPF access." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true {
+    chroot-script "echo 'kernel.unprivileged_bpf_disabled=1 # restrict BPF to root' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="sysctl-kexec-disabled" \
+  dialog-name="System Hardening" \
+  short-description="Disable kexec (kernel.kexec_load_disabled=1)" \
+  long-description="Disable kexec: Prevents loading a replacement kernel at runtime via the kexec system call. An attacker with sufficient privileges could use kexec to boot a malicious kernel, bypassing Secure Boot and other boot-time protections. Once set to 1 at runtime, this cannot be changed back without a reboot." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true {
+    chroot-script "echo 'kernel.kexec_load_disabled=1 # disable kexec' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="sysctl-ptrace-restrict" \
+  dialog-name="System Hardening" \
+  short-description="Restrict ptrace to root (kernel.yama.ptrace_scope=2)" \
+  long-description="Restrict ptrace to Root: Limits the ptrace system call to processes running as root. ptrace allows inspecting and modifying the memory of running processes, which can be used to extract passwords or inject code. This setting will prevent non-root users from using debuggers such as gdb and strace. Developers who need debugging tools should disable this option. The Linux default (0) allows unrestricted ptrace between processes of the same user." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT sysctl-ptrace-unrestricted" \
+  default-value="`NOT install-desktop-environment`" {
+    chroot-script "echo 'kernel.yama.ptrace_scope=2 # restrict ptrace to root' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="sysctl-ptrace-unrestricted" \
+  dialog-name="System Hardening" \
+  short-description="Unrestrict ptrace for developers (kernel.yama.ptrace_scope=0)" \
+  long-description="""
+Allow unrestricted ptrace: Sets kernel.yama.ptrace_scope=0 and completely disables Yama restrictions.
+
+This restores the classic Linux behavior where any process of the same user can debug or trace other processes of that user. **This setting is particularly important for developers** – it enables full functionality of debugging and profiling tools such as gdb, lldb, strace, perf, rr, Valgrind, SystemTap and IDE debuggers. Without this option most of these tools will fail with «Operation not permitted» or «Permission denied» when trying to attach to another process.
+""" \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT sysctl-ptrace-restrict" \
+  default-value="`install-desktop-environment`" {
+    chroot-script "echo 'kernel.yama.ptrace_scope=0 # unrestricted ptrace - important for developers' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="sysctl-net-hardening" \
+  dialog-name="System Hardening" \
+  short-description="Harden network stack (syncookies, no redirects, no source routing, rp_filter)" \
+  long-description="""
+Harden Network Stack: Applies several network protections in a single setting:
+
+• SYN flood protection via TCP syncookies.
+• Reject ICMP redirects to prevent man-in-the-middle attacks (IPv4 and IPv6).
+• Disable source routing, which allows senders to dictate the packet path through the network.
+• Enable reverse-path filtering to drop packets with spoofed source addresses.
+
+These settings are broadly recommended and unlikely to cause compatibility issues.
+""" \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true {
+    chroot-script "echo 'net.ipv4.tcp_syncookies=1 # SYN flood protection' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv4.conf.all.accept_redirects=0 # reject ICMP redirects' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv6.conf.all.accept_redirects=0 # reject ICMP redirects (IPv6)' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv4.conf.all.accept_source_route=0 # disable source routing' >> /etc/sysctl.d/ditana.conf" "echo 'net.ipv4.conf.all.rp_filter=1 # reverse-path filtering' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="sysctl-fs-protection" \
+  dialog-name="System Hardening" \
+  short-description="Protect FIFOs and regular files in sticky directories (fs.protected_fifos/regular=2)" \
+  long-description="Protect FIFOs and Regular Files in Sticky Directories: Prevents users from writing to FIFOs or regular files they do not own in world-writable sticky directories such as /tmp. This mitigates a class of privilege escalation attacks where an attacker creates or replaces files in shared directories to trick privileged processes into reading or writing attacker-controlled data. The Linux default protects hardlinks and symlinks (fs.protected_hardlinks=1, fs.protected_symlinks=1) but leaves FIFOs and regular files unprotected." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true {
+    chroot-script "echo 'fs.protected_fifos=2 # protect FIFOs in sticky dirs' >> /etc/sysctl.d/ditana.conf" "echo 'fs.protected_regular=2 # protect regular files in sticky dirs' >> /etc/sysctl.d/ditana.conf"
+  }

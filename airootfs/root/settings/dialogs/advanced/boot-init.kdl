@@ -1,0 +1,22 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Boot Init System"
+- name="use-init-busybox" \
+  dialog-name="Boot Init System" \
+  short-description="BusyBox" \
+  long-description="BusyBox provides a suite of Unix utilities in a single executable. It combines various common commands and system functions into one binary, optimizing the size and complexity of the boot process." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`zfs-filesystem`"
+- name="use-init-systemd" \
+  dialog-name="Boot Init System" \
+  short-description="systemd" \
+  long-description="""
+systemd integrates several boot and process management functions into one framework. It is designed to handle system initialization, service management, and logging in a unified way, with built-in parallelization and dependency management. systemd offers a modular architecture where different components work together to manage the system’s lifecycle from boot to shutdown.
+
+Note that using systemd with a ZFS root filesystem is presently only possible if the root partition is not encrypted. As a result, Ditana does not currently support the use of systemd with ZFS.
+""" \
+  spdx-identifiers="GPL-2.0-only" \
+  required-by-chroot=#true \
+  \ // Using systemd init system for ZFS requires https://github.com/dasJ/sd-zfs, but this project does not yet support
+  \ // ZFS encryption (which we configure when encrypt-root-partition is true). We could still support this, but currently
+  \ // do not.ZFS encryption (which we configure when encrypt-root-partition is true). We could still support this, but currently do not.
+  available="`NOT zfs-filesystem`" \
+  default-value="`NOT zfs-filesystem`"

@@ -1,0 +1,128 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Hardware Support Options"
+- name="install-audio" \
+  dialog-name="Hardware Support Options" \
+  short-description="Install Audio support" \
+  long-description="Install Audio Support: Installs PipeWire with PulseAudio and ALSA compatibility layers, and adds the user «$user-name» to the «audio» group to enable access to audio devices." \
+  spdx-identifiers="MIT LGPL-2.1-or-later" \
+  default-value=#true {
+    arch-packages "pipewire" \
+                  "pipewire-alsa" \
+                  "pipewire-pulse" \
+                  "wireplumber"
+    chroot-script "`usermod -aG audio {Settings.instance.get('user-name')}`"
+  }
+- name="install-bluetooth" \
+  dialog-name="Hardware Support Options" \
+  short-description="Install Bluetooth support" \
+  long-description="Install Bluetooth Support: Installs the necessary Bluetooth components (protocol stack, management tools, OBEX for file transfer, and mesh services) and enables the Bluetooth service in the system. Bluetooth allows wireless connection to various devices such as keyboards, mice, headsets, smartphones, and other Bluetooth-capable devices. The Bluetooth service will be automatically started at system boot, making Bluetooth devices immediately available. This entry is enabled by default if Bluetooth hardware is detected in the system." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`has-bluetooth`" {
+    arch-packages \ // see https://wiki.archlinux.org/title/Bluetooth
+                  "bluez" \
+                  "bluez-utils" \
+                  "bluez-obex" \
+                  "bluez-mesh"
+    chroot-script "systemctl enable bluetooth"
+  }
+- name="install-nvidia-opensource" \
+  dialog-name="Hardware Support Options" \
+  short-description="Install open-source NVIDIA kernel modules" \
+  long-description="""
+Install the open-source NVIDIA kernel modules (nvidia-open-dkms): These kernel modules, developed by NVIDIA and published as open source, are now the default NVIDIA driver in Arch Linux since driver version 590 (December 2025). They integrate natively with the Linux kernel, resulting in better system stability, improved power management, and full Wayland support.
+
+This driver supports Turing (RTX 20xx, GTX 16xx) and newer GPUs.
+
+For older GPUs (Maxwell, Pascal, Volta, Kepler), the open-source kernel modules are NOT available. These GPUs require a legacy proprietary driver or the Nouveau driver.
+
+Note: Like the proprietary driver, the open kernel modules still rely on the proprietary NVIDIA userspace utilities (nvidia-utils).
+
+For more information, visit: https://github.com/NVIDIA/open-gpu-kernel-modules
+""" \
+  spdx-identifiers="" \
+  license-category="CLOSED/FOSS" \
+  required-by-chroot=#true available="`nvidia-pci-id`" \
+  default-value=#false { // this default is set by check-nvidia()
+    arch-packages "nvidia-open-dkms"
+    files "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf" \
+          "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
+  }
+- name="install-nvidia-proprietary" \
+  dialog-name="Hardware Support Options" \
+  short-description="Install proprietary NVIDIA legacy driver" \
+  long-description="""
+Install the proprietary NVIDIA legacy driver: This driver provides support for older NVIDIA GPUs that are not compatible with the open-source NVIDIA kernel modules. Since driver version 590 (December 2025), the main Arch Linux NVIDIA packages have switched to open kernel modules, which only support Turing and newer GPUs.
+
+For Maxwell (GTX 900), Pascal (GTX 10xx), and Volta GPUs, the nvidia-580xx-dkms legacy driver is required. This driver will receive security updates through October 2028.
+
+For Kepler (GTX 600/700) GPUs, the nvidia-470xx-dkms legacy driver is required. Note that this driver is no longer receiving updates.
+
+The specific legacy driver package for your GPU is determined automatically by the installer.
+
+For detailed driver information, please visit: https://www.nvidia.com/en-us/drivers/unix
+""" \
+  license-category="CLOSED" \
+  spdx-identifiers="" \
+  required-by-chroot=#true \
+  available="`nvidia-pci-id`" \ // this availability is set by function check-nvidia()
+  \ // the value of arch-packages for this component is set by check-nvidia()
+  default-value=#false {
+    files "/etc/environment.d/50-ditana-disable-dmabuf-for-webkit.conf" \
+          "/etc/profile.d/ditana-disable-dmabuf-for-webkit.sh"
+  }
+- name="install-nouveau" \
+  dialog-name="Hardware Support Options" \
+  short-description="Install open-source Nouveau NVIDIA driver" \
+  long-description="""
+Install the Nouveau open-source NVIDIA graphics card driver: Nouveau is a community-developed, fully open-source driver for NVIDIA graphics cards. It offers the following benefits:
+
+• Broad support for older NVIDIA hardware, including GPUs not supported by NVIDIA's own drivers.
+• Unlike NVIDIA's open kernel modules and the proprietary legacy drivers, Nouveau does not depend on any proprietary NVIDIA components, making it the only truly open-source NVIDIA driver.
+• For first-generation Maxwell GPUs (GTX 750 series), Nouveau provides good support including GPU re-clocking.
+
+Limitations:
+• For GPUs from GTX 900 series onwards, signed firmware requirements limit Nouveau's power management and performance capabilities.
+• Modern Nouveau development focuses on GPUs with the NVIDIA GPU System Processor (GSP), i.e., GTX 1600/RTX 2000 and newer, via the upcoming NOVA driver.
+
+Default Recommendation: Nouveau is recommended for very old GPUs (requiring drivers older than version 470), where running outdated proprietary drivers would pose compatibility or security risks.
+
+For more detailed information, visit: https://nouveau.freedesktop.org
+""" \
+  spdx-identifiers="MIT" \
+  available="`nvidia-pci-id`" \
+  default-value=#false { // this default is set by check-nvidia()
+    arch-packages "xf86-video-nouveau"
+  }
+- name="install-nvidia-prime" \
+  default-value="`has-hybrid-nvidia-gpu AND install-desktop-environment AND (install-nvidia-proprietary OR install-nvidia-opensource)`" {
+    arch-packages "nvidia-prime" \
+                  "switcheroo-control"
+    chroot-script "systemctl enable switcheroo-control"
+  }
+- name="install-virtualbox-guest" \
+dialog-name="Hardware Support Options" \
+short-description="Install the VirtualBox Guest Additions" \
+long-description="""
+Install the VirtualBox Guest Additions: These enhance the integration and performance of Ditana in a VirtualBox environment, including better graphics performance, shared clipboard, drag & drop functionality, and automatic window resizing.
+
+For more information, visit: https://www.virtualbox.org/manual/ch04.html
+
+Please note that although the actual package is licensed under the FOSS GPL2, it will automatically install additional components that are closed-source. These are licensed under the VirtualBox Extension Pack Personal Use and Evaluation Licence, see https://www.virtualbox.org/wiki/VirtualBox_PUEL
+""" \
+  license-category="CLOSED" \
+  spdx-identifiers="PUEL" \
+  available="`virtualbox`" \
+  default-value="`virtualbox`" {
+    arch-packages "virtualbox-guest-iso"
+    root-script #"echo "Installing VirtualBox guest additions...""# \
+    "mkdir -p /tmp/virtualbox-guest" \
+    "mount -o loop /usr/lib/virtualbox/additions/VBoxGuestAdditions.iso /tmp/virtualbox-guest/" \
+    "pushd /tmp/virtualbox-guest/" \
+    "./VBoxLinuxAdditions.run" \
+    "`USER_NAME={Settings.instance.get('user-name')}`" \
+    #"usermod -aG vboxsf "$USER_NAME""# \
+    #"echo "VirtualBox guest additions installed successfully.""# \
+    "popd" \
+    "umount /tmp/virtualbox-guest/" \
+    "rmdir /tmp/virtualbox-guest" \
+    #"echo "Finished installing VirtualBox guest additions.""#
+  }

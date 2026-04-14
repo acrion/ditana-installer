@@ -1,0 +1,54 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Kernel Selection"
+- name="install-standard-stable-kernel" dialog-name="Kernel Selection" short-description="Standard Kernel (Stable)" long-description="Standard Kernel (linux) [Stable]: The standard kernel offers balanced performance and stability for a wide range of hardware and use cases. It is maintained as a stable release, receiving bug fixes and security patches regularly to ensure reliability." spdx-identifiers="GPL-2.0-only" default-value="`b43-required`" {
+    arch-packages "linux" "linux-headers"
+  }
+- name="install-standard-lts-kernel" \
+  dialog-name="Kernel Selection" \
+  short-description="Standard Kernel (LTS)" \
+  long-description="Standard Kernel (linux-lts) [LTS]: The Long-Term Support kernel provides extended support and stability, making it ideal for users who prioritize reliability and long-term maintenance over the latest features. It is recommended for systems utilizing DKMS modules (e.g., ZFS) to ensure compatibility and reduce maintenance overhead." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT b43-required`" \
+  default-value=#false {
+    arch-packages "linux-lts" \
+                  "linux-lts-headers"
+  }
+- name="install-hardened-stable-kernel" \
+  dialog-name="Kernel Selection" \
+  short-description="Hardened Kernel (Stable)" \
+  long-description="Hardened Kernel (linux-hardened) [Stable]: This kernel emphasizes security by applying a set of hardening patches and security-focused compile-time options. It offers enhanced protection against exploits and vulnerabilities but may reduce compatibility with certain software, such as «throttled»." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT b43-required`" \
+  default-value=#false {
+    arch-packages "linux-hardened" \
+                  "linux-hardened-headers"
+  }
+- name="install-hardened-lts-kernel" \
+  dialog-name="Kernel Selection" \
+  short-description="Hardened Kernel (LTS)" \
+  long-description="Hardened Kernel (linux-hardened-lts) [LTS]: Combining the security enhancements of the Hardened Kernel with long-term support, this kernel is ideal for users seeking both increased security and extended maintenance." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT b43-required`" \
+  default-value="`NOT b43-required`" {
+    arch-packages "linux-hardened-lts" \
+                  "linux-hardened-lts-headers"
+  }
+- name="install-zen-kernel" \
+  dialog-name="Kernel Selection" \
+  short-description="Zen Kernel (Stable)" \
+  long-description="Zen Kernel (linux-zen) [Stable]: Tailored for desktop usage, this kernel offers performance enhancements and tweaks like a modified CPU scheduler. Note that there is no LTS version of this kernel. While it may improve desktop performance, frequent updates can require rebuilding DKMS modules more often. It usually works well with the NVIDIA DKMS driver but may not be ideal for systems relying heavily on DKMS modules like «zfs-dkms»." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT b43-required`" \
+  default-value=#false {
+    arch-packages "linux-zen" \
+                  "linux-zen-headers"
+  }
+- name="install-realtime-lts-kernel" \
+  dialog-name="Kernel Selection" \
+  short-description="Realtime Kernel (LTS)" \
+  long-description="Realtime Kernel (linux-rt-lts) [LTS]: Optimized for applications demanding strict real-time requirements, providing predictable response times with the PREEMPT_RT patch. Ideal for audio/video production, live performance, and industrial control systems." \
+  spdx-identifiers="various, incl GPL-1.0-or-later,BSD-3-Clause-Clear" \
+  available="`NOT b43-required`" \
+  default-value=#false {
+    arch-packages "linux-rt-lts" \
+                  "linux-rt-lts-headers"
+  }

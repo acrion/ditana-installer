@@ -1,0 +1,50 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Multimedia Applications"
+- name="install-phoronix" \
+  dialog-name="Multimedia Applications" \
+  short-description="Install Phoronix Test Suite" \
+  long-description="Install the Phoronix Test Suite, the most comprehensive benchmarking platform for Linux. Example: To run the UNIGINE Superposition GPU benchmark, use 'phoronix-test-suite install unigine-super' followed by 'phoronix-test-suite run unigine-super'." \
+  spdx-identifiers="GPL-3.0-or-later" \
+  available="`install-desktop-environment`" \
+  default-value=#false {
+    arch-packages "phoronix-test-suite"
+  }
+- name="install-audacity" \
+  dialog-name="Multimedia Applications" \
+  short-description="Install Audacity" \
+  long-description="Install Audacity, a versatile audio editing program that allows you to record and manipulate digital audio files with ease. Whether you’re mixing music, processing podcasts, or editing sound effects, Audacity offers a robust set of tools for precise audio control and effects." \
+  spdx-identifiers="GPL3,BSD" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "audacity"
+  }
+- name="install-spotify" \
+  dialog-name="Multimedia Applications" \
+  short-description="Install Spotify" \
+  long-description="Install Spotify: Opt to install Spotify, a widely popular music streaming service that offers instant access to a vast library of songs, playlists, and podcasts." \
+  license-category="CLOSED" \
+  spdx-identifiers="" \
+  available="`install-desktop-environment`" \
+  default-value=#false {
+    aur-packages "spotify"
+  }
+- name="install-pinta" dialog-name="Multimedia Applications" short-description="Install Pinta image editor" long-description="Install Pinta image editor: Choose to install Pinta, a user-friendly raster graphics editor that resembles Windows’ Paint .NET application. Pinta offers a straightforward interface with essential image editing tools like layers, adjustments, and effects. It’s ideal for quick edits, creating simple graphics, or touching up photos without the complexity of more advanced software like GIMP." spdx-identifiers="MIT" available="`install-desktop-environment`" default-value="`install-desktop-environment`" {
+    arch-packages "pinta"
+  }
+- name="install-inkscape" \
+  dialog-name="Multimedia Applications" \
+  short-description="Install Inkscape" \
+  long-description="Install Inkscape, a professional vector graphics editor. Inkscape supports SVG format natively and brings advanced features like markers, clones, and alpha blending, which are essential for graphic designers." \
+  spdx-identifiers="GPL,LGPL" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "inkscape"
+  }
+- name="install-mypaint" \
+  dialog-name="Multimedia Applications" \
+  short-description="Install MyPaint" \
+  long-description="Install MyPaint: Opt for the installation of MyPaint, allowing the software to respond to different pressure levels and strokes from a digital pen or stylus. This feature enhances your drawing experience by mimicking the natural variations in line thickness, opacity, and texture that you would get with real paintbrushes on canvas." \
+  spdx-identifiers="GPL" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "mypaint"
+  }

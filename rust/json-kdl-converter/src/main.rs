@@ -471,27 +471,18 @@ fn assemble_kdlset(dir: &str) -> String {
         panic!("Cannot read {}: {e}", steps_path.display());
     });
 
-    // Read all .kdl files from settings/ directory
+    // Read all .kdl files from settings/ directory (recursively)
     let settings_dir = base.join("settings");
     let mut settings_content = String::new();
 
     if settings_dir.is_dir() {
-        let mut entries: Vec<_> = fs::read_dir(&settings_dir)
-            .unwrap_or_else(|e| panic!("Cannot read {}: {e}", settings_dir.display()))
-            .filter_map(|e| e.ok())
-            .filter(|e| {
-                e.path()
-                    .extension()
-                    .map_or(false, |ext| ext == "kdl")
-            })
-            .collect();
+        let mut kdl_files = Vec::new();
+        collect_kdl_files(&settings_dir, &mut kdl_files);
+        kdl_files.sort();
 
-        // Sort by filename for deterministic order
-        entries.sort_by_key(|e| e.file_name());
-
-        for entry in entries {
-            let content = fs::read_to_string(entry.path()).unwrap_or_else(|e| {
-                panic!("Cannot read {}: {e}", entry.path().display());
+        for path in kdl_files {
+            let content = fs::read_to_string(&path).unwrap_or_else(|e| {
+                panic!("Cannot read {}: {e}", path.display());
             });
             settings_content.push_str(&content);
             settings_content.push('\n');
@@ -509,6 +500,25 @@ fn assemble_kdlset(dir: &str) -> String {
     });
     let value = kdl_document_to_json(&doc);
     serde_json::to_string_pretty(&value).expect("JSON serialization failed")
+}
+
+/// Recursively collect all .kdl files from a directory.
+/// Paths are sorted lexicographically, with directories traversed in order.
+fn collect_kdl_files(dir: &std::path::Path, result: &mut Vec<std::path::PathBuf>) {
+    let mut entries: Vec<_> = fs::read_dir(dir)
+        .unwrap_or_else(|e| panic!("Cannot read {}: {e}", dir.display()))
+        .filter_map(|e| e.ok())
+        .collect();
+    entries.sort_by_key(|e| e.file_name());
+
+    for entry in entries {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_kdl_files(&path, result);
+        } else if path.extension().map_or(false, |ext| ext == "kdl") {
+            result.push(path);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

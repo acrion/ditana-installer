@@ -1,0 +1,36 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "System Allocator"
+- name="allocator-mimalloc" \
+  dialog-name="System Allocator" \
+  short-description="mimalloc — Ditana Default" \
+  long-description="mimalloc (Microsoft Research): A high-performance general-purpose allocator that excels in multi-threaded workloads. It provides faster allocation and deallocation than glibc's default allocator, with reduced fragmentation and better scalability across CPU cores. Recommended for both desktop and server use." \
+  spdx-identifiers="MIT" \
+  default-value=#true {
+    arch-packages "mimalloc"
+    chroot-script "echo /usr/lib/libmimalloc.so > /etc/ld.so.preload"
+  }
+- name="allocator-hardened" \
+  dialog-name="System Allocator" \
+  short-description="hardened_malloc (Full)" \
+  long-description="hardened_malloc (GrapheneOS, Full): A security-focused allocator designed to make exploitation of heap vulnerabilities significantly harder. It provides strong protections including guard pages, randomized allocation, and strict size class isolation. This comes at the cost of higher memory usage and reduced allocation performance compared to mimalloc or glibc. Not available when Xorg is in use, as Xorg is incompatible with hardened_malloc." \
+  spdx-identifiers="MIT" \
+  available="`NOT install-desktop-environment`" \
+  default-value=#false {
+    arch-packages "hardened_malloc"
+    chroot-script "echo /usr/lib/libhardened_malloc.so > /etc/ld.so.preload"
+  }
+- name="allocator-hardened-light" \
+  dialog-name="System Allocator" \
+  short-description="hardened_malloc (Light)" \
+  long-description="hardened_malloc Light (GrapheneOS, Light): A less aggressive variant of hardened_malloc that reduces memory overhead while retaining most of its security properties. It uses smaller guard regions and less strict isolation than the full variant, making it more suitable for memory-constrained environments. Not available when Xorg is in use, as Xorg is incompatible with hardened_malloc." \
+  spdx-identifiers="MIT" \
+  available="`NOT install-desktop-environment`" \
+  default-value=#false {
+    arch-packages "hardened_malloc"
+    chroot-script "echo /usr/lib/libhardened_malloc-light.so > /etc/ld.so.preload"
+  }
+- name="allocator-glibc" \
+  dialog-name="System Allocator" \
+  short-description="glibc Default — Linux Default" \
+  long-description="glibc Default Allocator: The standard memory allocator provided by the GNU C Library. It is well-tested, compatible with all software, and requires no additional packages. While it does not offer the performance benefits of mimalloc or the security hardening of hardened_malloc, it is the most conservative and universally compatible choice." \
+  spdx-identifiers="LGPL-2.1-or-later" \
+  default-value=#false

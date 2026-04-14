@@ -1,0 +1,86 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "CPU Vulnerability Mitigation Options".
+// These correspond to kernel mitigations for which the kernel does not perform the maximum mitigation by default. These are set
+// by default to True if the CPU has the corresponding vulnerability.
+- name="kernel-option-spec2" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce Spectre Variant 2 Mitigation (spectre_v2=on)" \
+  long-description="Enforce Spectre Variant 2 Mitigation: This vulnerability allows attackers to exploit speculative execution to access sensitive data. Enabling this option forces the kernel to apply full mitigations for Spectre Variant 2, potentially enhancing security." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-spectre-v2-vulnerable`"
+- name="kernel-option-l1tff" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce L1 Terminal Fault Mitigation (l1tf=full,force)" \
+  long-description="Enforce L1 Terminal Fault Mitigation: Affects Intel CPUs, allowing unauthorized access to data in the Level 1 cache. This option enforces full mitigation, which may involve more aggressive cache flushing." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-l1tf-vulnerable`"
+- name="kernel-option-mdsfu" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce MDS Mitigation (mds=full,nosmt)" \
+  long-description="Enforce MDS (Microarchitectural Data Sampling) mitigation: Allows attackers to sample data from CPU buffers. Enabling this enforces full mitigations and may disable Hyperthreading if necessary." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-mds-vulnerable`"
+- name="kernel-option-tsxaa" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce TSX Async Abort Mitigation (tsx_async_abort=full,nosmt)" \
+  long-description="Enforce TSX Async Abort Mitigation: Affects CPUs with Transactional Synchronization Extensions (TSX). This option enables full mitigation and may disable Hyperthreading if required." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-taa-vulnerable`"
+- name="kernel-option-meltd" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce Meltdown Mitigation (l1d_flush=on)" \
+  long-description="Enforce Meltdown Mitigation: Exploits speculative execution to read kernel memory. Enabling this forces the kernel to flush the Level 1 data cache to mitigate Meltdown." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-meltdown-vulnerable`"
+- name="kernel-option-mmios" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce MMIO Stale Data Mitigation (mmio_stale_data=full,nosmt)" \
+  long-description="Enforce MMIO Stale Data Mitigatio: Allows leakage of data from Memory-Mapped I/O. This enforces full mitigations and may disable SMT if needed." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-mmio-stale-data-vulnerable`"
+- name="kernel-option-retbl" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce Retbleed Mitigation (retbleed=auto,nosmt)" \
+  long-description="Enforce Retbleed Mitigation: A speculative execution attack that can leak return addresses. This option enables automatic mitigation and may disable SMT." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-retbleed-vulnerable`"
+- name="kernel-option-srsom" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce SRSO Mitigation (spec_rstack_overflow=ibpb spectre_v2-user=on)" \
+  long-description="Enforce SRSO Mitigation: Leads to speculative execution attacks via the return stack buffer. Enabling this applies mitigations and may impact performance." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-srso-vulnerable`"
+- name="kernel-option-gdsfo" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce Gather Data Sampling Mitigation (gather_data_sampling=force)" \
+  long-description="Enforce Gather Data Sampling Mitigation: Affects AVX instructions. This option forces microcode mitigations or disables AVX if the microcode is unavailable." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-gds-vulnerable`"
+- name="kernel-option-rfdso" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Enforce RFDS Mitigation (reg_file_data_sampling=on)" \
+  long-description="Enforce RFDS Mitigation: Allows sampling of data from CPU registers. Enabling this activates mitigations to protect against RFDS." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT kernel-option-mitof`" \
+  default-value="`is-rfds-vulnerable`"
+// The following two are to switch off mitigations
+- name="kernel-option-ibtof" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Disable Intel BTI Mitigation - Security Risk! Undocumented! (ibt=off)" \
+  long-description="Disable Mitigation for Intel Branch Target Injection: Disables the Intel BTI mitigation to increase system performance. Warning: This exposes the system to certain types of speculative execution attacks like Spectre." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#false
+- name="kernel-option-mitof" \
+  dialog-name="CPU Vulnerability Mitigation Options" \
+  short-description="Disable all Mitigations - Security Risk! (mitigations=off)" \
+  long-description="Disable all Mitigations: This option differs from unchecking all mitigations in the list: It disables all kernel-based security mitigations against speculative execution vulnerabilities such as Spectre, Meltdown, MDS, and others. This option maximizes system performance by avoiding the overhead of security patches, but it significantly increases the risk of exposure to these vulnerabilities. Use this setting only if you fully understand the implications and are confident that your system is not at risk from these types of attacks." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#false

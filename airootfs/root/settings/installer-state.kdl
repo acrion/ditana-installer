@@ -1,0 +1,31 @@
+// Settings that correspond to the main installer logic
+- name="keymap-layout" default-value=""
+- name="keymap-variant" default-value=""
+- name="keyboard-rate" default-value=50
+- name="keyboard-delay" default-value=250
+- name="install-disk" required-by-chroot=#true default-value=""
+- name="install-disk-description" default-value=""
+- name="boot-device" default-value=""
+- name="current-bootloader-partition" default-value="" // an EFI-Partition that existed prior installation (or the empty string)
+- name="overwrite-efi" default-value=#false // user confirmed to overwrite the existing current-bootloader-partition
+- name="bootloader-partition" default-value="" // either the EFI or the BIOS partition, depending on the system
+- name="bootimage-partition" default-value="" // the partition that will be mounted at /boot
+- name="enable-os-prober" required-by-chroot=#true default-value=#false
+- name="change-nvme-lba-format" default-value=#false
+- name="optimal-lba-format-index" default-value=-1
+- name="encrypt-root-partition" required-by-chroot=#true default-value=#true
+- name="swap-partition" default-value=""
+- name="timezone" default-value=""
+- name="locale" required-by-chroot=#true default-value=""
+- name="main-locale" required-by-chroot=#true default-value=""
+- name="main-locale-description" default-value=""
+- name="host-name" default-value=""
+- name="user-name" required-by-chroot=#true default-value=""
+- name="user-id" required-by-chroot=#true default-value=1000
+- name="user-group" required-by-chroot=#true default-value=1000
+- name="host-dpi" default-value=""
+- name="kernel-options" required-by-chroot=#true default-value=""
+- name="bootloader-parent-disk" required-by-chroot=#true default-value=""
+- name="bootloader-partition-index" required-by-chroot=#true default-value=""
+- name="root-partition" required-by-chroot=#true default-value=""
+- name="terminal-font" required-by-chroot=#true default-value=""

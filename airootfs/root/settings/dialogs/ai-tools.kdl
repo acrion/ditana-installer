@@ -1,0 +1,127 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "AI Tools and Libraries"
+- name="install-ditana-assistant" \
+  dialog-name="AI Tools and Libraries" \
+  short-description="Install Ditana Assistant" \
+  long-description="""
+Install Ditana Assistant AI: Offers both a graphical user interface and a terminal command to simplify everyday Linux tasks through natural language interaction, e.g.
+
+ • Quick execution of common terminal commands through simple language inputs
+ • Assistance with file operations, system queries, and basic troubleshooting
+ • Ability to launch desktop applications or perform Internet searches
+
+Ditana Assistant respects your privacy by running locally and asks for confirmation before executing any command.
+""" \
+  spdx-identifiers="AGPL-3.0-or-later" \
+  default-value="`avx2-available AND total-ram-gib>=12`" {
+    arch-packages "ditana-assistant"
+  }
+- name="install-ollama" \
+  dialog-name="AI Tools and Libraries" \
+  short-description="Install Ollama Local AI" \
+  long-description="Install Ollama: Provide a local AI runtime on your computer with the pre-configured phi4-mini language model. Ollama runs as a systemd service, ensuring that applications like Ditana Assistant and Logseq have constant access to advanced language capabilities such as text generation and code completion. By handling all AI processing locally, Ollama ensures your privacy and data security without relying on external services. You can also interact directly with Ollama through the command line or integrate it with other tools. Enjoy the benefits of a robust AI backend integrated into your Ditana system." \
+  spdx-identifiers="MIT" \
+  available="`total-ram-gib>=3`" \
+  default-value="`avx2-available AND total-ram-gib>=12`" {
+    arch-packages "ollama"
+    chroot-script "systemctl enable ollama" \
+                  "runuser -u ollama -- env HOME=/var/lib/ollama OLLAMA_MODELS=/var/lib/ollama ollama serve > /dev/null 2>&1 &" \
+                  "OLLAMA_PID=$!" \
+                  #"echo "Waiting for Ollama to start...""# \
+                  "for i in $(seq 1 30); do ollama list > /dev/null 2>&1 && break; sleep 1; done" \
+                  #"echo -e "\033[32m--- Pulling phi4-mini model ---\033[0m""# \
+                  "ollama pull phi4-mini" \
+                  "kill $OLLAMA_PID 2>/dev/null || true" \
+                  "wait $OLLAMA_PID 2>/dev/null || true"
+    files "/etc/systemd/system/ollama.service.d/override.conf"
+  }
+- name="install-ollama-cuda" \
+  default-value="`install-ollama AND nvidia-pci-id AND (install-nvidia-opensource OR install-nvidia-proprietary)`" {
+    arch-packages "ollama-cuda"
+  }
+- name="install-ollama-rocm" \
+  default-value="`install-ollama AND amd-gpu-pci-id`" {
+    arch-packages "ollama-rocm"
+  }
+- name="install-logseq" \
+  dialog-name="AI Tools and Libraries" \
+  short-description="Install Logseq" \
+  long-description="Logseq: More than just a note-taking app, Logseq serves as a comprehensive platform for organizing thoughts, managing tasks, and building knowledge databases. In Ditana, Logseq is specially configured to leverage the local AI powered by Ollama. This integration enables AI-assisted note-taking, content generation, and knowledge management, all while maintaining privacy and security. Ideal for anyone looking to enhance their intellectual workflow with the power of AI, without compromising on data privacy." \
+  spdx-identifiers="AGPL-3.0-or-later" \
+  available="`install-desktop-environment AND total-ram-gib>=3 AND install-ollama`" \
+  default-value="`install-desktop-environment AND avx2-available AND total-ram-gib>=12`" {
+    arch-packages "logseq-desktop-bin"
+    chroot-script "pacman -S --noconfirm --needed npm git" \
+                  "cd /tmp" \
+                  "git clone --branch v1.14.2 --depth 1 https://github.com/briansunter/logseq-plugin-gpt3-openai.git" \
+                  "cd logseq-plugin-gpt3-openai" \
+                  #"sed -i 's/return response\.data\[0\]\.url;/return response.data![0].url;/' src/lib/openai.ts"# \
+                  #"sed -i 's/engine.startsWith("gpt-3.5") || engine.startsWith("gpt-4")/true/' src/lib/openai.ts"# \
+                  "npm install" \
+                  "npm run build" \
+                  "mkdir -p /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai" \
+                  "install -Dm644 LICENSE /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/LICENSE" \
+                  "install -Dm644 package.json /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/package.json" \
+                  "cp -r dist /etc/skel/.logseq/plugins/logseq-plugin-gpt3-openai/dist" \
+                  "rm -rf /tmp/logseq-plugin-gpt3-openai"
+    files "/etc/skel/.logseq/settings/logseq-plugin-gpt3-openai.json" \
+          "/etc/skel/.logseq/config/plugins.edn"
+  }
+- name="install-stable-diffusion" \
+  dialog-name="AI Tools and Libraries" \
+  short-description="Install Stable Diffusion" \
+  long-description="Install Stable Diffusion: Stable Diffusion is a powerful tool for generating high-quality images from textual descriptions. By installing this tool, you can create stunning visual content by simply providing text prompts. It’s useful for artists, designers, and anyone interested in AI-powered image generation." \
+  spdx-identifiers="easydiffusion" \
+  available="`install-desktop-environment AND avx2-available AND total-ram-gib>=6`" \
+  default-value=#false {
+    aur-packages "stable-diffusion-ui"
+    files "/usr/share/applications/stable-diffusion.desktop"
+  }
+- name="install-codegpt" \
+  dialog-name="AI Tools and Libraries" \
+  short-description="Install codegpt" \
+  long-description="Install codegpt to write git commit messages or do a code review for you using ChatGPT. For this, you need to copy your OpenAI API Key from https://platform.openai.com/api-keys to ~/.shell.d/openai.sh" \
+  spdx-identifiers="MIT" \
+  default-value=#false {
+    aur-packages "codegpt-bin"
+    files "/etc/skel/.shell.d/openai.sh"
+    session-setup-script {
+        - "chmod 600 $HOME/.shell.d/openai.sh"
+        - #true
+    }
+  }
+- name="install-gpu-libraries" \
+  dialog-name="AI Tools and Libraries" \
+  short-description="Install GPU libraries" \
+  long-description="""
+Install high-performance GPU computing libraries: This option installs a suite of libraries optimized for AI/ML workloads. These libraries provide essential functionality for GPU acceleration and efficient execution of AI/ML models across various hardware platforms:
+
+ • clblast: a tuned OpenCL BLAS library for GPU-accelerated linear algebra
+ • cuda: NVIDIA’s parallel computing platform and API model for GPU-accelerated computing
+ • cudnn: NVIDIA’s Deep Neural Network library, optimized for deep learning operations
+ • hipblas: AMD’s ROCm BLAS marshalling library for GPU computations
+ • hip-runtime-amd: AMD’s Heterogeneous-compute Interface for Portability
+ • ocl-icd, opencl-clhpp: Implementations of the Open Computing Language standard for heterogeneous computing
+ • onednn: an optimized Deep Neural Network library for efficient deep learning operations
+
+For NVIDIA GPU users, the following packages will be installed in addition:
+
+ • nccl: Library for NVIDIA multi-GPU and multi-node collective communication primitives
+""" \
+  license-category="CLOSED/FOSS" \
+  spdx-identifiers="CUDA,BSD,Apache-2.0,MIT,BSD-3-Clause,MPICH" \
+  available="`avx2-available`" \
+  default-value=#false {
+    arch-packages "clblast" \
+                  "cuda" \
+                  "cudnn" \
+                  "hipblas" \
+                  "hip-runtime-amd" \
+                  "ocl-icd" \
+                  "intel-compute-runtime" \
+                  "opencl-clhpp" \
+                  "onednn"
+  }
+- name="install-gpu-libraries-nvidia" \
+  default-value="`install-gpu-libraries AND nvidia-pci-id`" {
+    arch-packages "nccl"
+  }

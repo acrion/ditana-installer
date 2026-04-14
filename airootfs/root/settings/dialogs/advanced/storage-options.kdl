@@ -1,0 +1,49 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Storage & File System Options"
+- name="disable-atimes" \
+  dialog-name="Storage & File System Options" \
+  short-description="Disable File Access Time Recording" \
+  long-description="""
+Disable File Access Time Recording: Enable the «noatime» option when mounting the root file system to prevent the recording of the last access time of files. This configuration offers several benefits:
+
+• Performance Improvement: Reduces the overhead associated with updating access times on each file read operation, leading to faster file system performance.
+• Reduced Wear on Storage Devices: Minimizes write operations, which is particularly advantageous for SSDs by extending their lifespan.
+• Optimized for Btrfs: Enhances snapshot performance by reducing the number of write operations required during snapshot creation and management.
+• Enhanced Security: Prevents exposure of file access patterns, reducing potential information leakage.
+
+While «noatime» is beneficial for most users, it can be disabled if specific applications rely on access time information.
+""" \
+  spdx-identifiers="" \
+  default-value=#true
+- name="install-zram" \
+  dialog-name="Storage & File System Options" \
+  short-description="Install ZRAM" \
+  long-description="Install ZRAM: ZRAM is enabled by default to optimize memory usage, creating a compressed swap space in RAM that reduces wear on storage devices (SSDs and HDDs) and enhances system responsiveness under memory pressure. ZRAM is managed by the zram-generator, which efficiently configures and activates ZRAM without manual setup. Keeping ZRAM enabled balances performance and minimizes storage usage. Only consider disabling ZRAM if you are certain the system will not encounter high memory demand." \
+  spdx-identifiers="MIT" \
+  default-value=#true {
+    arch-packages "zram-generator"
+    files "/etc/systemd/zram-generator.conf"
+  }
+- name="install-ramdisk" \
+  dialog-name="Storage & File System Options" \
+  short-description="Install RAM Disk" \
+  long-description="""
+Make a RAM Disk available: This option creates a dedicated RAM Disk mounted within the user’s runtime directory and symlinked to their home directory, making it easily accessible. Key features include:
+
+• A clean, user-exclusive space for temporary data, free from system files, unlike $XDG_RUNTIME_DIR and /tmp.
+• Accessible only to the user, offering a controlled and secure temporary storage.
+• Set up with the $RAMDISK environment variable for easy reference in the terminal.
+
+Ideal for tasks needing fast, temporary storage, such as video processing or caching, the RAM Disk integrates with the file manager on desktops and clears automatically upon logout.
+""" \
+  spdx-identifiers="AGPL-3.0-or-later" \
+  default-value=#true {
+    files \ // Install the systemd user service to launch the RAM disk script located at /usr/share/ditana/ramdisk.sh
+          "/etc/systemd/user/ditana-ramdisk.service" \
+          \ // Install the main RAM disk script that creates and manages the RAM disk directory
+          "/usr/share/ditana/ramdisk.sh" \
+          \ // Install the environment configuration for systemd context to ensure the RAMDISK variable is available
+          "/etc/environment.d/90-ditana-ramdisk.conf" \
+          \ // Install the profile script to export the RAMDISK variable for user shell sessions
+          "/etc/profile.d/ditana-ramdisk.sh"
+    chroot-script "systemctl --global enable ditana-ramdisk.service"
+  }

@@ -1,0 +1,87 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Network and Security Tools"
+- name="enable-network" \
+  dialog-name="Network and Security Tools" \
+  short-description="Enable network access" \
+  long-description="Enable network access: Enables basic networking capabilities on your system. This includes configuration of DNSSEC and DNS over TLS for secure, encrypted DNS, fully integrated with systemd-resolved to ensure consistent and reliable name resolution. Additionally, it enables the Network Time Synchronization systemd service." \
+  spdx-identifiers="LGPL-2.1-or-later,GPL-2.0-or-later" \
+  default-value=#true {
+    arch-packages "ditana-network"
+    chroot-script "systemctl enable systemd-timesyncd" \
+                  "systemctl enable NetworkManager" \
+                  "systemctl enable systemd-resolved"
+  }
+- name="install-network-tools" \
+  dialog-name="Network and Security Tools" \
+  short-description="Install basic network tools" \
+  long-description="""
+Install basic network tools:
+ • net-tools: Provides commands like netstat and route.
+ • nmap: Network exploration and security auditing tool.
+ • mtr: Combines the functionality of traceroute and ping.
+ • tcpdump: Captures and analyzes network traffic.
+ • wget: Network utility to retrieve files from the Web
+""" \
+  spdx-identifiers="FOSS GPL-2.0-only,GPL3,BSD-3-Clause,Nmap" \
+  available="`enable-network`" \
+  default-value=#true {
+    arch-packages "net-tools" \
+                  "nmap" \
+                  "mtr" \
+                  "tcpdump" \
+                  "wget"
+  }
+- name="install-openssh" \
+  dialog-name="Network and Security Tools" \
+  short-description="Install and configure OpenSSH" \
+  long-description="Install OpenSSH server with public key authentication, and creates an ed25519 SSH key pair for your user «$user-name»." \
+  spdx-identifiers="BSD-2-Clause,BSD-3-Clause,ISC,MIT" \
+  available="`enable-network`" \
+  default-value=#true {
+    arch-packages "openssh"
+    chroot-script "systemctl enable sshd" \
+                  #"`su - {Settings.instance.get('user-name')} -c 'ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519 -q'`"# \
+                  "`su - {Settings.instance.get('user-name')} -c 'touch ~/.ssh/authorized_keys'`" \
+                  "`su - {Settings.instance.get('user-name')} -c 'chmod 600 ~/.ssh/authorized_keys'`"
+  }
+- name="install-firewalld" \
+  dialog-name="Network and Security Tools" \
+  short-description="Install and enable firewalld" \
+  long-description="Install firewalld, a dynamically managed firewall with D-Bus interface. Key features include support for network zones, IPv4/IPv6, runtime/permanent configurations, and a rich language for complex rules. It utilizes nftables, the modern successor to iptables, offering improved performance and flexibility. firewalld allows easy integration for services and applications to modify firewall settings without service restarts. For desktop installations, a graphical configuration tool is included." \
+  spdx-identifiers="GPL-2.0-or-later" \
+  available="`enable-network`" \
+  default-value=#true {
+    arch-packages "firewalld"
+    chroot-script "systemctl enable firewalld"
+  }
+- name="install-bubblejail" \
+  dialog-name="Network and Security Tools" \
+  short-description="Install Bubblejail" \
+  long-description="""
+Install Bubblejail, a sandboxing utility that provides application isolation without parallel packaging systems. It implements a resource-oriented permission model, enhanced by seccomp and D-Bus filtering. Key features include:
+ • Fine-grained control over application permissions and resource access
+ • X11/Wayland display server integration
+ • Custom home directory isolation per application
+ • User-friendly graphical interface for sandbox configuration
+""" \
+  spdx-identifiers="GPL-3.0-or-later" \
+  default-value=#true {
+    arch-packages "bubblejail"
+  }
+- name="install-protonvpn" \
+  dialog-name="Network and Security Tools" \
+  short-description="Install ProtonVPN" \
+  long-description="Install ProtonVPN, a secure VPN service with strong privacy features and servers in over 110 countries. It offers NetShield Ad-blocker to filter ads, trackers, and malware before they reach your device. Features include high-speed connections via their 10 Gbps network with VPN Accelerator technology, strict no-logs policy backed by Swiss privacy laws, and Stealth protocol for bypassing censorship. An account from https://protonvpn.com is required for full functionality." \
+  license-category="CLOSED" \
+  available="`enable-network AND install-desktop-environment`" \
+  default-value=#false {
+    arch-packages "proton-vpn-gtk-app"
+  }
+- name="install-expressvpn" \
+  dialog-name="Network and Security Tools" \
+  short-description="Install ExpressVPN" \
+  long-description="Install ExpressVPN, offering a robust VPN service with optional filtering of ads, trackers and malicious sites even before they arrive at your browser. An Activation Code from https://expressvpn.com is required to use ExpressVPN." \
+  license-category="CLOSED" \
+  available="`enable-network`" \
+  default-value=#false {
+    aur-packages "expressvpn"
+  }

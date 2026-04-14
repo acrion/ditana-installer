@@ -1,0 +1,123 @@
+// Settings that correspond to the dialog "Configuration Categories" → "Desktop Applications"
+- name="install-libreoffice" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Libre Office" \
+  long-description="LibreOffice is a powerful open-source office suite that includes applications for word processing, spreadsheets, presentations, vector graphics, databases, and more. It provides a wide range of tools and features, making it a versatile alternative to proprietary office software. With comprehensive file format compatibility and robust support for extensions, LibreOffice is ideal for users seeking a complete office solution. The appropriate language pack for your system will be installed." \
+  spdx-identifiers="LGPL-3.0-or-later" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages ""
+    chroot-script "`MAIN_LOCALE={Settings.instance.get('main-locale')}`" \
+                  #"LIBREOFFICE="libreoffice-still-$MAIN_LOCALE""# \
+                  #"if ! is_package_available "$LIBREOFFICE"; then"# \
+                  #"    if [ "$MAIN_LOCALE" != "en" ]; then"# \
+                  #"        echo -e "\033[33m--- Unable to localize Libre Office for $MAIN_LOCALE ---\033[0m""# \
+                  "    fi" \
+                  #"    LIBREOFFICE="libreoffice-still""# \
+                  "fi" \
+                  #"echo -e "\033[32m--- Installing $LIBREOFFICE ---\033[0m""# \
+                  #"runuser -u builduser -- pikaur -S "$LIBREOFFICE" --noconfirm || true"#
+  }
+- name="install-betterbird" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Betterbird" \
+  long-description="Betterbird is an enhanced version of the popular Thunderbird email client, offering additional features and bug fixes not found in Thunderbird. It includes advanced functionalities such as a multi-line view, vertical tabs, enhanced sorting options, and improved search capabilities, making email management more efficient and customizable. Betterbird also addresses many long-standing issues and user requests, offering a smoother, more reliable email experience. The appropriate language pack for your system will be installed." \
+  spdx-identifiers="MPL-2" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages ""
+    chroot-script "`MAIN_LOCALE={Settings.instance.get('main-locale')}`" \
+                  #"BETTERBIRD="betterbird-$MAIN_LOCALE-bin""# \
+                  #"if ! is_package_available "$BETTERBIRD"; then"# \
+                  #"    if [ "$MAIN_LOCALE" != "en" ]; then"# \
+                  #"        echo -e "\033[33m--- Unable to localize Betterbird for $MAIN_LOCALE ---\033[0m""# \
+                  "    fi" \
+                  #"    BETTERBIRD="betterbird-bin""# \
+                  "fi" #"echo -e "\033[32m--- Installing $BETTERBIRD ---\033[0m""# \
+                  #"runuser -u builduser -- pikaur -S "$BETTERBIRD" --noconfirm || true"#
+  }
+- name="install-backintime" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Back In Time" \
+  long-description="Back In Time is a straightforward backup tool that provides an easy-to-use interface for restoring previously saved snapshots of your file system. This also ensures that cron is installed, as Back In Time can automatically create a cron job to run periodic backups." \
+  spdx-identifiers="GPL" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "backintime"
+  }
+- name="install-pdfarranger" \
+  dialog-name="Desktop Applications" \
+  short-description="Install PDF Arranger" \
+  long-description="PDF Arranger is a versatile tool designed for modifying PDF files. It enables users to merge, split, rotate, rearrange, and crop PDF pages, providing an intuitive interface for managing PDF documents." \
+  spdx-identifiers="GPL-3.0-or-later" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "pdfarranger"
+  }
+- name="install-xournalpp" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Xournal++" \
+  long-description="Xournal++ is an application for sketching, keeping a journal using a stylus, and annotating PDFs. It’s particularly useful for interactive work with PDF documents, including writing into non-form based PDFs." \
+  spdx-identifiers="GPL-2.0-or-later" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "xournalpp"
+  }
+- name="install-font-manager" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Font Manager" \
+  long-description="Font Manager provides an intuitive interface for installing, removing, and organizing fonts on your system. The application allows users to preview fonts, group them into collections, and manage font activation/deactivation." \
+  spdx-identifiers="GPL-3.0-only" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "font-manager"
+  }
+- name="install-etcher" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Etcher" \
+  long-description="Etcher: Flash OS images to SD cards & USB drives, safely and easily." \
+  spdx-identifiers="Apache" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    aur-packages "etcher-bin"
+  }
+- name="install-bitwarden" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Bitwarden" \
+  long-description="Bitwarden is a free and open-source password management service that stores sensitive information such as website credentials in an encrypted vault." \
+  spdx-identifiers="GPL3" \
+  available="`install-desktop-environment`" \
+  default-value=#false {
+    arch-packages "bitwarden"
+  }
+- name="install-nomachine" \
+  dialog-name="Desktop Applications" \
+  short-description="Install NoMachine" \
+  long-description="NoMachine is a remote desktop application that uses NX technology to provide a highly efficient and low-latency remote desktop experience. It supports multimedia capabilities, including audio and video streaming, USB forwarding, and file transfer. NoMachine is platform-independent and ensures secure connections through SSH encryption, making it suitable for both personal and professional remote access needs." \
+  license-category="CLOSED" \
+  spdx-identifiers="NoMachine EULA" \
+  available="`install-desktop-environment`" \
+  default-value=#false {
+    aur-packages "nomachine"
+  }
+- name="install-fluffychat" \
+  dialog-name="Desktop Applications" \
+  short-description="Install FluffyChat" \
+  long-description="FluffyChat is a cute and user-friendly Matrix client that provides secure end-to-end encrypted instant messaging. It supports all major Matrix features including group chats, file sharing, voice messages, and video calls. It is able to manage multiple Matrix accounts within the same window, allowing users to conveniently switch between different accounts without opening separate instances. The application offers a modern, intuitive interface that makes Matrix messaging accessible to users of all technical levels. FluffyChat connects to the decentralized Matrix network, ensuring your communications remain private and under your control." \
+  spdx-identifiers="AGPL-3.0-only" \
+  available="`install-desktop-environment`" \
+  default-value=#false {
+    arch-packages "fluffychat"
+  }
+- name="install-variety" \
+  dialog-name="Desktop Applications" \
+  short-description="Install Variety" \
+  long-description="Variety is a wallpaper changer that automatically downloads and switches wallpapers on your desktop. It offers a wide range of customization options, allowing users to display random quotes, apply effects, and use images from various online sources." \
+  spdx-identifiers="GPL3" \
+  available="`install-desktop-environment`" \
+  default-value="`install-desktop-environment`" {
+    arch-packages "variety" \
+                  "python-setuptools"
+    files "/etc/skel/.config/variety/variety.conf" \
+          "/etc/skel/.config/autostart/variety.desktop"
+  }

@@ -1,0 +1,281 @@
+// Settings that correspond to the dialog "Configuration Categories" → "Desktop Environment"
+- name="install-desktop-environment" default-value="`install-xfce OR install-wayfire OR install-niri`" {
+    arch-packages \ // === Fonts ===
+                  "adobe-source-serif-fonts" \
+                  "otf-comicshanns-nerd" \
+                  "otf-font-awesome" \
+                  "terminus-font" \
+                  "ttf-jetbrains-mono-nerd" \
+                  "noto-fonts" \
+                  "noto-fonts-cjk" \
+                  "noto-fonts-extra" \
+                  "noto-fonts-emoji" \
+                  "ttf-twemoji" \
+                  \ // === Theming ===
+                  "dracula-gtk-theme" \
+                  "kora-yellow-icon-theme" \
+                  \ // === LightDM ===
+                  "lightdm" \
+                  "lightdm-settings" \
+                  \ // === XDG utilities ===
+                  "xdg-user-dirs" \
+                  "xdg-utils" \
+                  \ // === Key management ===
+                  "seahorse" \
+                  \ // === Bluetooth (GUI) ===
+                  "blueman" \
+                  \ // === Audio ===
+                  "pavucontrol" \
+                  \ // === Network tray ===
+                  "network-manager-applet" \
+                  \ // === Security updates indicator ===
+                  "arch-audit-gtk" \
+                  \ // === GPU diagnostics ===
+                  "mesa-utils" \
+                  "libva-utils" \
+                  "intel-gpu-tools" \
+                  \ // === Color picker ===
+                  "gpick" \
+                  \ // === System resources monitor ===
+                  "resources" \
+                  \ // === Disk management ===
+                  "gnome-disk-utility" \
+                  \ // === Printing ===
+                  "system-config-printer" \
+                  "cups-pk-helper" \
+                  "python-pysmbc" \
+                  \ // === Media ===
+                  "ristretto" \
+                  "vlc" \
+                  \ // === PDF viewer ===
+                  "xreader" \
+                  \ // === Browser ===
+                  "librewolf" \
+                  "speech-dispatcher" \
+                  \ // === On-screen keyboard ===
+                  "onboard" \
+                  \ // === File manager ===
+                  "thunar" \
+                  "catfish" \
+                  "gvfs" \
+                  "thunar-archive-plugin" \
+                  "thunar-media-tags-plugin" \
+                  "thunar-volman" \
+                  "tumbler" \
+                  \ // === Archive manager ===
+                  "engrampa" \
+                  \ // === Tumbler plugin dependencies ===
+                  "libgepub" \
+                  "libopenraw" \
+                  "libgsf"
+    files \ // Marker file for first-login detection. If this file exists when the user logs in,
+          \ // session-setup scripts marked with once=true (see "session-setup" below) are executed,
+          \ // and the file is then deleted. See generate-session-setup() in Chroot.rakumod.
+          "/etc/skel/.config/ditana/trigger-first-login" \
+          \ // === Fontconfig ===
+          "/etc/skel/.config/fontconfig/fonts.conf" \
+          \ // === GTK customization ===
+          "/etc/skel/.config/gtk-3.0/gtk.css" \
+          \ // === Thunar custom actions ===
+          "/etc/skel/.config/Thunar/uca.xml" \
+          \ // === LightDM greeter config ===
+          "/etc/lightdm/slick-greeter.conf" \
+          \ // === LibreWolf config ===
+          "/etc/skel/.librewolf/librewolf.overrides.cfg" \
+          \ // === Ditana helper scripts ===
+          "/usr/share/ditana/open-disk-manager.sh" \
+          "/usr/share/ditana/copy-path-to-clipboard.sh" \
+          \ // === Pacseek launcher ===
+          "/usr/share/applications/pacseek-desktop.desktop" \
+          \ // === Logos ===
+          "/usr/share/pixmaps/ditana-logo-small.png" \
+          "/usr/share/pixmaps/ditana-shakehands.png" \
+          \ // === Autostart desktop files (with OnlyShowIn entries) ===
+          "/etc/skel/.config/autostart/xapp-sn-watcher.desktop" \
+          "/etc/xdg/autostart/kanshi.desktop" \
+          "/etc/xdg/autostart/waybar.desktop" \
+          "/etc/xdg/autostart/kalu.desktop" \
+          \ // === Waybar config (pre-installed for all DEs) ===
+          "/etc/skel/.config/waybar/config.jsonc" \
+          "/etc/skel/.config/waybar/style.css" \
+          \ // === nwg-launchers config ===
+          "/etc/skel/.config/nwg-launchers/nwggrid/terminal" \
+          "/etc/skel/.config/nwg-launchers/nwgbar/bar.json" \
+          \ // === Niri config (pre-installed for all DEs) ===
+          "/etc/skel/.config/niri/config.kdl" \
+          \ // === NVIDIA Niri fix ===
+          "/etc/nvidia/nvidia-application-profiles-rc.d/50-limit-free-buffer-pool-in-wayland-compositors.json" \
+          \ // === Wayfire config (pre-installed for all DEs) ===
+          "/etc/skel/.config/wayfire.ini" \
+          \ // === Wayfire XDG autostart service ===
+          "/usr/lib/systemd/user/ditana-wayfire-xdg-autostart.service"
+    chroot-script "systemctl enable lightdm.service" \
+                  "fc-cache -fv" \
+                  "cat <<'DITANA_ENV' >> /etc/environment" \
+                  "# Fallback for apps not picking up the theme via gsettings" \
+                  "GTK_THEME=Dracula" \
+                  "DITANA_ENV" \
+                  "if [ -f /usr/lib/librewolf/distribution/policies.json ]; then" \
+                  #"    sed -i 's/"Default": *"[^"]*"/"Default": "StartPage"/g' /usr/lib/librewolf/distribution/policies.json"# \
+                  #"    sed -i '/"Remove": \[/,/\]/{ /"Google",/d }' /usr/lib/librewolf/distribution/policies.json"# \
+                  "fi"
+  }
+- name="install-xfce" \
+  dialog-name="Desktop Environment" \
+  short-description="XFCE (Xorg)" \
+  long-description="XFCE: A mature, lightweight desktop environment running on Xorg (X11). XFCE offers a traditional desktop paradigm with a panel, application menu, and window management. It is highly customizable, resource-efficient, and has broad hardware and software compatibility. Ditana ships a preconfigured XFCE setup with the Dracula theme, Kitty or Ghostty terminal, and curated panel plugins." \
+  spdx-identifiers="GPL-2.0-or-later" \
+  default-value=#false {
+    arch-packages \ // === group xfce4 without xfce4-terminal ===
+                  "exo" \
+                  "garcon" \
+                  "xfce4-appfinder" \
+                  "xfce4-panel" \
+                  "xfce4-power-manager" \
+                  "xfce4-session" \
+                  "xfce4-settings" \
+                  "xfconf" \
+                  "xfdesktop" \
+                  "xfwm4" \
+                  \ // === XFCE plugins ===
+                  "xfce4-screenshooter" \
+                  "xfce4-screensaver" \
+                  "xfce4-notifyd" \
+                  \ // === XFCE panel plugins ===
+                  "xfce4-docklike-plugin" \
+                  "xfce4-genmon-plugin" \
+                  "xfce4-notes-plugin" \
+                  "xfce4-weather-plugin" \
+                  "xfce4-whiskermenu-plugin" \
+                  "xfce4-xkb-plugin" \
+                  "xfce4-pulseaudio-plugin" \
+                  \ // === X11 utilities ===
+                  "xclip" \
+                  "xsel" \
+                  "xorg-xev" \
+                  "xorg-xkill" \
+                  "xorg-xrandr" \
+                  "xorg-xhost" \
+                  "lxsession" \
+                  \ // === XFCE fixes ===
+                  "mugshot" \
+                  "gnome-keyring" \
+                  \ // === XDG Desktop Portal ===
+                  "xdg-desktop-portal-gtk" \
+                  \ // === XFCE Ditana specific ===
+                  "xfce-display-config-observer" \
+                  "ditana-print-system-load" \
+                  "xfce-wallpaper-overlay" \
+                  "kalu" \
+                  "pciutils" \
+                  \ // === Script dependencies ===
+                  "xmlstarlet" \
+                  "bc" \
+                  "zenity"
+    files \ // === XFCE configuration ===
+          "/etc/skel/.config/xfce4/helpers.rc" \
+          "/etc/skel/.config/xfce4/panel/docklike-2.rc" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-session.xml" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-terminal.xml" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" \
+          "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml" \
+          "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-1.txt" \
+          "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-2.txt" \
+          "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-3.txt" \
+          "/etc/skel/.config/xfce4/wallpaper-overlay/ditana-help-4.txt" \
+          \ // === Kalu config ===
+          "/etc/skel/.config/kalu/kalu.conf" \
+          \ // === Desktop shortcuts ===
+          "/etc/skel/Desktop/Donate to Ditana.desktop" \
+          "/etc/skel/Desktop/Best Practices.desktop" \
+          \ // === LibreWolf XFCE helper ===
+          "/etc/skel/.local/share/xfce4/helpers/librewolf.desktop" \
+          \ // === XDG dirs init script ===
+          "/etc/X11/xinit/xinitrc.d/55-ditana-xdg-dirs.sh" \
+          \ // === Ditana XFCE helper scripts ===
+          "/usr/share/ditana/pre-xfce-first-login.sh" \
+          "/usr/share/ditana/xfce-first-login.sh" \
+          \ // === Wallpapers ===
+          "/usr/share/backgrounds/xfce/ditana-wallpaper.jpg" \
+          "/usr/share/backgrounds/xfce/ditana-blue.png"
+    chroot-script "cat <<'DITANA_ENV' >> /etc/environment" \
+                  "# https://wiki.archlinux.org/title/HiDPI#Qt_5" \
+                  "# https://doc.qt.io/qt-5/highdpi.html" \
+                  "QT_AUTO_SCREEN_SCALE_FACTOR=1" \
+                  "QT_ENABLE_HIGHDPI_SCALING=1" \
+                  "DITANA_ENV"
+    session-setup {
+        - "/usr/share/ditana/pre-xfce-first-login.sh" #true
+    }
+    autostart {
+        - "XFCE;" "/usr/share/ditana/xfce-first-login.sh"
+    }
+  }
+- name="install-wayfire" \
+  dialog-name="Desktop Environment" \
+  short-description="Wayfire (Wayland)" \
+  long-description="Wayfire: A modular Wayland compositor inspired by Compiz. Wayfire provides a stacking/floating window management experience on the modern Wayland display protocol, offering smooth animations, 3D effects, and a plugin-based architecture. It is a good choice for users who want a visually rich desktop without the legacy constraints of Xorg." \
+  spdx-identifiers="MIT" \
+  default-value=#true {
+    arch-packages "wayfire" \
+                  "wayfire-plugins-extra" \
+                  "wf-msg-git" \
+                  "wlr-protocols" \
+                  "wlr-randr" \
+                  "wdisplays-persistent" \
+                  "wcm" \
+                  "wf-config" \
+                  "xapp" \
+                  "xdg-desktop-portal-wlr" \
+                  "xorg-xwayland" \
+                  "grim"
+  }
+- name="install-niri" \
+  dialog-name="Desktop Environment" \
+  short-description="Niri (Wayland)" \
+  long-description="Niri: A scrollable-tiling Wayland compositor. Instead of arranging windows in a fixed grid, Niri places them in an infinite horizontal strip that you scroll through, similar to a panoramic workspace. It is well-suited for keyboard-driven workflows and users who prefer automatic window tiling without manual layout management." \
+  spdx-identifiers="GPL-3.0-or-later" \
+  default-value=#false {
+    arch-packages "xwayland-satellite" "swaybg"
+  }
+- name="install-wayland" \
+  default-value="`install-niri OR install-wayfire`" {
+    arch-packages "xdg-desktop-portal-gtk" \
+                  "wayland-display-info" \
+                  "wayland-font-dpi" \
+                  "rofi" \
+                  "wl-clipboard" \
+                  "waybar" \
+                  "nwg-launchers" \
+                  "swaylock" \
+                  "hyprpolkitagent" \
+                  "mako"
+  }
+- name="kitty" \
+  default-value="`install-desktop-environment AND virtual-environment`" {
+    arch-packages "kitty" \
+                  "imagemagick" \
+                  "python-pygments" \
+                  "libcanberra" \
+                  "xdg-terminal-exec-git"
+    files "/etc/skel/.config/kitty/kitty.conf" \
+          "/usr/share/pixmaps/ditana-logo-tiny.png"
+    chroot-script "mkdir -p /etc/xdg" "echo kitty.desktop >/etc/xdg/xdg-terminals.list"
+  }
+- name="ghostty" \
+  \ // In VMs without GPU passthrough, Ghostty's OpenGL 4.3+ requirement
+  \ // (compute shaders, SSBOs) cannot be met: llvmpipe crashes due to an
+  \ // LLVM JIT bug (MGATHER instruction selection), and softpipe only
+  \ // supports OpenGL 3.3. Kitty works with OpenGL 3.3, so we use it as
+  \ // the default terminal in virtual environments instead.
+  default-value="`install-desktop-environment AND NOT virtual-environment`" {
+    arch-packages "ghostty" \
+                  "xdg-terminal-exec-git"
+    files "/etc/skel/.config/ghostty/config" \
+          "/usr/share/pixmaps/ditana-logo-tiny.png"
+    chroot-script "mkdir -p /etc/xdg" "echo com.mitchellh.ghostty.desktop >/etc/xdg/xdg-terminals.list"
+  }

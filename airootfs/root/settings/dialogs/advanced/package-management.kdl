@@ -1,0 +1,33 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Repository & Package Management Configuration"
+- name="install-pacman-core-tools" \
+  dialog-name="Repository & Package Management Configuration" \
+  short-description="Install package management tools" \
+  long-description="""
+Install core package management tools:
+
+• arch-audit: A security tool that checks installed packages for known vulnerabilities. It uses data from the Arch Security Team, helping to keep your system secure.
+• pacman-contrib: This package includes various useful scripts and tools to enhance the functionality of the pacman package manager. Tools such as pacdiff for managing configuration file changes and checkupdates for checking package updates are included.
+• pacseek: A convenient text-based graphical interface that supports quick browsing of available installation packages (including AUR) and their installation. For AUR, pikaur is configured, which is the default AUR helper on Ditana.
+• fwupd: Simple daemon to allow session software to update firmware.
+• pkgfile: A utility to search for files across all packages in the repositories, not just installed ones. It is particularly useful for identifying which package a specific file belongs to, even if the package is not currently installed on the system.
+""" \
+  spdx-identifiers="MIT GPL-2.0-or-later GPL-3.0-only LGPL-2.1-or-later" \
+  default-value=#true {
+    arch-packages "arch-audit" \
+                  "pacman-contrib" \ // optional dependency of pikaur
+                  "pacseek" \
+                  "fwupd" \ // daemon to allow session software to update firmware
+                  "pkgfile"
+    chroot-script "systemctl enable pkgfiled"
+    files "/etc/skel/.config/pacseek/config.json"
+  }
+- name="install-pkgstats" \
+  dialog-name="Repository & Package Management Configuration" \
+  short-description="Contribute to Arch statistics" \
+  long-description="Contribute to the Arch Linux package statistics. «pkgstats» anonymously submits a list of installed packages to the Arch Linux project every week. See https://pkgstats.archlinux.de" \
+  spdx-identifiers="GPL-3.0-or-later" \
+  default-value="`release-version AND NOT virtual-environment`" {
+    arch-packages "pkgstats"
+  }
+- name="enable-multilib" required-by-chroot=#true default-value=#true
+- name="enable-chaotic-aur" required-by-chroot=#true default-value="`install-desktop-environment`"

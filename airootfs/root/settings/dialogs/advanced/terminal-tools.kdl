@@ -1,0 +1,139 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "Terminal Tools and Utilities"
+- name="install-zsh" \
+  dialog-name="Terminal Tools and Utilities" \
+  short-description="Install zsh and make it default" \
+  long-description="Install zsh and make it default: zsh enhances the command-line interface with features like improved tab completion, globbing, and programmable command-line completion. This will also install useful zsh plugins like syntax highlighting." \
+  spdx-identifiers="zsh" \
+  default-value=#true {
+    arch-packages "zsh" \
+                  "zsh-syntax-highlighting" \
+                  "zsh-autosuggestions" \
+                  "zsh-history-substring-search" \
+                  "fzf" \
+                  "pkgfile"
+    chroot-script #"useradd -D -s "$(which zsh)""# \
+                  #"`chsh -s "\$(which zsh)" {Settings.instance.get('user-name')}`"#
+    files "/etc/skel/.zshrc"
+  }
+- name="install-cron" \
+  dialog-name="Terminal Tools and Utilities" \
+  short-description="Install cron and activate service" \
+  long-description="Install cron and activate service: cron is a common service that allows for the scheduling of regular jobs directly from the terminal." \
+  spdx-identifiers="" \
+  default-value="`install-backintime`" {
+    arch-packages "cronie"
+    chroot-script "systemctl enable cronie"
+  }
+- name="install-terminal-utilities" \
+  dialog-name="Terminal Tools and Utilities" \
+  short-description="Install essential terminal utilities like grep, rsync, bc..." \
+  long-description="Install terminal utilities to enhance productivity: $packages. bat will be configured to act like cat, but with syntax highlighting." \
+  spdx-identifiers="" \
+  default-value=#true {
+    arch-packages "bat" \
+    "bc" \
+    "bind" \
+    "ditana-print-system-infos" \
+    "expect" \ // for unbuffer
+    "eza" \
+    "fd" \
+    "ffmpeg" \
+    "fzf" \
+    "git-lfs" \
+    "jq" \
+    "fakeroot" \
+    "grep" \
+    "htop" \
+    "img2pdf" \
+    "inotify-tools" \
+    "less" \
+    "lsof" \
+    "lua" \
+    "man-db" \
+    "mediainfo" \
+    "ncdu" \
+    "neovim" \
+    "perl-image-exiftool" \
+    "ripgrep" \
+    "rsync" \
+    "shellcheck" \
+    "sed" \
+    "starship" \ // used by bash and zsh configuration (if installed)
+    "systemctl-tui" \
+    "trash-cli" \
+    "turbostat" \
+    "zoxide" \
+    "zellij"
+    files "/etc/skel/.config/bat/config"
+    chroot-script "`su - {Settings.instance.get('user-name')} -c 'git lfs install'`"
+  }
+- name="install-micro" \
+  dialog-name="Terminal Tools and Utilities" \
+  short-description="Install micro editor and set it as default" \
+  long-description="""
+Install micro editor and set it as default: micro, mirroring the user interface of GUI editors, supports shortcuts and mouse interactions, offering a familiar editing environment within the terminal. It is installed with the following settings:
+
+ • Display git diff indicators next to lines
+ • Save and restore cursor position when opening files
+ • Retain undo history even after closing and reopening files
+ • Use spaces for the tab key instead of tabs
+ • Use a subtle visual indicator for indentations
+ • Automatically remove trailing whitespace at the end of lines
+ • Automatically re-use existing superuser privileges to save if possible
+ • Automatically create missing parent directories when saving
+ • Highlight all instances of searched text after a successful search
+ • Open multiple files side-by-side in vertical splits
+ • Wrap long lines at word boundaries (when softwrap is enabled)
+ • Display a scroll bar
+""" \
+  spdx-identifiers="MIT" \
+  default-value=#true {
+    files "/etc/skel/.config/micro/settings.json" \
+          "/etc/profile.d/ditana-set-micro-as-default-editor.sh" \
+          "/etc/environment.d/90-ditana-micro-editor.conf" \
+          \ // Install the custom sudoers configuration to preserve the EDITOR and VISUAL environment variables in the sudo context,
+          \ // ensuring that 'micro' is used as the default editor even when elevated permissions are required.
+          "/etc/sudoers.d/10-ditana-micro"
+    arch-packages "micro"
+  }
+- name="configure-micro-for-xfce" \
+  default-value="`install-micro AND install-desktop-environment`" {
+    \ // under XFCE, we overrule the default desktop shortcut to use exo-open --launch TerminalEmulator micro %F
+    files "/etc/skel/.local/share/applications/micro.desktop"
+  }
+- name="install-yazi" \
+  dialog-name="Terminal Tools and Utilities" \
+  short-description="Install yazi terminal file manager including optional packages" \
+  long-description="Install yazi, a blazing fast terminal file manager written in Rust, including optional packages for thumbnails, previews, searching, and clipboard support." \
+  spdx-identifiers="MIT" \
+  default-value=#true {
+    arch-packages "yazi" \
+                  "chafa" \ // fallback ASCII image preview
+                  "imagemagick" \ // for image and font preview
+                  "poppler" \ // for PDF preview
+                  "resvg" // for SVG preview
+  }
+- name="install-archivers" \
+  dialog-name="Terminal Tools and Utilities" \
+  short-description="Install various command line archivers like zip, unzip, 7z..." \
+  long-description="Install various command line archivers: $packages." \
+  spdx-identifiers="" \
+  default-value=#true {
+    arch-packages "7zip" \
+                  "arj" \
+                  "bzip2" \
+                  "cpio" \
+                  "gzip" \
+                  "lhasa" \
+                  "lrzip" \
+                  "lz4" \
+                  "lzip" \
+                  "lzop" \
+                  "tar" \
+                  "unarj" \
+                  "unrar" \
+                  "unzip" \
+                  "xz" \
+                  "zip" \
+                  "zstd"
+  }

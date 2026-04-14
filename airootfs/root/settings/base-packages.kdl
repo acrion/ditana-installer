@@ -1,0 +1,63 @@
+// Non-configurable settings that define the installation of packages determined by
+// default values, which are derived from the installation logic.
+- name="intel-microcode" default-value="`intel-cpu`" {
+    arch-packages "intel-ucode"
+  }
+- name="amd-microcode" default-value="`amd-cpu`" {
+    arch-packages "amd-ucode"
+  }
+- name="firmware" default-value=#true {
+    // should match those packages of `packages.x86_64` that install into `/usr/lib/firmware`, with the exception of amd-ucode, intel-ucode and b43-firmware
+    arch-packages "linux-atm" \
+                  "linux-firmware" \
+                  "linux-firmware-marvell" \
+                  "sof-firmware" \
+                  "wireless-regdb"
+  }
+- name="b43-firmware" default-value="`b43-required`" {
+    // we separate this from the rest of the firmware packages and install it only if it is required, because it requires a specific kernel
+    arch-packages "b43-firmware"
+  }
+- name="install-syslinux" default-value="`zfs-filesystem AND NOT uefi`" {
+    arch-packages "syslinux"
+  }
+- name="install-grub" default-value="`NOT zfs-filesystem`" {
+    arch-packages "grub"
+  }
+- name="install-efibootmgr" default-value="`uefi`" {
+    arch-packages "efibootmgr"
+  }
+- name="ditana-base" default-value=#true {
+    arch-packages "base" \              // Minimal package set to define a basic Arch Linux installation.
+                  "base-devel" \        // Provides various essential tools like sudo. Optional dependency of pacman, required to use makepkg.
+                  "dialog" \            // Utilized in chroot-install.sh to prompt for the user password.
+                  "bash" \              // Required for chroot-install.sh.
+                  "ditana-filesystem" \ // Base Ditana GNU/Linux files, based on the original 'filesystem' package from Arch Linux.
+                  "glibc-locales" \     // Required for localized output and locale-dependent functions in various applications (even for users who choose en_US.UTF-8 for LC_MESSAGES).
+                  "libpwquality" \      // Provides pwscore which we use in chroot-install.sh to validate user passwort quality
+                  "lsb-release" \       // Provides the lsb_release command, as referenced at https://refspecs.linuxfoundation.org/lsb.shtml.
+                  "os-prober" \         // See https://wiki.archlinux.org/title/GRUB/Detecting_other_operating_systems
+                  "pikaur" \            // Ditana’s chosen AUR helper for enhanced security
+                  "python-defusedxml" \ // Enables pikaur to safeguard against XML-related vulnerabilities.
+                  "python-pysocks" \    // Allows pikaur to route package manager traffic through a SOCKS5 proxy for enhanced privacy, security, and access.
+                  "rakudo-bin" \        // Used in chroot-install.sh to safely customize grub und mkinitcpio configuration files.
+                  "terminus-font" \     // The terminal font that will be configured.
+                  "util-linux" \        // Provides various essential tools, among others it is required to enable the fstrim.timer, depending on value of enable-fstrim
+                  "ditana-keyring"      // Provides keyring update for the Ditana Arch repo
+    files "/etc/lsb-release" \
+          "/etc/systemd/system/ditana-initialize-system.service" \
+          "/etc/profile.d/ditana-java.sh" \
+          "/etc/profile.d/ditana-system-paths.sh" \
+          "/etc/profile.d/ditana-bash-setup.sh" \
+          "/usr/share/ditana/create-debug-user.sh" \
+          "/etc/skel/.bashrc_ditana" \
+          "/etc/skel/.shellrc" \
+          "/etc/skel/.shell.d/readme.md"
+    chroot-script "echo COLORTERM=truecolor >>/etc/environment"
+  }
+- name="ditana-mirrorlist" default-value="`release-version`" {
+    arch-packages "ditana-mirrorlist"
+  }
+- name="ditana-testing-mirrorlist" default-value="`NOT release-version`" {
+    arch-packages "ditana-testing-mirrorlist"
+  }

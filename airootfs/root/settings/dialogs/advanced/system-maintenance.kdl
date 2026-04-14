@@ -1,0 +1,91 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "System Maintenance Tools"
+- name="configure-automatic-snapshots" \
+  dialog-name="System Maintenance Tools" \
+  short-description="Configure Automatic System Snapshots" \
+  long-description="""
+Configure Automatic System Snapshots
+Create automatic snapshots of the system state before each upgrade, ensuring a reliable fallback in case of upgrade-related issues. Depending on the selected file system, different tools are used to perform these snapshots:
+
+• ext4, xfs, btrfs: Timeshift is utilized to create snapshots. For btrfs, Timeshift performs atomic operations with minimal overhead, while for ext4 and xfs, it uses rsync, typically completing backups in under five seconds.
+• zfs: ZFS snapshots are created instead, providing the same reliable snapshot functionality.
+
+In the Ditana Rescue-System, all snapshots are automatically listed for easy management. Note that snapshots do not include home directories or other user-specific data, ensuring personal files remain unaffected by system resets.
+""" \
+  spdx-identifiers="GPL-2.0-or-later,MIT" \
+  required-by-chroot=#true default-value=#true {
+    arch-packages ""
+  }
+- name="configure-automatic-snapshots-zfs" \
+  default-value="`configure-automatic-snapshots AND zfs-filesystem`" {
+    arch-packages "zfs-autosnap"
+  }
+- name="configure-automatic-snapshots-timeshift" \
+  default-value="`configure-automatic-snapshots AND NOT zfs-filesystem`" {
+    arch-packages "timeshift" \
+                  "timeshift-autosnap"
+  }
+- name="install-logrotate" \
+  dialog-name="System Maintenance Tools" \
+  short-description="Install and enable logrotate" \
+  long-description="""
+Install and enable logrotate:
+Logrotate manages the automatic rotation and compression of various system and application log files across your Linux system. It prevents these logs from consuming excessive disk space by periodically archiving, compressing, or deleting old logs. When enabled, the logrotate.timer service runs this task at scheduled intervals, maintaining a balance between keeping necessary logs for troubleshooting and controlling their growth.
+""" \
+  spdx-identifiers="GPL" \
+  default-value=#true {
+    arch-packages "logrotate"
+    chroot-script "systemctl enable logrotate.timer"
+  }
+- name="configure-lingering" dialog-name="System Maintenance Tools" short-description="Enable persistent user services" long-description="Enable lingering for your user «$user-name»: Allows user systemd services to start before login and continue running after logout. This is useful for background synchronization services, persistent user daemons, and ensures more consistent behavior of user services across different session types. While not strictly required for basic desktop functionality, it can improve the reliability of user-level services and background tasks." spdx-identifiers="" default-value="true" {
+    arch-packages ""
+    chroot-script "mkdir -p /var/lib/systemd/linger" \
+                  "`touch /var/lib/systemd/linger/{Settings.instance.get('user-name')}`"
+  }
+- name="install-rate-mirrors" \
+  dialog-name="System Maintenance Tools" \
+  short-description="Install rate-mirrors" \
+  long-description="""
+Install rate-mirrors:
+Rate-mirrors optimizes your system’s package downloads by selecting the fastest repository mirrors. A daily systemd timer automatically re-evaluates mirror speeds, ensuring optimal download performance without manual intervention. This is especially beneficial for laptops that change geographic locations or when mirror configurations change. The tool tests mirror speeds based on your current network conditions and location, using data about submarine cable connections and inter-country network topologies.
+""" \
+  spdx-identifiers="CC-BY-NC-SA-3.0" \
+  default-value=#true {
+    arch-packages "rate-mirrors"
+    files "/etc/systemd/system/ditana-rate-mirrors.service" \
+          "/etc/systemd/system/ditana-rate-mirrors.timer"
+    chroot-script "systemctl enable ditana-rate-mirrors.timer"
+  }
+- name="enable-auditd" \
+  dialog-name="System Maintenance Tools" \
+  short-description="Enable the Linux Audit Daemon" \
+  long-description="""
+Enable the Linux Audit Daemon:
+The Linux Audit Daemon (auditd) monitors and logs critical system events, enhancing system security and integrity. It captures a wide range of activities, such as file accesses and user actions, making it invaluable for auditing and forensic analysis. Enabling auditd with its default configuration ensures comprehensive logging of system events. You can view summaries of these logs with «sudo aureport», providing essential insights into system behavior and potential security issues.
+""" \
+  spdx-identifiers="GPL-/LGPL-2.0-or-later" \
+  default-value=#true {
+    arch-packages "audit"
+    chroot-script "systemctl enable auditd"
+  }
+- name="disable-core-dumps" \
+  dialog-name="System Maintenance Tools" \
+  short-description="Disable Core Dumps" \
+  long-description="""
+Disable Core Dumps:
+Core dumps capture the memory state of a program during crashes, which is useful for debugging but may inadvertently expose sensitive information. In Ditana, core dumps are disabled by default, safeguarding system integrity and user privacy. Advanced users can choose to enable core dumps temporarily in shell sessions or for specific systemd services, ensuring a secure default configuration while allowing flexibility for debugging needs.
+""" \
+  spdx-identifiers="AGPL-3.0-or-later" \
+  default-value=#true {
+    files "/etc/security/limits.d/50-ditana.conf" \
+          "/etc/systemd/system.conf.d/50-ditana-limits.conf"
+  }
+- name="enable-fstrim" \
+  dialog-name="System Maintenance Tools" \
+  short-description="Weekly discarding of unuseds SSD blocks" \
+  long-description="TRIM is a command that informs a solid-state drive (SSD) which blocks of data are no longer in use and can be wiped internally. For Linux systems, enabling the fstrim.timer service schedules a weekly TRIM operation on all mounted file systems that support it, optimizing free space management. This helps maintain SSD performance and extends the drive’s longevity by reducing wear during write operations. Unlike continuous TRIM methods, which can slightly degrade performance by issuing TRIM commands at every delete operation, scheduling TRIM operations weekly minimizes the impact on system performance and is less stressful on the SSD. The fstrim.timer is a safe and effective way to ensure your SSD’s health and efficiency. It activates only on partitions that support TRIM, making it a non-invasive and beneficial optimization for your system. This option is only available outside virtualization." \
+  spdx-identifiers="" \
+  default-value="`NOT virtual-environment`" \
+  available="`NOT virtual-environment`" {
+    arch-packages ""
+    chroot-script "systemctl enable fstrim.timer"
+  }

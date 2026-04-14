@@ -1,0 +1,37 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Advanced Settings" → "File System"
+- name="zfs-filesystem" \
+  dialog-name="File System" \
+  short-description="ZFS   - Snapshots, Self-Healing Storage & RAID-Z Support" \
+  long-description="ZFS: Supports atomic snapshots with a pre-configured snapshot solution instead of Timeshift. Designed for high data integrity with automatic self-healing. The installer will switch to the recommended Long-Term Support Kernel automatically, because ZFS requires DKMS modules (see Expert Settings → Kernel Selection menu available for selection later)." \
+  spdx-identifiers="CDDL" \
+  required-by-chroot=#true \
+  \ // We restrict ZFS to LTS kernel only for maximum stability. OpenZFS typically supports new kernel versions
+  \ // within days/weeks of release, see https://github.com/openzfs/zfs/releases for current status.
+  available="`install-standard-lts-kernel OR install-hardened-lts-kernel`" \
+  default-value="`install-standard-lts-kernel OR install-hardened-lts-kernel`" {
+    arch-packages "zfs-utils"
+  }
+- name="btrfs-filesystem" \
+  dialog-name="File System" \
+  short-description="Btrfs - Snapshots, Flexible Subvolumes & Online Management" \
+  long-description="BTRFS: Supports atomic snapshots and ensures data integrity. Ideal for systems using Timeshift for reliable restoration and reducing SSD wear through data compression. Flexible management of subvolumes online without downtime." \
+  spdx-identifiers="GPL-2.0-only" \
+  required-by-chroot=#true default-value="`NOT (install-standard-lts-kernel OR install-hardened-lts-kernel)`" {
+    arch-packages "btrfs-progs" "compsize"
+  }
+- name="xfs-filesystem" \
+  dialog-name="File System" \
+  short-description="XFS   - High-Performance, Scalability & Efficient Metadata" \
+  long-description="XFS: Optimized for high performance with large files and data sets. Supports a high number of concurrent operations, ideal e.g. for streaming video workloads. Uses Timeshift in rsync mode for snapshot functionality." \
+  spdx-identifiers="GPL-2.0-only et al." \
+  default-value=#false {
+    arch-packages "xfsprogs"
+  }
+- name="ext4-filesystem" \
+  dialog-name="File System" \
+  short-description="EXT4  - Reliable, Standard & Proven Stability" \
+  long-description="EXT4: A widely supported standard file system suitable for general-purpose use. Offers proven stability with Timeshift running in rsync mode for snapshots." \
+  spdx-identifiers="GPL-2.0-only et al." \
+  default-value=#false {
+    arch-packages "e2fsprogs"
+  }
