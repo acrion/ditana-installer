@@ -1,0 +1,101 @@
+// Settings that correspond to the dialog "Configuration Categories" -> "Expert Settings" → "General Kernel Configuration".
+- name="kernel-option-sysrq" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Enable Magic SysRq Keys (kernel.sysrq=1)" \
+  long-description="Enable Magic System Request Keys: Enables the SysRq (commonly «Print Screen») key for emergency recovery actions, such as Alt+SysRq+B to reboot." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true {
+    chroot-script "echo 'kernel.sysrq=1 # Enable Magic SysRq Keys' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-vfsca" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Reduce background reclaiming of file system cache (vm.vfs_cache_pressure 100 -> 50)" \
+  long-description="Reduce background reclaiming of file system cache: Retains more file system metadata in memory for faster access, increasing RAM usage." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`total-ram-gib >= 24`" {
+    chroot-script "echo 'vm.vfs_cache_pressure=50 # Reduce background reclaiming of file system cache' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-compa" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Minimize background memory compaction (vm.compaction_proactiveness 20/100 → 1/100)" \
+  long-description="Minimize background memory compaction: Reduces effort spent on memory compaction in the background, which may decrease CPU load at the cost of increased RAM consumption." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`total-ram-gib >= 24`" {
+    chroot-script "echo 'vm.compaction_proactiveness=1 # Minimize background memory compaction' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-swapp" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Optimize swap file and ZRAM usage (vm.swappiness)" \
+  long-description="Optimize swap file and ZRAM usage: If you have left ZRAM enabled (default), this setting changes swappiness from the default of 60 to the recommended value of 180. If you have ZRAM disabled, this setting changes swappiness to 1, which conserves RAM for active applications to improve system responsiveness, but leaves less RAM available for kernel operations such as caching file system metadata and managing network buffers." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`install-zram OR total-ram-gib >= 24`"
+- name="kernel-option-zswap" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Disable Zswap Cache Layer (zswap.enabled=0)" \
+  long-description="Disable Zswap Cache Layer: Disables Zswap’s intermediary cache, allowing direct use of swap devices like ZRAM." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`install-zram`"
+- name="kernel-option-pagec" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Disable Swap Readahead (vm.page-cluster 3 → 0)" \
+  long-description="Disable Swap Readahead: The system reads only one page at a time from swap, potentially reducing initial latency when accessing swapped-out pages. This is advantageous when using ZRAM, as ZRAM provides fast access to swap space. Reading only the required pages can improve performance without the overhead of prefetching additional pages." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`install-zram`" {
+    \ // # https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+    chroot-script "echo 'vm.page-cluster=0 # Disable Swap Readahead - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-wmboo" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Disable Extra Memory Reclaim (vm.watermark_boost_factor 15000 → 0)" \
+  long-description="Disable Extra Memory Reclaim: This reduces reclaim activity during memory fragmentation when high-order memory allocations are less critical. This can optimize memory management for systems using ZRAM. Since ZRAM reduces the need for high-order memory allocations, the extra memory reclaim becomes unnecessary, improving overall performance." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`install-zram`" {
+    \ // https: //wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+    chroot-script "echo 'vm.watermark_boost_factor=0 # Disable Extra Memory Reclaim - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-wmsca" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Maintain free memory (vm.watermark_scale_factor 10/3000 → 125/3000)" \
+  long-description="Maintain free memory: Make the Kernel Swap Thread more aggressive in maintaining free memory. This helps prevent applications from entering direct memory reclaim, enhancing system responsiveness under memory pressure. This is particularly beneficial for systems with ZRAM, because it allows the system to better utilize ZRAM’s fast swap capabilities by maintaining more free memory and reducing allocation stalls." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value="`install-zram`" {
+    \ // https://wiki.archlinux.org/title/Zram#Optimizing_swap_on_zram
+    chroot-script "echo 'vm.watermark_scale_factor=125 # Maintain free memory - recommended for ZRAM' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-fwdpe" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Order device init & power tasks (fw_devlink=permissive)" \
+  long-description="Order Device Initialization & Power Tasks: Facilitates the correct sequence of device initialization and power management tasks based on firmware information. This ensures a stable system operation by prioritizing the initialization of supplier devices before consumers and managing power states effectively during suspend/resume cycles." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true
+- name="kernel-option-perf1" \
+    dialog-name="General Kernel Configuration" \
+    short-description="Allow normal users to access performance profiling tools (perf_event_paranoid=1)" \
+    long-description="Allow normal users to access performance profiling tools: This is particularly useful for developers who need to analyze application performance in a more secure way without needing full root privileges." \
+    spdx-identifiers="GPL-2.0-only" \
+    default-value=#true {
+    \ // https://docs.kernel.org/admin-guide/sysctl/kernel.html#perf-event-paranoid
+    chroot-script "echo 'kernel.perf_event_paranoid=1 # Allow normal users to access performance profiling tools' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-duurn" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Disable unprivileged user namespaces (unprivileged_userns_clone=0)" \
+  long-description="Disable unprivileged user namespaces: Enhances system security by preventing local privilege escalation attacks through user namespace exploitation. However, this will break application sandboxing tools that rely on unprivileged user namespaces, including Bubblejail, certain containerization tools, and communication software. Consider leaving this disabled if you plan to use these security tools." \
+  spdx-identifiers="GPL-2.0-only" \
+  available="`NOT (install-bubblejail OR install-hardened-stable-kernel OR install-hardened-lts-kernel)`" \
+  default-value=#false {
+    \ // https://wiki.archlinux.org/title/Security#Sandboxing_applications
+    chroot-script "echo 'kernel.unprivileged_userns_clone=0 # Disable unprivileged user namespaces' >> /etc/sysctl.d/ditana.conf"
+  }
+- name="kernel-option-inita" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Automatically fill allocated memory with 0 (init_on_alloc=1)" \
+  long-description="Fill Allocated Memory with 0: Increases security by zeroing out newly allocated memory." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true
+- name="kernel-option-initf" \
+  dialog-name="General Kernel Configuration" \
+  short-description="Automatically fill deallocated memory with 0 (init_on_free=1)" \
+  long-description="Fill Deallocated Memory with 0: Aids in preventing data leakage by clearing freed memory." \
+  spdx-identifiers="GPL-2.0-only" \
+  default-value=#true
