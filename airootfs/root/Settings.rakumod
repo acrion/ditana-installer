@@ -70,7 +70,7 @@ class Settings {
         $!modified-settings = SetHash.new;
 
         my $converter = $*PROGRAM.parent.child('json-kdl-converter').resolve.absolute;
-        my $json = run($converter, 'kdl2json', 'settings.kdl', :out).out.slurp(:close);
+        my $json = run($converter, 'kdlset2json', '.', :out).out.slurp(:close);
         my $data = from-json($json);
 
         Logging.log("Loading installation steps...");

@@ -31,6 +31,15 @@ enum Commands {
         /// Output JSON file (stdout if omitted)
         output: Option<String>,
     },
+    /// Assemble split KDL settings into a single JSON file.
+    /// Reads installation-steps.kdl and settings/*.kdl from the
+    /// given directory, assembles them, and outputs JSON.
+    Kdlset2json {
+        /// Directory containing installation-steps.kdl and settings/
+        dir: String,
+        /// Output JSON file (stdout if omitted)
+        output: Option<String>,
+    },
 }
 
 fn main() {
@@ -51,6 +60,10 @@ fn main() {
             let value = kdl_document_to_json(&doc);
             let json =
                 serde_json::to_string_pretty(&value).expect("JSON serialization failed");
+            write_output(&json, output.as_deref());
+        }
+        Commands::Kdlset2json { dir, output } => {
+            let json = assemble_kdlset(&dir);
             write_output(&json, output.as_deref());
         }
     }
@@ -441,6 +454,61 @@ fn strip_jsonc_comments(input: &str) -> String {
     }
 
     result
+}
+
+// ---------------------------------------------------------------------------
+// Assemble split KDL settings
+// ---------------------------------------------------------------------------
+
+/// Read installation-steps.kdl and settings/*.kdl from `dir`,
+/// assemble into a single KDL document, convert to JSON.
+fn assemble_kdlset(dir: &str) -> String {
+    let base = std::path::Path::new(dir);
+
+    // Read installation-steps.kdl
+    let steps_path = base.join("installation-steps.kdl");
+    let steps_content = fs::read_to_string(&steps_path).unwrap_or_else(|e| {
+        panic!("Cannot read {}: {e}", steps_path.display());
+    });
+
+    // Read all .kdl files from settings/ directory
+    let settings_dir = base.join("settings");
+    let mut settings_content = String::new();
+
+    if settings_dir.is_dir() {
+        let mut entries: Vec<_> = fs::read_dir(&settings_dir)
+            .unwrap_or_else(|e| panic!("Cannot read {}: {e}", settings_dir.display()))
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.path()
+                    .extension()
+                    .map_or(false, |ext| ext == "kdl")
+            })
+            .collect();
+
+        // Sort by filename for deterministic order
+        entries.sort_by_key(|e| e.file_name());
+
+        for entry in entries {
+            let content = fs::read_to_string(entry.path()).unwrap_or_else(|e| {
+                panic!("Cannot read {}: {e}", entry.path().display());
+            });
+            settings_content.push_str(&content);
+            settings_content.push('\n');
+        }
+    }
+
+    // Assemble into a single KDL document
+    let assembled = format!(
+        "installation-steps {{\n{steps_content}\n}}\nsettings {{\n{settings_content}\n}}\n"
+    );
+
+    // Parse and convert to JSON
+    let doc: kdl::KdlDocument = assembled.parse().unwrap_or_else(|e| {
+        panic!("KDL parse error in assembled document: {e}");
+    });
+    let value = kdl_document_to_json(&doc);
+    serde_json::to_string_pretty(&value).expect("JSON serialization failed")
 }
 
 // ---------------------------------------------------------------------------

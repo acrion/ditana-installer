@@ -1,0 +1,270 @@
+    - name="welcome" type="procedure" text="""
+                             Welcome to Ditana GNU/Linux $version
+______________________________________________________________________________________________
+
+To learn more about Ditana, visit our website at:
+
+                                       https://ditana.org
+
+To view the source code and contribute to the development of Ditana,
+visit our main Git repository (hub for all Ditana-specific repos) at:
+
+                           https://github.com/acrion/ditana-installer
+______________________________________________________________________________________________
+
+Navigate through the settings dialogs using your mouse or these keys:
+
+  - ENTER to confirm selections and proceed to the next dialog
+  - ESCAPE to go back to the previous dialog to review or alter settings
+  - CURSOR KEYS and TAB to navigate between options and buttons, e.g. < Help >
+  - SPACE to toggle an option
+
+No changes will be made to your system until you confirm in the final dialog.
+
+                               A Note on Software Licenses
+
+In the following installation dialogs, we categorize software as either «FOSS» (Free and Open
+Source Software) or «CLOSED» (non-open source software). After this category, the specific
+license identifier for each package is provided, see https://spdx.org/licenses for details.
+
+Please note that some software, including FOSS, may be dual-licensed, but commercial use or
+distribution is still permitted under the FOSS license as long as its terms are met. If you
+plan to use dual-licensed software in a commercial setting, reviewing its full license details
+may offer additional flexibility and benefits.
+
+Enjoy customizing Ditana to your preferences!
+"""
+    - name="display-size" type="ask-for-setting" validation="number" instruction="""
+Enter the screen diagonal in inches (only the used area).
+
+This is used to determine the terminal font size.
+""" available="`virtual-terminal AND NOT installing-over-ssh AND NOT set-font-hook-exists`"
+    - name="update-terminal-font" type="procedure" available="`virtual-terminal AND NOT installing-over-ssh`"
+    - name="keymap-layout" type="procedure"
+    - name="keymap-variant" type="procedure"
+    - name="test-keymap" type="procedure"
+    - name="choose-region-or-timezone" type="procedure"
+    - name="choose-specific-timezone" type="procedure"
+    - name="choose-main-locale" type="procedure"
+    - name="choose-sub-locale" type="procedure"
+    - name="host-name" type="ask-for-setting" validation="name" instruction="""
+Computer name for new system
+
+Enter a lowercase name for your computer. While DNS servers don’t distinguish case, using lowercase simplifies system management and prevents potential conflicts.
+"""
+    - name="user-name" \
+      type="ask-for-setting" \
+      validation="name" \
+      extra-validation="!$_.starts-with('systemd-') && $_ ∉ <alpm avahi bin colord cups daemon dbus ftp fwupd games gdm geoclue git http koboldcpp lightdm mail named news nobody nvidia-persistenced passim polkitd root rtkit sync sys transmission tss uuidd>" \
+      instruction="""
+User name for new system
+
+Enter a login name in lowercase letters only (this is not your real name, but a system identifier). Using lowercase letters ensures consistency across system components and avoids potential issues with case sensitivity in command-line operations and configuration files.
+"""
+    - name="select-disk" type="procedure"
+    - name="check_efi" type="procedure"
+    - name="confirm-nvme-format" type="procedure"
+    - name="encrypt-root-partition" type="ask-for-yes-no" instruction="""
+Would you like to encrypt the root partition?
+
+This is recommended, especially for laptops. Please note that if you lose your encryption passphrase, all data will be irretrievably lost.
+"""
+    - name="select-swap-size" type="procedure"
+    - name="add-repos-and-sync" type="procedure" available="`real-install`"
+    - name="adjust-mtu-if-needed" type="procedure" available="`real-install`"
+    - name="update-keyring" type="procedure" available="`real-install`"
+    - name="update-mirrorlist" type="procedure" available="`real-install`"
+    - name="rate-mirrors" type="procedure" available="`real-install`"
+    - name="check-nvidia" type="procedure" available="`nvidia-pci-id`"
+    - name="Configuration Categories" type="categories" {
+        categories {
+            - name="Desktop Environment" type="checklist" instruction="Choose desktop environments to install:" help-intro="Select one or more desktop environments. If you leave all options unchecked, Ditana will be installed as a headless system without a graphical interface, suitable for servers or remote-only usage." help-note="""
+For further information, please consult the following URLs:
+ • https://wiki.archlinux.org/title/Xfce (XFCE)
+ • https://wayfire.org (Wayfire)
+ • https://github.com/YaLTeR/niri (Niri)
+"""
+            - name="Desktop Applications" type="checklist" instruction="Choose desktop options:" help-intro="" help-note=""
+            - name="Multimedia Applications" type="checklist" instruction="Choose multimedia options:" help-intro="" help-note=""
+            - name="AI Tools and Libraries" type="checklist" instruction="If Ditana Assistant is enabled by default, it means that your hardware supports running a local AI (CPU with AVX2 & sufficient RAM). Ditana Assistant relies on KoboldCpp to handle AI interactions locally, ensuring your privacy and data security. If your hardware does not support running KoboldCpp, it will not be available in this list. You can still activate Ditana Assistant, but you will need to configure it in the installed system to use an external LLM API (see documentation)." help-intro="" help-note=""
+            - name="Advanced Settings" type="categories" {
+                categories {
+                    - name="File System" type="radiolist" instruction="Select the file system for your root partition using the [SPACE] key. If you are unsure, leave it at the default." help-intro="Choose the appropriate file system for your root partition." help-note="Note: Timeshift is enabled by default for BTRFS, XFS, and EXT4. For ZFS, a native snapshot solution is pre-configured instead of using Timeshift. You can configure automatic system snapshots in the Advanced Settings → System Maintenance Tools menu, available for selection later."
+                    - name="Storage & File System Options" type="checklist" instruction="Choose Storage & File System Options:" help-intro="" help-note=""
+                    - name="sudo-timeout" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 0..480" instruction="""
+Sudo password timeout in minutes.
+
+This sets how long sudo remembers your password before asking again. The default (5 minutes) is a common balance between security and convenience.
+
+• 0 means sudo will ask for the password every time.
+• Higher values are more convenient but less secure, as any process running in your terminal can use the cached credentials.
+
+If unsure, it's recommended to keep the default value.
+"""
+                    - name="keyboard-delay" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 200..500" instruction="""
+Please enter the key repeat delay in milliseconds.
+
+Please enter a value between 200 and 500. A smaller value will result in a faster repeat start, while a larger value will delay the repeat start.
+"""
+                    - name="user-id" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 1000..60000" instruction="""
+ID of user «$user-name».
+
+The user ID (UID) is a unique number assigned to each user on a Linux system. The default value (1000) is suitable for most cases and ensures compatibility with standard system settings.
+
+You might want to change this if:
+
+• You’re mounting existing Linux-formatted drives with data owned by a user with a different UID.
+• You’re setting up a multi-user system and want to align UIDs with an existing network structure.
+
+If unsure, it’s recommended to keep the default value.
+"""
+                    - name="user-group" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 1000..60000" instruction="""
+Group of user «$user-name».
+
+In Linux, every user belongs to at least one group. Groups help manage permissions for shared resources. The default value (1000) creates a private group for the user, which is suitable for most personal systems.
+
+You might want to change this if:
+
+• You’re integrating this system into an existing network with predefined group structures.
+• You’re mounting drives with data owned by a specific group and want to maintain access permissions.
+• You’re setting up a multi-user system and want to implement a specific group-based access control.
+
+If unsure, it’s recommended to keep the default value.
+"""
+                    - name="Kernel Selection" type="radiolist" instruction="Choose kernel:" help-intro="You may choose one of the following kernels:" help-note="""
+For further information, please consult the following URLs:
+ • https://www.kernel.org (Default Kernel)
+ • https://github.com/anthraxx/linux-hardened (Hardened Kernel)
+ • https://wiki.linuxfoundation.org/realtime/start (Realtime Kernel)
+ • https://github.com/zen-kernel/zen-kernel/wiki/Detailed-Feature-List (Zen Kernel)
+"""
+                    - name="Boot Init System" type="radiolist" instruction="Here you can select the boot initialization system. If you are unsure, it is recommended to keep the default option." help-intro="""
+The boot initialization system, used during the early stages of the boot process, is responsible for preparing the system to start. This choice only affects how the system boots in the initial phase, specifically by loading the necessary modules and scripts from a temporary root file system (called initramfs). After that, the system uses systemd to manage all processes and services, regardless of the choice made here.
+
+Both BusyBox and systemd are installed, as they are required by other parts of the system, but here you can choose which one to use as the boot initialization system:
+""" help-note=""
+                    - name="Hardware Support Options" \
+                      type="checklist" \
+                      instruction="" \ // this text may be changed by check-nvidia()
+                      help-intro="" \
+                      help-note=""
+                    - name="Repository & Package Management Configuration" type="checklist" instruction="" help-intro="" help-note=""
+                    - name="Network and Security Tools" type="checklist" instruction="Choose network options:" help-intro="" help-note=""
+                    - name="System Maintenance Tools" type="checklist" instruction="Choose system maintenance options:" help-intro="" help-note=""
+                    - name="Terminal Tools and Utilities" type="checklist" instruction="Choose terminal options:" help-intro="" help-note=""
+                    - name="Development Tools and Libraries" type="checklist" instruction="Choose development options:" help-intro="" help-note=""
+                }
+              }
+            - name="Expert Settings" type="categories" {
+                categories {
+                    - name="Umask Configuration" \
+                      type="radiolist" \
+                      instruction="Choose umask:" \
+                      help-intro="The umask determines default file permissions for newly created files and directories. A more restrictive umask enhances privacy by limiting access for other users on the system." \
+                      help-note="""
+For further information, please consult the following URL:
+ • https://wiki.archlinux.org/title/Umask
+"""
+                    - name="General Kernel Configuration" \
+                      type="checklist" \
+                      instruction="The checked items indicate modifications to the default kernel configurations. If you prefer to adhere to established standards for security and stability, you may wish to uncheck all items and retain the standard Linux kernel configurations. These modifications have been carefully selected and are further explained in the Help page." \
+                      help-intro="" \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://docs.kernel.org/next/admin-guide/sysctl
+ • https://docs.kernel.org/next/admin-guide/kernel-parameters.html
+""" suppress-license=#true
+                    - name="System Hardening" \
+                      type="checklist" \
+                      instruction="Select system hardening options:" \
+                      help-intro="These settings harden the system against common attack vectors by restricting access to kernel internals, reducing the attack surface, protecting the network stack, and securing the file system. All selected options are written to /etc/sysctl.d/ditana.conf." \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://wiki.archlinux.org/title/Security
+ • https://www.kernel.org/doc/html/latest/admin-guide/sysctl/
+ • https://madaidans-insecurities.github.io/guides/linux-hardening.html
+"""
+                    - name="CPU Vulnerability Mitigation Options" \
+                      type="checklist" \
+                      instruction="""
+The options listed below are mitigations for CPU vulnerabilities detected on your system. These mitigations are enabled by default to enhance security. You can adjust these settings as needed. Please note that modifying these settings may impact system performance or security.
+
+If you choose to uncheck all mitigations, the kernel will revert to its standard vulnerability management strategy. However, it is important to note that the standard kernel settings may introduce security vulnerabilities. The purpose of this dialog is to present you with the most secure kernel settings available, allowing you to make an informed decision based on the provided documentation. While some users may prioritize potential performance improvements, it is generally recommended to maintain the default mitigations to ensure robust security.
+
+For more information about each mitigation, click the Help button below. Comprehensive details are also available at ditana.org/mitigations.
+""" \
+                      help-intro="" \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln
+ • https://docs.kernel.org/next/admin-guide/kernel-parameters.html
+""" \
+                      suppress-license=#true
+                    - name="System Allocator" \
+                      type="radiolist" \
+                      instruction="Choose system memory allocator:" \
+                      help-intro="The system memory allocator handles all dynamic memory requests from applications. Replacing the default glibc allocator can improve performance, security, or both." \
+                      help-note="""
+For further information, please consult the following URLs:
+ • https://github.com/microsoft/mimalloc (mimalloc)
+ • https://github.com/GrapheneOS/hardened_malloc (hardened_malloc)
+"""
+                }
+            }
+            - name="review-summary-and-start-installation" type="procedure"
+        }
+      }
+    - name="host-dpi" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 102..185" instruction="""
+Virtual Environment Detected: Please enter the DPI of your display.
+
+Ditana automatically scales your desktop based on your main display’s DPI, ensuring optimal visuals when changing resolutions or display connections. This setting allows Ditana to provide the same seamless experience in your virtual setup as it would on physical hardware.
+
+Note: Enter the DPI value of your host display, not the virtual
+      environment’s.
+""" available="`virtual-environment AND install-desktop-environment`"
+    - name="set-keymap-and-delay-rate" type="procedure" available="`real-install`"
+    - name="format-nvme" type="procedure" available="`real-install`"
+    - name="partition-drive" type="procedure" available="`real-install`"
+    - name="create-kernel-configuration" type="procedure" available="`real-install`"
+    - name="mount-bootimage-partition" type="procedure" available="`real-install AND NOT zfs-filesystem`"
+    - name="mount-bootloader-partition" type="procedure" available="`real-install`"
+    - name="enable-swap-partition" type="procedure" available="`real-install`"
+    - name="set-host-dpi" type="procedure" available="`real-install AND virtual-environment`"
+
+    // Copy system files that should not be part of packages into the chroot before pacstrap. This
+    // includes /usr/lib/os-release, which contains distribution-specific release information
+    // (VERSION and VERSION_ID fields). This file must be present before pacstrap, as it is required
+    // by DKMS modules (provided by e.g. nvidia-dkms) during their installation process (related
+    // error message: "Error! System is missing os-release file.").
+    - name="copy-files-into-chroot-before-pacstrap" type="procedure" available="`real-install`"
+
+    - name="add-version" type="procedure" available="`real-install`"
+    - name="copy-console-keyboard-configuration" type="procedure" available="`real-install`"
+    - name="configure-terminal-font" type="procedure" available="`real-install AND virtual-terminal AND NOT installing-over-ssh`"
+    - name="pacstrap" type="procedure" available="`real-install`"
+
+    // Copy system files that should not be part of packages into the chroot after pacstrap. This
+    // includes /etc/lsb-release, overriding the version that was installed by package lsb-release.
+    - name="copy-files-into-chroot-after-pacstrap" type="procedure" available="`real-install`"
+
+    - name="apply-locale" type="procedure" available="`real-install`"
+    - name="copy-xorg-keyboard-configuration" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="create-xfce-keyboard-xml" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="modify-niri-config" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="create-keyboard-service" type="procedure" available="`real-install AND NOT virtual-environment`"
+    - name="create-hostid" type="procedure" available="`real-install`"
+    - name="genfstab" type="procedure" available="`real-install`"
+    - name="curate-chroot-files" type="procedure" available="`real-install`"
+    - name="create-mimeapps-list" type="procedure" available="`real-install`"
+    - name="generate-aur-package-installation-script" type="procedure"
+    - name="generate-chroot-script" type="procedure"
+    - name="generate-root-script" type="procedure" available="`real-install`"
+    - name="generate-session-setup" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="generate-session-setup-script" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="generate-autostart-entries" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="patch-lightdm-conf" type="procedure" available="`real-install AND install-desktop-environment`"
+    - name="generate-chroot-settings-file" type="procedure"
+    - name="configure-bind-mounts" type="procedure" available="`real-install`"
+    - name="chroot-installation" type="procedure" available="`real-install`"
+    - name="cleanup-mounts" type="procedure" available="`real-install`"
+    - name="reboot" type="procedure" available="`real-install`"
