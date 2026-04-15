@@ -156,14 +156,12 @@ if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
 
         echo -e "\033[32m--- Downloading prebuilt ZFSBootMenu component images ---\033[0m"
         mkdir -p /boot/syslinux/zfsbootmenu
-        if ! curl -L -o /boot/syslinux/zfsbootmenu/vmlinuz-bootmenu "$ZBM_BASE_URL/vmlinuz"; then
-            echo -e "\033[31m--- ERROR: Failed to download ZFSBootMenu kernel ---\033[0m"
+        if ! curl -L -o /tmp/zbm-components.tar.gz "$ZBM_BASE_URL/components/release"; then
+            echo -e "\033[31m--- ERROR: Failed to download ZFSBootMenu component archive ---\033[0m"
             exit 1
         fi
-        if ! curl -L -o /boot/syslinux/zfsbootmenu/initramfs-bootmenu.img "$ZBM_BASE_URL/initramfs"; then
-            echo -e "\033[31m--- ERROR: Failed to download ZFSBootMenu initramfs ---\033[0m"
-            exit 1
-        fi
+        tar xzf /tmp/zbm-components.tar.gz --strip-components=1 -C /boot/syslinux/zfsbootmenu/
+        rm -f /tmp/zbm-components.tar.gz
 
         echo -e "\033[32m--- Contents of /boot/syslinux/zfsbootmenu ---\033[0m"
         ls -l /boot/syslinux/zfsbootmenu
