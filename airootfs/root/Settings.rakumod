@@ -319,6 +319,9 @@ class Settings {
                   ~ "[[line, ...], once-flag(bool)], got only {@data.elems} element(s)";
             }
             my $once = @data[*-1];
+            if $once ~~ Positional && $once.elems == 1 {
+                $once = $once[0];
+            }
             unless $once ~~ Bool {
                 die "Setting '{$setting.name}': last element of 'session-setup-script' "
                   ~ "must be a boolean (once-flag), got: {$once.raku}";
