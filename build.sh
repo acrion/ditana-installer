@@ -36,6 +36,91 @@ ensure_package_installed gnupg
 ensure_package_installed pkgfile
 ensure_package_installed zfs-dkms
 
+echo "Building Rust tools..."
+pushd rust
+cargo build --release
+popd
+cp rust/target/release/json-kdl-converter airootfs/root/
+
+# Delete temporary files from simulated installations
+rm -f  airootfs/root/bind-mount/root/installation-steps.sh
+rm -f  airootfs/root/bind-mount/root/settings.sh
+rm -f  airootfs/root/installation-steps.kdl
+rm -rf airootfs/root/settings/
+rm -rf airootfs/root/folders/
+
+# --- Quick rebuild mode: only replace airootfs/root in existing ISO ---
+# Insert this block in build.sh where the --quick check is.
+
+if [[ "${1:-}" == "--quick" ]]; then
+    ensure_package_installed squashfs-tools
+    ensure_package_installed libisoburn
+
+    ISO_FILE=$(find out/ -maxdepth 1 -name "*.iso" -print -quit 2>/dev/null)
+    if [[ -z "$ISO_FILE" ]]; then
+        echo "ERROR: No existing ISO found in out/. Run a full build first."
+        exit 1
+    fi
+
+    echo "Quick rebuild: updating /root in $(basename "$ISO_FILE")..."
+
+    # Auto-detect the squashfs path inside the ISO
+    SFS_ISO_PATH=$(bsdtar -tf "$ISO_FILE" | grep 'airootfs\.sfs$' | head -1 || true)
+    if [[ -z "$SFS_ISO_PATH" ]]; then
+        echo "ERROR: Could not find airootfs.sfs inside the ISO."
+        exit 1
+    fi
+    # xorriso expects an absolute path
+    SFS_ISO_PATH="/${SFS_ISO_PATH}"
+    echo "Found squashfs at: $SFS_ISO_PATH"
+
+    QUICK_TMP=$(mktemp -d)
+
+    cleanup_quick() {
+        sudo rm -rf "$QUICK_TMP"
+    }
+    trap cleanup_quick EXIT
+
+    # Step 1: Extract squashfs from ISO
+    echo "[1/4] Extracting squashfs from ISO..."
+    xorriso -osirrox on -indev "$ISO_FILE" \
+        -extract "$SFS_ISO_PATH" "$QUICK_TMP/airootfs.sfs"
+
+    # Step 2: Unsquash filesystem
+    echo "[2/4] Unsquashing filesystem..."
+    sudo unsquashfs -d "$QUICK_TMP/squashfs-root" "$QUICK_TMP/airootfs.sfs"
+
+    # Step 3: Replace /root and rebuild squashfs
+    echo "[3/4] Replacing /root and rebuilding squashfs..."
+    sudo rm -rf "$QUICK_TMP/squashfs-root/root"
+    sudo cp -a airootfs/root "$QUICK_TMP/squashfs-root/root"
+    sudo rm "$QUICK_TMP/airootfs.sfs"
+    # Use low compression for speed — this is a dev build
+    sudo mksquashfs "$QUICK_TMP/squashfs-root" "$QUICK_TMP/airootfs.sfs" \
+        -comp zstd -Xcompression-level 1 -b 1M
+    sudo rm -rf "$QUICK_TMP/squashfs-root"
+
+    # Step 4: Patch the squashfs back into the ISO
+    echo "[4/4] Updating ISO..."
+    xorriso -indev "$ISO_FILE" \
+        -outdev "${ISO_FILE}.tmp" \
+        -boot_image any replay \
+        -update "$QUICK_TMP/airootfs.sfs" "$SFS_ISO_PATH" \
+        -end
+    mv "${ISO_FILE}.tmp" "$ISO_FILE"
+
+    # Update checksum if it exists
+    SHA_FILE="${ISO_FILE}.sha256"
+    if [[ -f "$SHA_FILE" ]]; then
+        pushd out
+        sha256sum "$(basename "$ISO_FILE")" > "$(basename "$SHA_FILE")"
+        popd
+    fi
+
+    echo "Quick rebuild complete: $ISO_FILE"
+    exit 0
+fi
+
 function list_gpg_keys() {
     # Terminate any running keyboxd process to prevent conflicts with the following user-level GPG operations.
     # The keyboxd daemon is part of the GnuPG package and is started automatically by GPG whenever the keybox database is accessed.
@@ -184,12 +269,6 @@ else
     exit 1
 fi
 
-echo "Building Rust tools..."
-pushd rust
-cargo build --release
-popd
-cp rust/target/release/json-kdl-converter airootfs/root/
-
 mkdir -p airootfs/root/.raku
 zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
 
@@ -198,13 +277,6 @@ zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/roo
 # Currently, a user-owned keyboxd process is running, because we accessed it above. It holds locks or permissions that interfere
 # with root-level operations in mkarchiso, leading to conflicts.
 sudo pkill keyboxd
-
-# Delete temporary files from simulated installations
-rm -f  airootfs/root/bind-mount/root/installation-steps.sh
-rm -f  airootfs/root/bind-mount/root/settings.sh
-rm -f  airootfs/root/installation-steps.kdl
-rm -rf airootfs/root/settings/
-rm -rf airootfs/root/folders/
 
 source version.sh
 export DITANA_BUILD_ID=${DITANA_VERSION}-$(TZ=UTC date +%Y-%m-%d.%H)
@@ -242,4 +314,5 @@ if [[ -n "$selected_key" ]]; then
     popd
 else
     sudo -E mkarchiso -v -C pacman.conf -L "$LABEL" -w "$TMP_ISO" .
+    sudo chown -R "$USER:$USER" out/
 fi
