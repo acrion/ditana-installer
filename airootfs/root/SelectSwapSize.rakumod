@@ -23,7 +23,7 @@ use Settings;
 use Logging;
 use RunAndLog;
 
-sub select-swap-size() is export {
+sub select-swap-size() returns Int is export {
     my $s = Settings.instance;
     my $install-disk = Settings.instance.get("install-disk");
     my $total-ram-gib = Settings.instance.get("total-ram-gib");

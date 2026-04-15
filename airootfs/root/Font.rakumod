@@ -30,7 +30,7 @@ sub find-closest-font-size(Real $desired-font-pt, Real $terminal-dpi) returns In
     @sizes.min: { abs($_ - $target) }
 }
 
-sub update-terminal-font($silent-exit-code) is export {
+sub update-terminal-font($silent-exit-code) returns Int is export {
     return $silent-exit-code if $silent-exit-code != 0; # only do this if user navigated forward
 
     my $hook-path = '/tmp/ditana-set-font.sh';

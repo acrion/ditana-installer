@@ -195,7 +195,7 @@ sub get-mitigations-description() {
     return $description || "Kernel default";
 }
 
-sub review-summary is export {
+sub review-summary returns Int is export {
     my $s = Settings.instance;
     my $init-system-description = $s.get('use-init-systemd') ?? "systemd" !! "BusyBox";
     my $kernel-description = get-kernel-description();

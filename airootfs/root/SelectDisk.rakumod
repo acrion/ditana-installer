@@ -86,7 +86,7 @@ Matched devices:
     return '';
 }
 
-sub select-disk() is export {
+sub select-disk() returns Int is export {
     my $current-bootloader-partition = get-efi-partition();
     my $boot-device = get-boot-device();
     Settings.instance.set("current-bootloader-partition", $current-bootloader-partition);

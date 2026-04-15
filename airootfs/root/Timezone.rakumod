@@ -25,7 +25,7 @@ use Logging;
 my $region-or-timezone;
 my @zones;
 
-sub choose-region-or-timezone() is export {
+sub choose-region-or-timezone() returns Int is export {
     my @other;
     
     my @patterns = <Etc CET CST EET EST GMT HST MET MST NZ PRC PST ROC ROK UCT UTC Universal W-SU WET>;
@@ -76,7 +76,7 @@ sub choose-region-or-timezone() is export {
 }
 
 
-sub choose-specific-timezone($silent-exit-code) is export {
+sub choose-specific-timezone($silent-exit-code) returns Int is export {
     my $exit-code;
     my $selected-timezone;
     

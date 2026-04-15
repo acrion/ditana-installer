@@ -106,7 +106,7 @@ END
     show-dialog-raw(|@args);
 }
 
-sub choose-main-locale() is export {
+sub choose-main-locale() returns Int is export {
     state $temp-file = qx{mktemp}.chomp;
     
     my $output = '/etc/locale.gen'.IO.lines
@@ -160,7 +160,7 @@ sub choose-main-locale() is export {
     }
 }
 
-sub choose-sub-locale() is export {
+sub choose-sub-locale() returns Int is export {
     state $temp-file = qx{mktemp}.chomp;
     my $main-locale = Settings.instance.get('main-locale');
     

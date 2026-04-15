@@ -162,7 +162,7 @@ sub scan-and-select-efi-partition($common-dialog-text, $silent-exit-code) {
     return %bootloader-partition<status>;
 }
 
-sub check_efi($silent-exit-code) is export {
+sub check_efi($silent-exit-code) returns Int is export {
     unless Settings.instance.get("uefi")
     {
         show-dialog-raw('--msgbox',

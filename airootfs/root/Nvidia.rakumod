@@ -65,10 +65,11 @@ sub get-nvidia-driver-version($pci-id) is export {
     return parse-nvidia-page($nvidia_legacy_gpu_page, $pci-id);
 }
 
-sub check-nvidia($silent-exit-code, $reset-to-default) is export {
+sub check-nvidia($silent-exit-code) returns Int is export {
     return $silent-exit-code if $silent-exit-code != 0; # only do this if user navigated forward
 
     state $checked-nvidia is default(False);
+    my $reset-to-default = False;
     return $silent-exit-code if $checked-nvidia && !$reset-to-default;
     $checked-nvidia = True;
 

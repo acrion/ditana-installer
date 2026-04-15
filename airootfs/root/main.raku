@@ -27,6 +27,7 @@ use Chroot;
 use Desktop;
 use Dialogs;
 use Font;
+use Internet;
 use Kernel;
 use Keyboard;
 use Keymap;
@@ -45,10 +46,11 @@ use Settings;
 use Summary;
 use Timezone;
 use Uefi;
+use Welcome;
 
 my $log-on-screen = False;
 
-sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) {
+sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) returns Int {
     my $selected-category;
     repeat {
         if Settings.instance.get('tmux') {
@@ -81,8 +83,6 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) {
                         given $selected-dialog<name> {
                             when 'review-summary-and-start-installation' {
                                 if review-summary() == 0 {
-                                    shell q{clear};
-                                    $log-on-screen = True;
                                     return 0 # start installation
                                 }
                             }
@@ -125,6 +125,17 @@ sub find-dialog-name($current-index, &index-modifier) {
         return kebab-to-title($installation-step<name>);
     }
 }
+
+sub switch-on-logging {
+    shell q{clear};
+    $log-on-screen = True;
+}
+
+sub reboot {
+    run-and-echo('systemctl', 'reboot');
+}
+
+my %dispatch = MY::.pairs.grep(*.key.starts-with('&')).map({ .key.substr(1) => .value });
 
 sub process-installation-step($installation-step, $current-index, $silent-exit-code) returns Int {
     my @installation-steps = Settings.get-installation-steps;
@@ -173,177 +184,16 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
             $result = ask-for-yes-no($installation-step)
         }
         when 'procedure' {
-            given $installation-step<name> {
-                when 'welcome' {
-                    $result = '/tmp/ditana-set-font.sh'.IO.f
-                        ?? $silent-exit-code
-                        !! show-dialog-raw(
-                            '--no-collapse',
-                            '--msgbox',
-                            $installation-step<text>.subst(q{$version},%*ENV<DITANA_VERSION>//""),
-                            $installation-step<text>.lines+4,
-                            98
-                           )<status>;
-                }
-                when 'update-terminal-font' {
-                    $result = update-terminal-font($silent-exit-code);
-                }
-                when 'keymap-layout' {
-                    $result = choose-keymap-layout();
-                }
-                when 'keymap-variant' {
-                    $result = choose-keymap-variant($silent-exit-code);
-                }
-                when 'set-keymap-and-delay-rate' {
-                    $result = set-keymap-and-delay-rate($silent-exit-code);
-                }
-                when 'test-keymap' {
-                    $result = test-keymap();
-                }
-                when 'choose-region-or-timezone' {
-                    $result = choose-region-or-timezone();
-                }
-                when 'choose-specific-timezone' {
-                    $result = choose-specific-timezone($silent-exit-code);
-                }
-                when 'choose-main-locale' {
-                    $result = choose-main-locale();
-                }
-                when 'choose-sub-locale' {
-                    $result = choose-sub-locale();
-                }
-                when 'select-disk' {
-                    $result = select-disk();
-                }
-                when 'check_efi' {
-                    $result = check_efi($silent-exit-code);
-                }
-                when 'confirm-nvme-format' {
-                    $result = confirm-nvme-format($silent-exit-code);
-                }
-                when 'select-swap-size' {
-                    $result = select-swap-size();
-                }
-                when 'add-repos-and-sync' {
-                    add-repos-and-sync();
-                }
-                when 'adjust-mtu-if-needed' {
-                    adjust-mtu-if-needed();
-                }
-                when 'update-keyring' {
-                    update-keyring();
-                }
-                when 'update-mirrorlist' {
-                    update-mirrorlist();
-                }
-                when 'rate-mirrors' {
-                    rate-mirrors();
-                }
-                when 'check-nvidia' {
-                    $result = check-nvidia($silent-exit-code, False);
-                }
-                # here follows the configuration menu, see settings.json
-                when 'format-nvme' {
-                    format-nvme();
-                }
-                when 'partition-drive' {
-                    partition-drive();
-                }
-                when 'create-kernel-configuration' {
-                    create-kernel-configuration();
-                }
-                when 'mount-bootimage-partition' {
-                    mount-bootimage-partition();
-                }
-                when 'mount-bootloader-partition' {
-                    mount-bootloader-partition();
-                }
-                when 'enable-swap-partition' {
-                    enable-swap-partition();
-                }
-                when 'set-host-dpi' {
-                    set-host-dpi();
-                }
-                when 'configure-bind-mounts' {
-                    configure-bind-mounts();
-                }
-                when 'copy-files-into-chroot-before-pacstrap' {
-                    copy-files-into-chroot-before-pacstrap();
-                }
-                when 'add-version' {
-                    add-version();
-                }
-                when 'pacstrap' {
-                    pacstrap();
-                }
-                when 'copy-files-into-chroot-after-pacstrap' {
-                    copy-files-into-chroot-after-pacstrap();
-                }
-                when 'apply-locale' {
-                    apply-locale();
-                }
-                when 'copy-console-keyboard-configuration' {
-                    copy-console-keyboard-configuration();
-                }
-                when 'copy-xorg-keyboard-configuration' {
-                    copy-xorg-keyboard-configuration();
-                }
-                when 'configure-terminal-font' {
-                    configure-terminal-font();
-                }
-                when 'create-xfce-keyboard-xml' {
-                    create-xfce-keyboard-xml();
-                }
-                when 'create-keyboard-service' {
-                    create-keyboard-service();
-                }
-                when 'create-hostid' {
-                    create-hostid();
-                }
-                when 'genfstab' {
-                    genfstab();
-                }
-                when 'curate-chroot-files' {
-                    curate-chroot-files();
-                }
-                when 'create-mimeapps-list' {
-                    create-mimeapps-list();
-                }
-                when 'generate-aur-package-installation-script' {
-                    generate-aur-package-installation-script();
-                }
-                when 'generate-chroot-script' {
-                    generate-chroot-script();
-                }
-                when 'generate-root-script' {
-                    generate-root-script();
-                }
-                when 'generate-session-setup' {
-                    generate-session-setup();
-                }
-                when 'generate-session-setup-script' {
-                    generate-session-setup-script();
-                }
-                when 'generate-autostart-entries' {
-                    generate-autostart-entries();
-                }
-                when 'patch-lightdm-conf' {
-                    patch-lightdm-conf();
-                }
-                when 'generate-chroot-settings-file' {
-                    generate-chroot-settings-file();
-                }
-                when 'chroot-installation' {
-                    chroot-installation();
-                }
-                when 'cleanup-mounts' {
-                    cleanup-mounts();
-                }
-                when 'reboot' {
-                    run-and-echo('systemctl', 'reboot');
-                }
+            my $name = $installation-step<name>;
+            die "No procedure found for '$name'" unless %dispatch{$name}:exists;
+            my &proc := %dispatch{$name};
+            if &proc.arity > 0 {
+                $result = &proc($silent-exit-code);
+            } elsif &proc.returns ~~ Int {
+                $result = &proc();
+            } else {
+                &proc();
             }
-            
         }
         default {
             die "Unknown installation step type: {$installation-step<type>}";
@@ -354,7 +204,6 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
 }
 
 sub debug-info() {
-
     my $debug-info = "Please create a GitHub issue on https://github.com/acrion/ditana-installer or write an email to support@ditana.org and attach the log file install_ditana.log. To retrieve this file from another machine, execute /root/folders/usr/share/ditana/create-debug-user.sh on this machine and follow the instructions. Thank you!";
 
     say $debug-info;
@@ -362,6 +211,11 @@ sub debug-info() {
 }
 
 sub main() {
+    welcome();
+
+    show-dialog-raw('--infobox', "Checking Internet Connection...", 4, 65);
+    establish-internet-connection();
+
     show-dialog-raw('--title', 'Ditana GNU/Linux Installer', "--infobox", "\nDetecting Hardware...", 10, 50);
 
     Settings.instance.validate-referenced-files();

@@ -78,7 +78,7 @@ sub get-variant-description($layout, $variant) {
     return $descriptions{$layout}{$variant} // '';
 }
 
-sub choose-keymap-layout() is export {
+sub choose-keymap-layout() returns Int is export {
     state $temp-file=qx{mktemp}.chomp;
     $temp-file.IO.spurt(qx{localectl list-x11-keymap-layouts});
     
@@ -121,7 +121,7 @@ After selecting a layout variant, you have the option to test it. This is useful
     show-dialog-raw(|@args);
 }
 
-sub choose-keymap-variant($silent-exit-code) is export {
+sub choose-keymap-variant($silent-exit-code) returns Int is export {
     Logging.log("choose-keymap-variant: start");
     my $keymap-layout = Settings.instance.get('keymap-layout');
     my $proc = run "localectl", "list-x11-keymap-variants", $keymap-layout, :out, :err;
@@ -187,7 +187,7 @@ sub choose-keymap-variant($silent-exit-code) is export {
     }
 }
 
-sub set-keymap-and-delay-rate($silent-exit-code) is export {
+sub set-keymap-and-delay-rate($silent-exit-code) returns Int is export {
     return $silent-exit-code if $silent-exit-code != 0; # only set the keymap if the user navigated forward
 
     my $s = Settings.instance;
@@ -242,7 +242,7 @@ sub copy-xorg-keyboard-configuration() is export {
     $source.IO.copy($destination);
 }
 
-sub test-keymap() is export {
+sub test-keymap() returns Int is export {
     my $input=qx{mktemp}.chomp;
     my $description = (Settings.instance.get("keymap-layout")
         ~ " " ~ Settings.instance.get("keymap-variant")).trim();

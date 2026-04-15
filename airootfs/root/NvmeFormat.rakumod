@@ -69,7 +69,7 @@ sub format-nvme-output(Str $install-disk) {
         }).join("\n");
 }
 
-sub confirm-nvme-format($silent-exit-code) is export {
+sub confirm-nvme-format($silent-exit-code) returns Int is export {
     my $install-disk = Settings.instance.get("install-disk");
     my $optimal-lba-format-index = nvme-format-should-be-changed($install-disk);
     Settings.instance.set("optimal-lba-format-index", $optimal-lba-format-index);
