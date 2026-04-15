@@ -132,14 +132,13 @@ if [[ "$choice" -gt 0 && "$choice" -le "${#key_list[@]}" ]]; then
     pushd tests/configuration
     tomty --color --all
     popd
+    list_special_packages
 else
     echo "No signing selected."
     selected_signer="(none)"
     selected_key=""
     ZEF_SWITCHES="--/test --/test-depends"
 fi
-
-list_special_packages
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 
