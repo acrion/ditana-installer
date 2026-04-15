@@ -199,9 +199,12 @@ zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/roo
 # with root-level operations in mkarchiso, leading to conflicts.
 sudo pkill keyboxd
 
-# Delete temporary files from test installations
-rm -f airootfs/root/bind-mount/root/installation-steps.sh
-rm -f airootfs/root/bind-mount/root/settings.sh
+# Delete temporary files from simulated installations
+rm -f  airootfs/root/bind-mount/root/installation-steps.sh
+rm -f  airootfs/root/bind-mount/root/settings.sh
+rm -f  airootfs/root/installation-steps.kdl
+rm -rf airootfs/root/settings/
+rm -rf airootfs/root/folders/
 
 source version.sh
 export DITANA_BUILD_ID=${DITANA_VERSION}-$(TZ=UTC date +%Y-%m-%d.%H)
