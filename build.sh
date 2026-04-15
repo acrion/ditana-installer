@@ -49,14 +49,12 @@ rm -f  airootfs/root/installation-steps.kdl
 rm -rf airootfs/root/settings/
 rm -rf airootfs/root/folders/
 
-# --- Quick rebuild mode: only replace airootfs/root in existing ISO ---
-# Insert this block in build.sh where the --quick check is.
-
 if [[ "${1:-}" == "--quick" ]]; then
+    # --- Quick rebuild mode: only replace airootfs/root in existing ISO ---
     ensure_package_installed squashfs-tools
     ensure_package_installed libisoburn
 
-    ISO_FILE=$(find out/ -maxdepth 1 -name "*.iso" -print -quit 2>/dev/null)
+    ISO_FILE=$(find out/ -maxdepth 1 -name "*.iso" ! -name "*_backup*" -print -quit 2>/dev/null)
     if [[ -z "$ISO_FILE" ]]; then
         echo "ERROR: No existing ISO found in out/. Run a full build first."
         exit 1
@@ -64,22 +62,31 @@ if [[ "${1:-}" == "--quick" ]]; then
 
     echo "Quick rebuild: updating /root in $(basename "$ISO_FILE")..."
 
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+    QUICK_TMP=$(mktemp -d)
+
+    if [[ "$current_branch" != "main" ]]; then
+        echo "Applying patch to use testing repo..."
+        git apply use-testing-repo.patch
+    fi
+
+    cleanup_quick() {
+        if [[ "$current_branch" != "main" ]]; then
+            echo "Reversing patch..."
+            git apply --reverse use-testing-repo.patch
+        fi
+        sudo rm -rf "$QUICK_TMP"
+    }
+    trap cleanup_quick EXIT
+
     # Auto-detect the squashfs path inside the ISO
     SFS_ISO_PATH=$(bsdtar -tf "$ISO_FILE" | grep 'airootfs\.sfs$' | head -1 || true)
     if [[ -z "$SFS_ISO_PATH" ]]; then
         echo "ERROR: Could not find airootfs.sfs inside the ISO."
         exit 1
     fi
-    # xorriso expects an absolute path
     SFS_ISO_PATH="/${SFS_ISO_PATH}"
     echo "Found squashfs at: $SFS_ISO_PATH"
-
-    QUICK_TMP=$(mktemp -d)
-
-    cleanup_quick() {
-        sudo rm -rf "$QUICK_TMP"
-    }
-    trap cleanup_quick EXIT
 
     # Step 1: Extract squashfs from ISO
     echo "[1/4] Extracting squashfs from ISO..."
