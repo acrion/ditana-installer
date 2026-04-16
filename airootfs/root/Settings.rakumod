@@ -41,6 +41,7 @@ class Setting {
     has SettingValue $.default-value is rw;
     has SettingValue $.current-value is rw;
     has Array @.files = [];
+    has Array @.early-chroot-script =[];
     has Array @.chroot-script = [];
     has Array @.root-script = [];
     has Array @.session-setup = [];
@@ -276,6 +277,36 @@ class Settings {
             }
         }
         return @steps;
+    }
+
+    method get-early-chroot-script-steps() {
+        my Str @steps;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.early-chroot-script && $setting.early-chroot-script[0];
+            @steps.push('echo -e "\033[32m--- Early chroot steps for ' ~ $setting.name ~ ' ---\033[0m"');
+            for @($setting.early-chroot-script[0]) -> $line {
+                next unless $line;
+                @steps.push(self!resolve-script-line($line.Str));
+            }
+        }
+        return @steps;
+    }
+
+    method validate-chroot-scripts() {
+        my @invalid;
+        for %!settings.values -> $setting {
+            next unless $setting.chroot-script && $setting.chroot-script[0];
+            for @($setting.chroot-script[0]) -> $line {
+                if $line && $line.Str.contains('/etc/skel/') {
+                    @invalid.push("{$setting.name}: $line");
+                }
+            }
+        }
+        if @invalid {
+            die "The following chroot-script steps reference /etc/skel/, which is invalid because chroot-script is executed after user creation. Use early-chroot-script instead:\n"
+              ~ @invalid.join("\n");
+        }
     }
 
     method get-root-script-steps() {

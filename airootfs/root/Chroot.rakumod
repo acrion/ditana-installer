@@ -151,9 +151,19 @@ sub generate-aur-package-installation-script() is export {
     }
 }
 
+sub add-early-chrooted-step(Str $commands) is export {
+    "bind-mount/root/early-installation-steps.sh".IO.spurt($commands.chomp ~ "\n", :append);
+}
+
 sub generate-chroot-script() is export {
     "bind-mount/root/installation-steps.sh".IO.spurt("");  # clear file
+    "bind-mount/root/early-installation-steps.sh".IO.spurt(""); # NEU: clear early file
+    
     my $s = Settings.instance;
+    
+    for $s.get-early-chroot-script-steps -> $step {
+        add-early-chrooted-step($step);
+    }
 
     # Check if a package is available natively or in the AUR
     # This function is used as an alternative to pikaur -Si, which requires systemd (unavailable in chroot)

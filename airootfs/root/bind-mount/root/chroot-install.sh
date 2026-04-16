@@ -50,6 +50,10 @@ export PATH="$HOME/.raku/bin:$PATH"
         sed -i 's/^UMASK.*/UMASK\t\t077/' /etc/login.defs
     fi
     # umask-022: no change needed, 022 is the default in /etc/login.defs
+
+    source early-installation-steps.sh
+    # restore current directory (potentially changed by early-installation-steps.sh)
+    cd "$HOME"
     
     echo -e "\033[32m--- Creating user $USER_NAME with UID $USER_ID and GID $USER_GROUP ---\033[0m"
     useradd -m -u "$USER_ID" -g "$USER_GROUP" "$USER_NAME"
