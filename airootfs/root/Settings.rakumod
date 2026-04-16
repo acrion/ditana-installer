@@ -634,7 +634,14 @@ class Settings {
                 arch-packages => $setting.arch-packages.deepmap(*.clone),
                 aur-packages => $setting.aur-packages.deepmap(*.clone),
                 default-value => $setting.default-value,
-                current-value => $setting.current-value
+                current-value => $setting.current-value,
+                files => $setting.files.deepmap(*.clone),
+                early-chroot-script => $setting.early-chroot-script.deepmap(*.clone),
+                chroot-script => $setting.chroot-script.deepmap(*.clone),
+                root-script => $setting.root-script.deepmap(*.clone),
+                session-setup => $setting.session-setup.deepmap(*.clone),
+                session-setup-script => $setting.session-setup-script.deepmap(*.clone),
+                autostart => $setting.autostart.deepmap(*.clone)
             );
         }
         return %( settings => %cloned, order => %!settings.get-order() );
