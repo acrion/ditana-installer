@@ -44,23 +44,23 @@ sub create-mimeapps-list() is export {
         %mime{$type} = $text-editor;
     }
 
-    # PDF viewer (xreader is part of install-desktop-environment)
-    if $s.get("install-desktop-environment") {
+    # PDF viewer
+    if $s.get("install-xreader") {
         for <application/pdf application/x-pdf> -> $type {
             %mime{$type} = "xreader.desktop";
         }
     }
 
-    # Web browser (librewolf is part of install-desktop-environment)
-    if $s.get("install-desktop-environment") {
+    # Web browser
+    if $s.get("install-librewolf") {
         for <text/html text/xml application/xhtml+xml application/xml
              x-scheme-handler/http x-scheme-handler/https> -> $type {
             %mime{$type} = "librewolf.desktop";
         }
     }
 
-    # Archive manager (engrampa is part of install-desktop-environment)
-    if $s.get("install-desktop-environment") {
+    # Archive manager
+    if $s.get("install-engrampa") {
         for <application/x-7z-compressed application/x-7z-compressed-tar
              application/x-ace application/x-alz application/x-ar
              application/x-archive application/x-arj application/x-bzip
@@ -87,8 +87,19 @@ sub create-mimeapps-list() is export {
         }
     }
 
-    # Image viewer (ristretto is part of install-desktop-environment)
-    if $s.get("install-desktop-environment") {
+    # File manager
+    if $s.get("install-thunar") {
+        for <inode/directory> -> $type {
+            %mime{$type} = "thunar.desktop";
+        }
+    } elsif $s.get("install-yazi") {
+        for <inode/directory> -> $type {
+            %mime{$type} = "yazi.desktop";
+        }
+    }
+
+    # Image viewer
+    if $s.get("install-ristretto") {
         for <image/bmp image/gif image/jpeg image/jpg image/pjpeg
              image/png image/svg+xml image/svg+xml-compressed
              image/tiff image/vnd.microsoft.icon image/x-bmp
@@ -100,8 +111,8 @@ sub create-mimeapps-list() is export {
         }
     }
 
-    # Media player (vlc is part of install-desktop-environment)
-    if $s.get("install-desktop-environment") {
+    # Media player
+    if $s.get("install-vlc") {
         # Audio
         for <audio/3gpp audio/3gpp2 audio/aac audio/ac3 audio/amr
              audio/amr-wb audio/basic audio/dv audio/eac3 audio/flac
@@ -159,6 +170,15 @@ sub create-mimeapps-list() is export {
             %mime{$type} = "vlc.desktop";
         }
     }
+
+    # Terminal emulator scheme handler (consumed by Nautilus, some GTK file managers,
+    # and certain "Open Terminal Here" actions). Priority matches the KDL block order
+    # and the last-writer-wins behaviour of the /etc/environment TERMINAL entry:
+    # install-foot overrides install-kitty when both are selected.
+    my $terminal-desktop;
+    $terminal-desktop = "kitty.desktop" if $s.get("install-kitty");
+    $terminal-desktop = "foot.desktop"  if $s.get("install-foot");
+    %mime{"x-scheme-handler/terminal"} = $terminal-desktop if $terminal-desktop;
 
     # Write
     my $content = "[Default Applications]\n";

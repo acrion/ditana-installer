@@ -20,7 +20,7 @@
 use v6.d;
 use Settings;
 
-sub set-host-dpi() is export
+sub set-host-dpi-for-xfce() is export
 {
     # This file is evaulated package ditana-config-xfce, see /usr/share/ditana/xfce-display-config-updater.sh of package 
     my $basedir = "/mnt/etc/skel/.config/xfce4/display-config-observer/dpi";
