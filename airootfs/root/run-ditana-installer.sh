@@ -60,8 +60,14 @@ export PARENT_TERM=$TERM
 source ditana-version.sh
 
 while true; do
-    tmux new-session -s ditana -d "echo 'Loading Ditana GNU/Linux Installer...' && ./main.raku"
-    tmux attach -t ditana
+tmux kill-session -t ditana 2>/dev/null || true
+
+tmux new-session -s ditana -d -c "$(pwd)" sh -c '
+    echo "Loading Ditana GNU/Linux Installer..."
+    ./main.raku
+'
+
+tmux attach -t ditana
 
     if [[ -f /tmp/ditana-set-font.sh ]]; then
         source /tmp/ditana-set-font.sh
