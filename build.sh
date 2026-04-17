@@ -49,6 +49,14 @@ rm -f  airootfs/root/installation-steps.kdl
 rm -rf airootfs/root/settings/
 rm -rf airootfs/root/folders/
 
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+source version.sh
+export DITANA_BUILD_ID=${DITANA_VERSION}-$(TZ=UTC date +%Y-%m-%d.%H)
+echo "export DITANA_VERSION=$DITANA_VERSION"    >airootfs/root/ditana-version.sh
+echo "export DITANA_BUILD_ID=$DITANA_BUILD_ID" >>airootfs/root/ditana-version.sh
+echo "export DITANA_BRANCH=$current_branch"    >>airootfs/root/ditana-version.sh
+
 if [[ "${1:-}" == "--quick" ]]; then
     # --- Quick rebuild mode: only replace airootfs/root in existing ISO ---
     ensure_package_installed squashfs-tools
@@ -62,7 +70,6 @@ if [[ "${1:-}" == "--quick" ]]; then
 
     echo "Quick rebuild: updating /root in $(basename "$ISO_FILE")..."
 
-    current_branch=$(git rev-parse --abbrev-ref HEAD)
     QUICK_TMP=$(mktemp -d)
 
     if [[ "$current_branch" != "main" ]]; then
@@ -232,8 +239,6 @@ else
     ZEF_SWITCHES="--/test --/test-depends"
 fi
 
-current_branch=$(git rev-parse --abbrev-ref HEAD)
-
 cleanup() {
     trap - EXIT ERR
 
@@ -264,6 +269,19 @@ if [[ "$current_branch" != "main" ]]; then
     git apply use-testing-repo.patch
     git status
     LABEL+="-Testing"
+    DITANA_CONFIG_TAG="develop"
+else
+    DITANA_CONFIG_TAG="latest"
+fi
+
+# Download latest configuration archive
+DITANA_CONFIG_URL="https://github.com/acrion/ditana-config/releases/download/${DITANA_CONFIG_TAG}/ditana-config.tar.gz"
+echo "Downloading Ditana configuration from ${DITANA_CONFIG_TAG}..."
+if curl -fSL "$DITANA_CONFIG_URL" -o airootfs/root/ditana-config.tar.gz; then
+    echo "Configuration downloaded."
+else
+    echo "ERROR: Failed to download configuration."
+    exit 1
 fi
 
 # Download latest configuration archive
@@ -284,11 +302,6 @@ zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/roo
 # Currently, a user-owned keyboxd process is running, because we accessed it above. It holds locks or permissions that interfere
 # with root-level operations in mkarchiso, leading to conflicts.
 sudo pkill keyboxd
-
-source version.sh
-export DITANA_BUILD_ID=${DITANA_VERSION}-$(TZ=UTC date +%Y-%m-%d.%H)
-echo "export DITANA_VERSION=$DITANA_VERSION"    >airootfs/root/ditana-version.sh
-echo "export DITANA_BUILD_ID=$DITANA_BUILD_ID" >>airootfs/root/ditana-version.sh
 
 echo "Creating ISO..."
 

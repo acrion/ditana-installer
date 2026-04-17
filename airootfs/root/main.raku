@@ -216,7 +216,69 @@ sub main() {
     show-dialog-raw('--infobox', "Checking Internet Connection...", 4, 65);
     establish-internet-connection();
 
-    show-dialog-raw('--title', 'Ditana GNU/Linux Installer', "--infobox", "\nDetecting Hardware...", 10, 50);
+    show-dialog-raw('--infobox', "Downloading Installer Configuration...", 4, 65);
+
+    my $config-dir = $*PROGRAM.parent;
+    my $config-archive = $config-dir.child('ditana-config.tar.gz');
+    
+    my $branch = 'main';
+    if $*USER eq 'root' {
+        $branch = %*ENV<DITANA_BRANCH> // 'main';
+    } else {
+        my $git = run('git', 'rev-parse', '--abbrev-ref', 'HEAD', :out, :err);
+        $branch = $git.exitcode == 0 ?? $git.out.slurp(:close).trim !! 'main';
+        Logging.log("Simulation mode: detected Git branch '$branch'");
+    }
+
+    my $config-tag = $branch eq 'main' ?? 'latest' !! 'develop';
+    my $config-url = "https://github.com/acrion/ditana-config/releases/download/$config-tag/ditana-config.tar.gz";
+
+    my $download = run('curl', '-fsSL', $config-url, '-o', '/tmp/ditana-config.tar.gz', :out, :err);
+    if $download.exitcode == 0 {
+        copy('/tmp/ditana-config.tar.gz', $config-archive);
+        unlink '/tmp/ditana-config.tar.gz';
+        Logging.log("Downloaded $config-tag configuration from GitHub.");
+    } else {
+        Logging.log("Using bundled configuration (download failed).");
+    }
+
+    run('tar', 'xzf', $config-archive, '-C', $config-dir);
+
+    my $config-hash = "unknown";
+    my $hash-file = $config-dir.child('config_hash.txt');
+    if $hash-file.e {
+        $config-hash = $hash-file.slurp(:close).trim;
+    }
+
+    my $config-date = "unknown";
+    my $date-file = $config-dir.child('config_date.txt');
+    if $date-file.e {
+        $config-date = $date-file.slurp(:close).trim;
+    }
+
+    my $lsb-release = $config-dir.child('folders/etc/lsb-release');
+    if $lsb-release.e {
+        $lsb-release.spurt("DISTRIB_CODENAME=$config-hash\n", :append);
+    }
+
+    %*ENV<DITANA_CONFIG_HASH> = $config-hash;
+    Logging.log("Loaded configuration state: $config-hash ($config-date)");
+
+    my $msg = qq:to/END/.chomp;
+
+The logic and configuration of this installer are decoupled from the ISO image. Instead, the installer dynamically downloads the most up-to-date configuration from our repository at runtime.
+
+This ensures you always benefit from the latest improvements and bug fixes without needing to download a new ISO.
+
+The currently loaded configuration state is:
+Commit Hash: $config-hash
+Timestamp:   $config-date
+
+This unique identifier is saved in your installed system and can be queried later using the 'lsb_release -cs' command.
+END
+    show-dialog-raw('--title', 'Installer Configuration', '--msgbox', $msg, 19, 75);
+
+    show-dialog-raw('--title', 'Ditana GNU/Linux Installer', '--infobox', "\nDetecting Hardware...", 10, 50);
 
     Settings.instance.validate-referenced-files();
     Settings.instance.validate-chroot-scripts();

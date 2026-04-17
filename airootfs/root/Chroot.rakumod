@@ -73,6 +73,11 @@ sub add-version() is export {
     if $build-id {
         $os-release-path.spurt("BUILD_ID={$build-id}\n", :append); # see `man os-release`
     }
+
+    my $config-hash = %*ENV<DITANA_CONFIG_HASH>;
+    if $config-hash && $config-hash ne "unknown" {
+        $os-release-path.spurt("VERSION_CODENAME=$config-hash\n", :append);
+    }
 }
 
 sub curate-chroot-files() is export {

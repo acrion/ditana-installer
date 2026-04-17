@@ -7,6 +7,7 @@ airootfs/root/folders/etc/sysctl.d/ditana.conf
 airootfs/root/folders/etc/skel/.config/ditana/dpi/value
 airootfs/root/folders/etc/xdg/ditana/default_locale_description
 airootfs/root/bind-mount/root/installation-steps.sh
+airootfs/root/bind-mount/root/early-installation-steps.sh
 airootfs/root/bind-mount/root/settings.sh
 *.log
 *.cache
@@ -20,3 +21,5 @@ airootfs/root/ditana-config.tar.gz
 airootfs/root/installation-steps.kdl
 airootfs/root/settings/
 airootfs/root/folders/
+airootfs/root/config_hash.txt
+airootfs/root/config_date.txt
