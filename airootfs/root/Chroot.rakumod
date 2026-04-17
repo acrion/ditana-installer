@@ -276,23 +276,6 @@ sub generate-session-setup() is export {
     $setup-script-path.IO.spurt($setup-content);
     $setup-script-path.IO.chmod(0o755);
 
-    # Generate /usr/share/ditana/session-wrapper
-    my $wrapper-path = $s.get("real-install")
-        ?? '/mnt/usr/share/ditana/session-wrapper'
-        !! "/tmp/session-wrapper";
-    my $wrapper-content = q:to/END/;
-    #!/bin/bash
-    # Ditana session wrapper — executed by LightDM before the desktop environment starts.
-    # XDG_SESSION_DESKTOP and XDG_SESSION_TYPE are set by LightDM at this point.
-
-    [ -x /usr/share/ditana/session-setup.sh ] && . /usr/share/ditana/session-setup.sh
-
-    exec /etc/lightdm/Xsession "$@"
-    END
-
-    $wrapper-path.IO.spurt($wrapper-content);
-    $wrapper-path.IO.chmod(0o755);
-
     Logging.log("Generated session-wrapper with {@scripts.elems} session-setup scripts");
 }
 
@@ -379,20 +362,61 @@ sub patch-lightdm-conf() is export {
     if $conf.IO.e {
         my $content = $conf.IO.slurp;
 
-        # Add session-wrapper under [Seat:*] if not already set
+        # Set session-wrapper
         if $content !~~ /'session-wrapper=/usr/share/ditana/session-wrapper'/ {
-            $content = $content.subst(
-                /^^ '[Seat:*]' $$/,
-                "[Seat:*]\nsession-wrapper=/usr/share/ditana/session-wrapper"
-            );
+            if $content ~~ /^^ '#'? \s* 'session-wrapper=' \N* $$/ {
+                $content = $content.subst(
+                    /^^ '#'? \s* 'session-wrapper=' \N* $$/,
+                    'session-wrapper=/usr/share/ditana/session-wrapper'
+                );
+            } else {
+                # Fallback (no existing session-wrapper entry)
+                $content = $content.subst(
+                    /^^ '[Seat:*]' $$/,
+                    "[Seat:*]\nsession-wrapper=/usr/share/ditana/session-wrapper"
+                );
+            }
+        }
+
+        # Determine default session name
+        my $s = Settings.instance;
+        my $default-session;
+        if $s.get("install-wayfire") {
+            $default-session = "wayfire";
+        } elsif $s.get("install-niri") {
+            $default-session = "niri";
+        } elsif $s.get("install-xfce") {
+            $default-session = "xfce";
+        }
+
+        if $default-session {
+            if $content ~~ /^^ '#'? \s* 'user-session=' \N* $$/ {
+                $content = $content.subst(
+                    /^^ '#'? \s* 'user-session=' \N* $$/,
+                    "user-session=$default-session"
+                );
+            } else {
+                $content = $content.subst(
+                    /'session-wrapper=/usr/share/ditana/session-wrapper'/,
+                    "session-wrapper=/usr/share/ditana/session-wrapper\nuser-session=$default-session"
+                );
+            }
         }
 
         # Set greeter
         if $content !~~ /'greeter-session=lightdm-slick-greeter'/ {
-            $content = $content.subst(
-                /^^ '#'? \s* 'greeter-session=' .* $$/,
-                'greeter-session=lightdm-slick-greeter',
-            );
+            if $content ~~ /^^ '#'? \s* 'greeter-session=' \N* $$/ {
+                $content = $content.subst(
+                    /^^ '#'? \s* 'greeter-session=' \N* $$/,
+                    'greeter-session=lightdm-slick-greeter'
+                );
+            } else {
+                # Fallback: No existing greeter-session entry
+                $content = $content.subst(
+                    /^^ '[Seat:*]' $$/,
+                    "[Seat:*]\ngreeter-session=lightdm-slick-greeter"
+                );
+            }
         }
 
         $conf.IO.spurt($content);
