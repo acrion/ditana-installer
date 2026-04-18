@@ -29,7 +29,6 @@ use Dialogs;
 use Font;
 use Internet;
 use Kernel;
-use Keyboard;
 use Keymap;
 use Locale;
 use Logging;
