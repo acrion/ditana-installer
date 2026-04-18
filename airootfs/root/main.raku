@@ -50,6 +50,17 @@ use Welcome;
 
 my $log-on-screen = False;
 
+sub switch-on-logging {
+    shell q{clear};
+    $log-on-screen = True;
+}
+
+sub reboot {
+    run-and-echo('systemctl', 'reboot');
+}
+
+my %dispatch = MY::.pairs.grep(*.key.starts-with('&')).map({ .key.substr(1) => .value });
+
 sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) returns Int {
     my $selected-category;
     repeat {
@@ -80,12 +91,22 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) ret
                         ask-for-setting($selected-dialog);
                     }
                     when 'procedure' {
-                        given $selected-dialog<name> {
-                            when 'review-summary-and-start-installation' {
-                                if review-summary() == 0 {
-                                    return 0 # start installation
-                                }
+                        my $name = $selected-dialog<name>;
+                        if $name eq 'review-summary-and-start-installation' {
+                            if review-summary() == 0 {
+                                return 0
                             }
+                        } elsif %dispatch{$name}:exists {
+                            my &proc := %dispatch{$name};
+                            if &proc.arity > 0 {
+                                &proc(0);
+                            } elsif &proc.returns ~~ Int {
+                                &proc();
+                            } else {
+                                &proc();
+                            }
+                        } else {
+                            die "No procedure found for '$name'";
                         }
                     }
                     default {
@@ -125,17 +146,6 @@ sub find-dialog-name($current-index, &index-modifier) {
         return kebab-to-title($installation-step<name>);
     }
 }
-
-sub switch-on-logging {
-    shell q{clear};
-    $log-on-screen = True;
-}
-
-sub reboot {
-    run-and-echo('systemctl', 'reboot');
-}
-
-my %dispatch = MY::.pairs.grep(*.key.starts-with('&')).map({ .key.substr(1) => .value });
 
 sub process-installation-step($installation-step, $current-index, $silent-exit-code) returns Int {
     my @installation-steps = Settings.get-installation-steps;
