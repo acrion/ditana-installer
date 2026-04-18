@@ -210,20 +210,6 @@ sub set-keymap-and-delay-rate($silent-exit-code) returns Int is export {
     return 0
 }
 
-sub write-xkb-environment-config() is export {
-    my $s = Settings.instance;
-    my $layout = $s.get("keymap-layout");
-    my $variant = $s.get("keymap-variant");
-
-    my @lines;
-    @lines.push: "XKB_DEFAULT_LAYOUT=$layout";
-    @lines.push: "XKB_DEFAULT_VARIANT=$variant" if $variant;
-
-    my $dest-dir = '/mnt/etc/environment.d';
-    $dest-dir.IO.mkdir;
-    "$dest-dir/50-ditana-xkb.conf".IO.spurt(@lines.join("\n") ~ "\n");
-}
-
 sub copy-console-keyboard-configuration() is export {
     my $source = '/etc/vconsole.conf'; # created by set-keymap-and-delay-rate()
     my $destination = '/mnt/etc/vconsole.conf';
