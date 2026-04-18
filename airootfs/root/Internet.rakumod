@@ -221,16 +221,16 @@ sub establish-internet-connection() is export {
                             }
                             else {
                                 # The temporary file initialize-wifi.sh contains the Wi-Fi password.
-                                # It is executed and then deleted by folders/usr/share/ditana/initialize-system-as-root.sh
-                                my $wifi-script = 'folders/usr/share/ditana/initialize-wifi.sh'.IO;
+                                # It is executed and then deleted by folders/usr/lib/ditana/initialize-system-as-root
+                                my $wifi-script = 'folders/usr/lib/ditana/initialize-wifi.sh'.IO;
                                 $wifi-script.spurt("nmcli dev wifi connect '$ssid' password '$ssid-passphrase'\n");
                                 $wifi-script.IO.chmod(0o700);
 
                                 add-root-script-step(q:to/END/.chomp);
 echo "Initializing Wi-Fi..."
-/usr/share/ditana/initialize-wifi.sh
+/usr/lib/ditana/initialize-wifi.sh
 echo "Successfully initialized Wi-Fi, deleting file that contained the Wi-Fi password."
-shred -u /usr/share/ditana/initialize-wifi.sh
+shred -u /usr/lib/ditana/initialize-wifi.sh
 END
                                 last;
                             }

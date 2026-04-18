@@ -213,7 +213,7 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
 }
 
 sub debug-info() {
-    my $debug-info = "Please create a GitHub issue on https://github.com/acrion/ditana-installer or write an email to support@ditana.org and attach the log file install_ditana.log. To retrieve this file from another machine, execute /root/folders/usr/share/ditana/create-debug-user.sh on this machine and follow the instructions. Thank you!";
+    my $debug-info = "Please create a GitHub issue on https://github.com/acrion/ditana-installer or write an email to support@ditana.org and attach the log file install_ditana.log. To retrieve this file from another machine, execute /root/folders/usr/lib/ditana/create-debug-user on this machine and follow the instructions. Thank you!";
 
     say $debug-info;
     Logging.log($debug-info);

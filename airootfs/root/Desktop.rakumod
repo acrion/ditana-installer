@@ -22,7 +22,7 @@ use Settings;
 
 sub set-host-dpi-for-xfce() is export
 {
-    # This file is evaulated package ditana-config-xfce, see /usr/share/ditana/xfce-display-config-updater.sh of package 
+    # This file is evaluated by package xfce-display-config-observer, see /usr/lib/xfce4/display-config-observer/updater.sh of package 
     my $basedir = "/mnt/etc/skel/.config/xfce4/display-config-observer/dpi";
     $basedir.IO.mkdir;
     "$basedir/value".IO.spurt(Settings.instance.get("host-dpi"));
