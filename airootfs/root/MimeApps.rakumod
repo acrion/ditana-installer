@@ -27,15 +27,15 @@ sub create-mimeapps-list() is export {
     my $s = Settings.instance;
     my $mimeapps-path = $s.get("real-install")
         ?? "/mnt/usr/share/applications/mimeapps.list"
-        !! "/tmp/mimeapps.list";
+        !! "/tmp/ditana-mimeapps.list";
     $mimeapps-path.IO.parent.mkdir unless $mimeapps-path.IO.parent.d;
 
     my %mime;
 
-    # Text editor — priority: vscode > micro > nvim (always available via install-terminal-utilities)
+    # Text editor — priority: vscode > fresh > nvim
     my $text-editor = do {
         if $s.get("install-vscode")     { "code.desktop" }
-        elsif $s.get("install-micro")   { "micro.desktop" }
+        elsif $s.get("install-fresh")   { "fresh.desktop" }
         else                            { "nvim.desktop" }
     };
 

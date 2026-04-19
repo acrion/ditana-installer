@@ -44,8 +44,10 @@ class Setting {
     has Array @.early-chroot-script =[];
     has Array @.chroot-script = [];
     has Array @.root-script = [];
-    has Array @.session-setup = [];
-    has Array @.session-setup-script = [];
+    has Array @.first-login-scripts =[];
+    has Array @.login-scripts = [];
+    has Array @.first-login-commands =[];
+    has Array @.login-commands =[];
     has Array @.autostart = [];  # list of [onlyshowin, script-path] pairs
 }
 
@@ -306,46 +308,52 @@ method load() {
         return @steps;
     }
 
-    method get-session-setups() {
-        my @scripts;
+    method get-first-login-scripts() {
+        my Str @scripts;
         for %!settings.values -> $setting {
             next unless $setting.current-value;
-            next unless $setting.session-setup && $setting.session-setup[0];
-            for @($setting.session-setup[0]) -> $entry {
-                if $entry ~~ Str {
-                    die "Setting '{$setting.name}': 'session-setup' entries must be "
-                      ~ "[path, once-flag] tuples, not bare strings. Got: '$entry'";
-                }
-                @scripts.push($entry) if $entry;
+            next unless $setting.first-login-scripts && $setting.first-login-scripts[0];
+            for @($setting.first-login-scripts[0]) -> $script {
+                @scripts.push($script.Str) if $script;
             }
         }
         return @scripts;
     }
 
-    method get-session-setup-scripts() {
-        my @results;
+    method get-login-scripts() {
+        my Str @scripts;
         for %!settings.values -> $setting {
             next unless $setting.current-value;
-            next unless $setting.session-setup-script && $setting.session-setup-script[0];
-            my @data = @($setting.session-setup-script[0]);
-            if @data.elems < 2 {
-                die "Setting '{$setting.name}': 'session-setup-script' must be "
-                  ~ "[[line, ...], once-flag(bool)], got only {@data.elems} element(s)";
-            }
-            my $once = @data[*-1];
-            if $once ~~ Positional && $once.elems == 1 {
-                $once = $once[0];
-            }
-            unless $once ~~ Bool {
-                die "Setting '{$setting.name}': last element of 'session-setup-script' "
-                  ~ "must be a boolean (once-flag), got: {$once.raku}";
-            }
-            my @line-groups = @data[0..^(*-1)];
-            for @line-groups -> $group {
-                @results.push([@($group), $once]);
+            next unless $setting.login-scripts && $setting.login-scripts[0];
+            for @($setting.login-scripts[0]) -> $script {
+                @scripts.push($script.Str) if $script;
             }
         }
-        return @results;
+        return @scripts;
+    }
+
+    method get-first-login-commands() {
+        my Str @lines;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.first-login-commands && $setting.first-login-commands[0];
+            for @($setting.first-login-commands[0]) -> $line {
+                @lines.push(self!resolve-script-line($line.Str)) if $line;
+            }
+        }
+        return @lines;
+    }
+
+    method get-login-commands() {
+        my Str @lines;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.login-commands && $setting.login-commands[0];
+            for @($setting.login-commands[0]) -> $line {
+                @lines.push(self!resolve-script-line($line.Str)) if $line;
+            }
+        }
+        return @lines;
     }
 
     method get-autostart-entries() {
@@ -622,8 +630,10 @@ method load() {
                 early-chroot-script => $setting.early-chroot-script.deepmap(*.clone),
                 chroot-script => $setting.chroot-script.deepmap(*.clone),
                 root-script => $setting.root-script.deepmap(*.clone),
-                session-setup => $setting.session-setup.deepmap(*.clone),
-                session-setup-script => $setting.session-setup-script.deepmap(*.clone),
+                first-login-scripts => $setting.first-login-scripts.deepmap(*.clone),
+                login-scripts => $setting.login-scripts.deepmap(*.clone),
+                first-login-commands => $setting.first-login-commands.deepmap(*.clone),
+                login-commands => $setting.login-commands.deepmap(*.clone),
                 autostart => $setting.autostart.deepmap(*.clone)
             );
         }
