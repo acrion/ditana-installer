@@ -230,7 +230,7 @@ sub main() {
 
         my $config-dir = $*PROGRAM.parent;
         my $config-archive = $config-dir.child('ditana-config.tar.gz');
-        
+
         my $branch = 'main';
         if $*USER eq 'root' {
             $branch = %*ENV<DITANA_BRANCH> // 'main';
@@ -252,7 +252,7 @@ sub main() {
             Logging.log("Using bundled configuration (download failed).");
         }
 
-        run('tar', 'xzf', $config-archive, '-C', $config-dir);
+        run('tar', 'xzf', $config-archive, '--exclude=json-kdl-converter', '-C', $config-dir);
 
         my $config-hash = "unknown";
         my $hash-file = $config-dir.child('config_hash.txt');
@@ -315,7 +315,7 @@ END
         my $result = Settings.instance.installation-step-is-available($installation-step<name>)
             ?? process-installation-step($installation-step,$current-index,$silent-exit-code)
             !! $silent-exit-code;
-        
+
         given $result {
             when 0 { # OK / Proceed
                 $current-index++;

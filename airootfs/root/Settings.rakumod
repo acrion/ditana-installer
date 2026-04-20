@@ -95,13 +95,13 @@ method load() {
         for %!installation-steps.kv -> $name,$installation-step-data {
             Logging.log($name);
         }
-        
+
         Logging.log("Detecting hardware...");
-        
+
         if !$data<settings>.defined {
             die "Missing 'settings' section in settings.json";
         }
-        
+
         for $data<settings>.list -> $setting-data {
             if $setting-data<detect>.defined {
                 if !$setting-data<name>.defined {
@@ -120,7 +120,7 @@ method load() {
             };
         }
         Logging.log("Loading settings...");
-        
+
         for $data<settings>.list -> $setting-data {
             if $setting-data<detect>.defined {
                 next

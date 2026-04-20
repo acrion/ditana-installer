@@ -174,9 +174,9 @@ sub create-mimeapps-list() is export {
     # Terminal emulator scheme handler (consumed by Nautilus, some GTK file managers,
     # and certain "Open Terminal Here" actions). Priority matches the KDL block order
     # and the last-writer-wins behaviour of the /etc/environment TERMINAL entry:
-    # install-foot overrides install-kitty when both are selected.
+    # install-foot overrides install-alacritty when both are selected.
     my $terminal-desktop;
-    $terminal-desktop = "kitty.desktop" if $s.get("install-kitty");
+    $terminal-desktop = "Alacritty.desktop" if $s.get("install-alacritty");
     $terminal-desktop = "foot.desktop"  if $s.get("install-foot");
     %mime{"x-scheme-handler/terminal"} = $terminal-desktop if $terminal-desktop;
 

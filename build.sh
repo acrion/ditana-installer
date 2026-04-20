@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
-
 set -e
 set -u
 
@@ -36,12 +35,6 @@ ensure_package_installed gnupg
 ensure_package_installed pkgfile
 ensure_package_installed zfs-dkms
 
-echo "Building Rust tools..."
-pushd rust
-cargo build --release
-popd
-cp rust/target/release/json-kdl-converter airootfs/root/
-
 # Delete temporary files from simulated installations
 rm -f  airootfs/root/bind-mount/root/installation-steps.sh
 rm -f  airootfs/root/bind-mount/root/settings.sh
@@ -56,6 +49,55 @@ export DITANA_BUILD_ID=${DITANA_VERSION}-$(TZ=UTC date +%Y-%m-%d.%H)
 echo "export DITANA_VERSION=$DITANA_VERSION"    >airootfs/root/ditana-version.sh
 echo "export DITANA_BUILD_ID=$DITANA_BUILD_ID" >>airootfs/root/ditana-version.sh
 echo "export DITANA_BRANCH=$current_branch"    >>airootfs/root/ditana-version.sh
+
+# --- Apply testing-repo patch (shared by quick and full build) -----------------
+# Both build modes need the patch applied: the full build because mkarchiso
+# consumes the patched files, and the quick build because airootfs/root is
+# copied into the ISO verbatim. The patch is reverted via the shared helper
+# below — an early EXIT trap catches failures that happen before the
+# mode-specific cleanup trap takes over.
+reverse_patch_if_needed() {
+    if [[ "$current_branch" != "main" ]]; then
+        git status
+        echo "Reversing patch..."
+        git apply --reverse use-testing-repo.patch
+        echo "Finished reversing patch."
+        git status
+    fi
+}
+
+if [[ "$current_branch" != "main" ]]; then
+    echo "Applying patch to use testing repo..."
+    git apply use-testing-repo.patch
+    # Register an early cleanup so failures between here and the mode-specific
+    # cleanup trap (set further below) still revert the patch.
+    trap reverse_patch_if_needed EXIT
+    git status
+    DITANA_CONFIG_TAG="develop"
+else
+    DITANA_CONFIG_TAG="latest"
+fi
+
+# --- Download latest Ditana configuration and build json-kdl-converter --------
+# Done before the quick-build branch so that a quick rebuild also picks up a
+# freshly built converter binary in airootfs/root.
+DITANA_CONFIG_URL="https://github.com/acrion/ditana-config/releases/download/${DITANA_CONFIG_TAG}/ditana-config.tar.gz"
+echo "Downloading Ditana configuration from ${DITANA_CONFIG_TAG}..."
+if curl -fSL "$DITANA_CONFIG_URL" -o airootfs/root/ditana-config.tar.gz; then
+    echo "Configuration downloaded."
+else
+    echo "ERROR: Failed to download configuration."
+    exit 1
+fi
+
+# Extract the converter source from the config archive and compile it for the ISO
+echo "Extracting and building json-kdl-converter from configuration archive..."
+tar -xzf airootfs/root/ditana-config.tar.gz -C /tmp json-kdl-converter
+pushd /tmp/json-kdl-converter
+cargo build --release
+popd
+cp /tmp/json-kdl-converter/target/release/json-kdl-converter airootfs/root/
+rm -rf /tmp/json-kdl-converter
 
 if [[ "${1:-}" == "--quick" ]]; then
     # --- Quick rebuild mode: only replace airootfs/root in existing ISO ---
@@ -72,16 +114,8 @@ if [[ "${1:-}" == "--quick" ]]; then
 
     QUICK_TMP=$(mktemp -d)
 
-    if [[ "$current_branch" != "main" ]]; then
-        echo "Applying patch to use testing repo..."
-        git apply use-testing-repo.patch
-    fi
-
     cleanup_quick() {
-        if [[ "$current_branch" != "main" ]]; then
-            echo "Reversing patch..."
-            git apply --reverse use-testing-repo.patch
-        fi
+        reverse_patch_if_needed
         sudo rm -rf "$QUICK_TMP"
     }
     trap cleanup_quick EXIT
@@ -242,13 +276,7 @@ fi
 cleanup() {
     trap - EXIT ERR
 
-    if [[ "$current_branch" != "main" ]]; then
-        git status
-        echo "Reversing patch..."
-        git apply --reverse use-testing-repo.patch
-        echo "Finished reversing patch."
-        git status
-    fi
+    reverse_patch_if_needed
 
     if [[ -n "$TMP_ISO" ]]; then
         sudo rm -rf "$TMP_ISO"
@@ -265,33 +293,7 @@ trap cleanup EXIT ERR
 LABEL="Ditana"
 
 if [[ "$current_branch" != "main" ]]; then
-    echo "Applying patch to use testing repo..."
-    git apply use-testing-repo.patch
-    git status
     LABEL+="-Testing"
-    DITANA_CONFIG_TAG="develop"
-else
-    DITANA_CONFIG_TAG="latest"
-fi
-
-# Download latest configuration archive
-DITANA_CONFIG_URL="https://github.com/acrion/ditana-config/releases/download/${DITANA_CONFIG_TAG}/ditana-config.tar.gz"
-echo "Downloading Ditana configuration from ${DITANA_CONFIG_TAG}..."
-if curl -fSL "$DITANA_CONFIG_URL" -o airootfs/root/ditana-config.tar.gz; then
-    echo "Configuration downloaded."
-else
-    echo "ERROR: Failed to download configuration."
-    exit 1
-fi
-
-# Download latest configuration archive
-DITANA_CONFIG_URL="https://github.com/acrion/ditana-config/releases/download/latest/ditana-config.tar.gz"
-echo "Downloading Ditana configuration..."
-if curl -fSL "$DITANA_CONFIG_URL" -o airootfs/root/ditana-config.tar.gz; then
-    echo "Configuration downloaded."
-else
-    echo "ERROR: Failed to download configuration."
-    exit 1
 fi
 
 mkdir -p airootfs/root/.raku
