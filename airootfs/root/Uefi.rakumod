@@ -35,7 +35,7 @@ sub handle-current-efi-partition($common-dialog-text) {
     if $device-that-contains-bootloader-partition eq $install-disk {
         my $instruction = "The selected installation disk contains the current EFI partition $current-bootloader-partition. Overwriting it will make all operating systems on your system unbootable, including those on other disks. Are you sure to continue?";
         my $dialog-result = ask-for-yes-no(:$instruction, default => True);
-        
+
         if $dialog-result == 0 {
             Settings.instance.set('bootloader-partition', 'new');
             return 0;
@@ -50,7 +50,7 @@ sub handle-current-efi-partition($common-dialog-text) {
             no-label => $current-bootloader-partition,
             default => Settings.instance.get('bootloader-partition') eq 'new',
             instruction => "Detected EFI partition on another disk ($device-that-contains-bootloader-partition).\n\n$common-dialog-text $current-bootloader-partition.");
-        
+
         given $exit-status {
             when 0 { Settings.instance.set('bootloader-partition', 'new') }
             when 1 { 
@@ -60,7 +60,7 @@ sub handle-current-efi-partition($common-dialog-text) {
             }
             default { Settings.instance.set('bootloader-partition', '') } # user pressed Escape
         }
-        
+
         return $exit-status;
     }
 }

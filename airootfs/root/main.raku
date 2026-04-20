@@ -27,6 +27,7 @@ use Chroot;
 use Desktop;
 use Dialogs;
 use Font;
+use Hostname;
 use Internet;
 use Kernel;
 use Keymap;

@@ -101,6 +101,7 @@ pciutils
 pcsclite
 ppp
 pptpclient
+pwgen
 python
 pv
 qemu-guest-agent
