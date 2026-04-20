@@ -21,6 +21,7 @@ use v6.d;
 use JSON::Fast;
 use Dialogs;
 use Settings;
+use Timezone;
 use Logging;
 
 sub get-country-name($code) {
@@ -79,7 +80,7 @@ sub get-variant-description($layout, $variant) {
 }
 
 sub choose-keymap-layout() returns Int is export {
-    state $temp-file=qx{mktemp}.chomp;
+    state $temp-file = qx{mktemp}.chomp;
     $temp-file.IO.spurt(qx{localectl list-x11-keymap-layouts});
     
     my @menu-options;
@@ -88,14 +89,37 @@ sub choose-keymap-layout() returns Int is export {
         @menu-options.append: $code, $name;
     }
 
+    # Priority: previous choice > sub-locale (e.g. "de_CH" → "ch") > detected country code
+    my @layouts = @menu-options.rotor(2).map(*.[0]);
+    my $preferred = '';
+
+    with Settings.instance.get('keymap-layout') -> $prev {
+        $preferred = $prev if @layouts.grep($prev);
+    }
+    unless $preferred {
+        with Settings.instance.get('locale') -> $loc {
+            if $loc ~~ / _ (\S+) $ / {
+                my $candidate = $0.Str.lc;
+                $preferred = $candidate if @layouts.grep($candidate);
+            }
+        }
+    }
+    unless $preferred {
+        my $cc = detected-country-code().lc;
+        $preferred = $cc if $cc && @layouts.grep($cc);
+    }
+
+    my @default-args;
+    @default-args = '--default-item', $preferred if $preferred;
+
     my @dialog-args = '--title', 'Keyboard Layout Selection',
                       '--cancel-label', "Back",
+                      |@default-args,
                       '--menu', '\nSelect your keyboard layout.',
                       32, 50, 10, |@menu-options;
                      
     my $result = show-dialog-raw(|@dialog-args);
-    if $result<status> == 0
-    {
+    if $result<status> == 0 {
         Settings.instance.set('keymap-layout', $result<value>);
     }
     $result<status>
@@ -162,10 +186,35 @@ sub choose-keymap-variant($silent-exit-code) returns Int is export {
         
     Logging.log("choose-keymap-variant: built dialog options");
 
+    # Priority: previous choice (if still valid for this layout)
+    #         > <main-locale>_nodeadkeys > <main-locale> > nodeadkeys
+    my @variants = $list-of-keymap-variants.lines;
+    my $preferred = '';
+
+    with Settings.instance.get('keymap-variant') -> $prev {
+        $preferred = $prev if $prev && @variants.grep($prev);
+    }
+    unless $preferred {
+        my $main = Settings.instance.get('main-locale') || '';
+        if $main {
+            for ("{$main}_nodeadkeys", $main) -> $candidate {
+                if @variants.grep($candidate) {
+                    $preferred = $candidate;
+                    last;
+                }
+            }
+        }
+        $preferred = 'nodeadkeys' if !$preferred && @variants.grep('nodeadkeys');
+    }
+
+    my @default-args;
+    @default-args = '--default-item', $preferred if $preferred;
+
     loop {
         my @dialog-args = '--help-button',
                         '--title', "Keyboard Layout Variant",
                         '--cancel-label', "Back",
+                        |@default-args,
                         '--menu', $dialogtext,
                         27, 98, 10,
                         |@menu-options;

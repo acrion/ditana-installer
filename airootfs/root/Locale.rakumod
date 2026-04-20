@@ -20,6 +20,7 @@
 use v6.d;
 use Dialogs;
 use Settings;
+use Timezone;
 use Logging;
 use RunAndLog;
 
@@ -133,21 +134,28 @@ sub choose-main-locale() returns Int is export {
         %menu-descriptions{$code} = $description;
     }
     
+    # Priority: previous choice (back-navigation) > detected language
+    my $preferred = Settings.instance.get('main-locale') || detected-language();
+
     loop {
+        my @default-args;
+        @default-args = '--default-item', $preferred if $preferred && (%menu-descriptions{$preferred}:exists);
+
         my @dialog-args = '--help-button',
                          '--title', 'Primary Locale Selection',
-                         '--menu', '\nChoose the Locale that best represents your region and language preferences. You’ll have the opportunity to fine-tune system locale behavior in a later step.',
+                         |@default-args,
+                         '--menu', "\nChoose the Locale that best represents your region and language preferences. You’ll have the opportunity to fine-tune system locale behavior in a later step.",
                          25, 72, 10,
                          |@menu-options;
-                         
+
         my %result = show-dialog-raw(|@dialog-args);
-        
+
         given %result<status> {
             when 0 {
                 my $main-locale = %result<value>;
                 Settings.instance.set('main-locale', $main-locale);
                 Settings.instance.set('main-locale-description', %menu-descriptions{$main-locale});
-                
+
                 return %result<status>;
             }
             when 2 {
@@ -163,19 +171,34 @@ sub choose-main-locale() returns Int is export {
 sub choose-sub-locale() returns Int is export {
     state $temp-file = qx{mktemp}.chomp;
     my $main-locale = Settings.instance.get('main-locale');
-    
+
     qqx{grep -E "^#?$main-locale" /etc/locale.gen | grep "\\.UTF-8 UTF-8" | sed 's/#\\? *\\(\\S\\+\\)\\.UTF-8 UTF-8/\\1/' | sed "s/$main-locale\\_//" | sort -u > $temp-file};
-    
+
     my $main-description = get-main-locale-description($main-locale);
     my @menu-options;
-    
+
     for $temp-file.IO.lines -> $code is copy {
         $code = $code.trim;
         my $description = get-sub-locale-description("{$main-locale}_$code", $main-description);
         @menu-options.append($code, $description);
     }
     
+    # Priority: previous choice (from 'locale' = "de_CH") > detected country code
+    my $preferred = '';
+    with Settings.instance.get('locale') -> $prev {
+        $preferred = $0.Str if $prev ~~ / _ (\S+) $ /;
+    }
+    $preferred ||= detected-country-code();
+
+    # Verify it's actually in the menu (detected CC might not match available sub-locales)
+    my @sub-codes = @menu-options.rotor(2).map(*.[0]);
+
+    my @default-args;
+    @default-args = '--default-item', $preferred
+        if $preferred && @sub-codes.grep($preferred);
+
     my @dialog-args = '--title', "Secondary Locale Selection for $main-description",
+                     |@default-args,
                      '--menu', '\nSelect your sub-locale:',
                      21, 70, 10,
                      |@menu-options;

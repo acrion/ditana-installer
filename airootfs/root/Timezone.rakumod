@@ -21,9 +21,42 @@ use v6.d;
 use Dialogs;
 use Settings;
 use Logging;
+use JSON::Fast;
 
 my $region-or-timezone;
 my @zones;
+my $detected-timezone     = '';
+my $detected-country-code = '';
+my $detected-language     = '';
+
+sub detect-defaults() is export {
+    return if $detected-timezone;   # idempotent — no repeated HTTP calls
+
+    my $proc = run
+        « curl --silent --max-time 3 --fail https://ipapi.co/json/ »,
+        :out, :err;
+    my $output = $proc.out.slurp(:close);
+    $proc.err.slurp(:close);
+    return unless $proc.exitcode == 0;
+
+    my %data;
+    try { %data = from-json($output); }
+    return if $!;
+
+    my $tz = %data<timezone> // '';
+    $detected-timezone = $tz if $tz ~~ / ^ \w+ '/' \S+ $ /;
+
+    my $cc = %data<country_code> // '';
+    $detected-country-code = $cc if $cc ~~ / ^ <[A..Z]> ** 2 $ /;
+
+    # "languages" is ordered by prevalence, e.g. "de-CH,fr-CH,it-CH,rm"
+    my $langs = %data<languages> // '';
+    $detected-language = $0.Str if $langs ~~ / ^ (<[a..z]>+) /;
+}
+
+sub detected-timezone()     is export { $detected-timezone     }
+sub detected-country-code() is export { $detected-country-code }
+sub detected-language()     is export { $detected-language     }
 
 sub choose-region-or-timezone() returns Int is export {
     my @other;
@@ -48,13 +81,30 @@ sub choose-region-or-timezone() returns Int is export {
     
     @regions.push: "Other";
     
-    # Menu-Optionen erstellen
     my @menu-options;
     for @regions.kv -> $idx, $region {
         @menu-options.append: ($idx + 1).Str, $region;
     }
+
+    # Pre-select the detected region, if any
+    my @default-args;
     
+    my $preferred = Settings.instance.get('timezone');
+    
+    if !$preferred {
+      detect-defaults();
+      $preferred = detected-timezone();
+    }
+    
+    my @default-args;
+    if $preferred {
+        my $region = $preferred.split('/')[0];
+        my $idx = @regions.first(* eq $region, :k);
+        @default-args = '--default-item', ($idx + 1).Str if $idx.defined;
+    }
+
     my @dialog-args = '--title', 'Time Zone Region Selection',
+                      |@default-args,
                       '--menu', 'Select Time Zone or Region:',
                       21, 70, 18, |@menu-options;
     
@@ -79,14 +129,24 @@ sub choose-region-or-timezone() returns Int is export {
 sub choose-specific-timezone($silent-exit-code) returns Int is export {
     my $exit-code;
     my $selected-timezone;
-    
+
     if @zones {
         my @menu-options;
         for @zones.kv -> $idx, $zone {
             @menu-options.append: ($idx + 1).Str, $zone;
         }
-        
+
+        # Pre-select the detected timezone, if it's in the current region
+        my $preferred = Settings.instance.get('timezone') || detected-timezone();
+
+        my @default-args;
+        if $preferred {
+            my $idx = @zones.first(* eq $preferred, :k);
+            @default-args = '--default-item', ($idx + 1).Str if $idx.defined;
+        }
+
         my @dialog-args = '--title', "Specific Time Zone Selection for $region-or-timezone",
+                          |@default-args,
                           '--menu', 'Select Specific Time Zone:',
                           20, 70, 18, |@menu-options;
         
