@@ -60,42 +60,40 @@ sub detected-language()     is export { $detected-language     }
 
 sub choose-region-or-timezone() returns Int is export {
     my @other;
-    
+
     my @patterns = <Etc CET CST EET EST GMT HST MET MST NZ PRC PST ROC ROK UCT UTC Universal W-SU WET>;
-    
+
     my @timezones = qx{timedatectl list-timezones}.lines;
-    
+
     for @patterns -> $pattern {
         @other.append: @timezones.grep(/$pattern/);
     }
-    
+
     @other = @other.map({ 
         my @parts = .split('/');
         @parts > 1 ?? "{@parts[*-1]}:{$_}" !! "$_:$_"
     }).unique.map(*.split(':')[1]);
-    
+
     my @regions = @timezones.grep({ 
         my $timezone = $_;
         !@other.grep({ $timezone eq $_ });
     }).map(*.split('/')[0]).unique;
-    
+
     @regions.push: "Other";
-    
+
     my @menu-options;
     for @regions.kv -> $idx, $region {
         @menu-options.append: ($idx + 1).Str, $region;
     }
 
-    # Pre-select the detected region, if any
-    my @default-args;
-    
     my $preferred = Settings.instance.get('timezone');
-    
+
     if !$preferred {
       detect-defaults();
       $preferred = detected-timezone();
     }
-    
+
+    # Pre-select the detected region, if any
     my @default-args;
     if $preferred {
         my $region = $preferred.split('/')[0];

@@ -10,6 +10,7 @@ bind
 bolt
 brltty
 btrfs-progs
+ckbcomp
 clonezilla
 cryptsetup
 darkhttpd

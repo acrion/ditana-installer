@@ -237,26 +237,62 @@ sub choose-keymap-variant($silent-exit-code) returns Int is export {
 }
 
 sub set-keymap-and-delay-rate($silent-exit-code) returns Int is export {
-    return $silent-exit-code if $silent-exit-code != 0; # only set the keymap if the user navigated forward
+    Logging.log("set-keymap-and-delay-rate: A - entered, silent-exit-code = $silent-exit-code");
+    return $silent-exit-code if $silent-exit-code != 0;
 
-    my $s = Settings.instance;
-    
-    my $layout = $s.get("keymap-layout");
-    my $variant = $s.get("keymap-variant");
-
-    my $cmd = "DISPLAY='' localectl set-x11-keymap $layout";
-
-    if $variant {
-        $cmd ~= " '' $variant";
+    my $tty = qx{tty}.chomp;
+    Logging.log("set-keymap-and-delay-rate: B - current tty = '$tty' (controlling terminal)");
+    if $tty ~~ /pts/ {
+        Logging.log("set-keymap-and-delay-rate: WARNING - Running in a pseudo-terminal. Hardware commands need /dev/tty0!");
     }
 
-    shell($cmd);
+    my $s = Settings.instance;
+    my $layout  = $s.get('keymap-layout');
+    my $variant = $s.get('keymap-variant') // '';
 
-    my $keyboard-delay = $s.get("keyboard-delay");
-    my $keyboard-rate = $s.get("keyboard-rate");
-    qqx{kbdrate --silent --delay $keyboard-delay --rate $keyboard-rate};
+    Logging.log("set-keymap-and-delay-rate: C - layout='$layout', variant='$variant'");
 
-    return 0
+    # 1. Write persistent X11 config
+    my $cmd-x11 = "DISPLAY='' localectl --no-convert set-x11-keymap $layout";
+    $cmd-x11 ~= " '' $variant" if $variant;
+    Logging.log("set-keymap-and-delay-rate: D - X11 command: $cmd-x11");
+    my $p1 = shell $cmd-x11;
+    Logging.log("set-keymap-and-delay-rate: D1 - X11 exitcode = {$p1.exitcode}");
+
+    # 2. Generate precise console keymap using ckbcomp
+    my $map-file = "/etc/vconsole-ditana.map";
+    my $cmd-gen = "ckbcomp $layout";
+    $cmd-gen ~= " $variant" if $variant;
+    $cmd-gen ~= " > $map-file";
+    
+    Logging.log("set-keymap-and-delay-rate: E - ckbcomp command: $cmd-gen");
+    my $p-gen = shell $cmd-gen;
+    Logging.log("set-keymap-and-delay-rate: E1 - ckbcomp exitcode = {$p-gen.exitcode}");
+
+    # 3. Apply generated map to running TTY
+    my $cmd-load = "loadkeys $map-file < /dev/tty0";
+    Logging.log("set-keymap-and-delay-rate: F - loadkeys command: $cmd-load");
+    my $p-load = shell $cmd-load;
+    Logging.log("set-keymap-and-delay-rate: F1 - loadkeys exitcode = {$p-load.exitcode}");
+
+    # 4. Write /etc/vconsole.conf manually for persistence
+    # (localectl set-keymap is intentionally omitted as it doesn't handle custom maps well)
+    my $vconsole-content = "KEYMAP=$map-file\n";
+    "/etc/vconsole.conf".IO.spurt($vconsole-content);
+    Logging.log("set-keymap-and-delay-rate: G - wrote /etc/vconsole.conf with KEYMAP=$map-file");
+
+    # 5. Keyboard typematic delay/rate
+    my $keyboard-delay = $s.get('keyboard-delay');
+    my $keyboard-rate  = $s.get('keyboard-rate');
+    Logging.log("set-keymap-and-delay-rate: H - keyboard-delay=$keyboard-delay, keyboard-rate=$keyboard-rate");
+
+    my $cmd-rate = "kbdrate --silent --delay $keyboard-delay --rate $keyboard-rate < /dev/tty0";
+    Logging.log("set-keymap-and-delay-rate: I - kbdrate command: $cmd-rate");
+    my $p-rate = shell $cmd-rate;
+    Logging.log("set-keymap-and-delay-rate: I1 - kbdrate exitcode = {$p-rate.exitcode}");
+
+    Logging.log("set-keymap-and-delay-rate: J - finished successfully");
+    0
 }
 
 sub copy-console-keyboard-configuration() is export {
@@ -266,6 +302,15 @@ sub copy-console-keyboard-configuration() is export {
     die unless $source.IO.e;
     $destination.IO.parent.mkdir();
     $source.IO.copy($destination); # note that we extend this file in configure-terminal-font()
+
+    my $map-source = '/etc/vconsole-ditana.map';
+    my $map-dest   = '/mnt/etc/vconsole-ditana.map';
+
+    if $map-source.IO.e {
+        Logging.log("copy-console-keyboard-configuration: copying custom map $map-source to $map-dest");
+        $map-dest.IO.parent.mkdir();
+        $map-source.IO.copy($map-dest);
+    }
 }
 
 sub copy-xorg-keyboard-configuration() is export {
