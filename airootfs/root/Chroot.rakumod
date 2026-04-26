@@ -189,22 +189,6 @@ sub generate-chroot-script() is export {
             return 1
         fi
     }
-
-    ditana_flatpak() {
-        local tmplog
-        tmplog=$(mktemp)
-        tail --pid=$$ -f "$tmplog" &
-        local tail_pid=$!
-        flatpak "$@" >"$tmplog" 2>&1
-        local rc=$?
-        # Give tail a moment to flush, then terminate it cleanly
-        sleep 0.2
-        kill "$tail_pid" 2>/dev/null || true
-        wait "$tail_pid" 2>/dev/null || true
-        cat "$tmplog" >> /var/log/install_ditana.log
-        rm -f "$tmplog"
-        return $rc
-    }
     FUNC
 
     # Unconditional time configuration

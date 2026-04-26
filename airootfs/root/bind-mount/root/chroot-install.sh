@@ -30,7 +30,7 @@ export PATH="$HOME/.raku/bin:$PATH"
     mount -a
 
     echo -e "\033[32m--- Configuring Arch multilib repository --- \033[0m"
-    s6 --task-run sparrow/tasks/pacman@enable_multilib=$ENABLE_MULTILIB
+    s6 --task-run "sparrow/tasks/pacman@enable_multilib=$ENABLE_MULTILIB"
     ./enable-chaotic-aur.sh "$ENABLE_CHAOTIC_AUR"
     echo -e "\033[32m--- Enabling the Ditana repository --- \033[0m"
     ./enable-ditana.sh
@@ -78,10 +78,19 @@ export PATH="$HOME/.raku/bin:$PATH"
         exit 1
     fi
 
+    # Flatpak setup: register the Flathub remote so the first-boot finalize
+    # service can install configured apps.
+    if pacman -Qi flatpak &>/dev/null; then
+        echo -e "\033[32m--- Configuring Flathub remote --- \033[0m"
+        flatpak remote-add --system --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo \
+            </dev/null >/dev/null 2>&1
+    fi
+
     source installation-steps.sh
 
     # restore current directory (potentially changed by installation-steps.sh)
-    cd $HOME
+    cd "$HOME"
 
     # Spell checker installation (locale-dependent, kept here for simplicity)
     LOWERCASE_LOCALE=$(echo "$LOCALE" | tr '[:upper:]' '[:lower:]')
@@ -116,53 +125,6 @@ export PATH="$HOME/.raku/bin:$PATH"
     rm /etc/sudoers.d/builduser
     echo -e "\033[32m--- Adding $USER_NAME to wheel group ---\033[0m"
     usermod -aG wheel "$USER_NAME" # Note file 99-wheel-group installed by package ditana-filesystem
-
-# === DIAGNOSTIC BLOCK ===
-    {
-        echo "=== DIAGNOSTIC: state before subshell exit ==="
-        date
-        echo "--- Process tree ---"
-        ps auxf
-        echo "--- All processes with name patterns flatpak/ostree/bwrap/portal ---"
-        ps -ef | grep -E 'flatpak|ostree|bwrap|portal|gdbus|dconf' | grep -v grep
-        echo "--- File descriptors of all processes pointing to pipes ---"
-        for p in /proc/[0-9]*; do
-            pid=$(basename "$p")
-            cmd=$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null | head -c 200)
-            [ -z "$cmd" ] && continue
-            for fd in /proc/$pid/fd/*; do
-                target=$(readlink "$fd" 2>/dev/null) || continue
-                case "$target" in
-                    pipe:*|socket:*)
-                        printf '%s  fd=%s  %s  cmd=%s\n' \
-                            "$pid" "$(basename "$fd")" "$target" "$cmd"
-                        ;;
-                esac
-            done
-        done | sort
-        echo "--- D-Bus services (system bus) ---"
-        timeout 3 dbus-send --system --print-reply \
-            --dest=org.freedesktop.DBus /org/freedesktop/DBus \
-            org.freedesktop.DBus.ListNames 2>/dev/null || echo "(dbus query failed)"
-        echo "--- systemd-style runaway descriptors ---"
-        ls -la /proc/self/fd/
-        echo "=== END DIAGNOSTIC ==="
-    } >> /var/log/install_ditana.log 2>&1
-    # === END DIAGNOSTIC BLOCK ===
-
-    echo -e "\033[32m--- Cleaning up flatpak background helpers ---\033[0m"
-    pkill -TERM -f 'flatpak-system-helper' 2>/dev/null || true
-    pkill -TERM -f 'xdg-.*-portal'         2>/dev/null || true
-    pkill -TERM -f '^ostree '              2>/dev/null || true
-    sleep 1
-    pkill -KILL -f 'flatpak-system-helper' 2>/dev/null || true
-
-    # Second diagnostic snapshot AFTER cleanup
-    {
-        echo "=== DIAGNOSTIC: state after cleanup ==="
-        ps -ef | grep -E 'flatpak|ostree|bwrap|portal' | grep -v grep
-        echo "=== END DIAGNOSTIC 2 ==="
-    } >> /var/log/install_ditana.log 2>&1
 
     touch /var/log/chroot_installation_finished
     echo -e "\033[32m--- Leaving subshell in chroot-install.sh ---\033[0m"

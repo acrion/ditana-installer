@@ -38,6 +38,7 @@ class Setting {
     has Bool $.required-by-chroot = False;
     has Array @.arch-packages = [];
     has Array @.aur-packages = [];
+    has Array @.flatpak-packages = [];
     has SettingValue $.default-value is rw;
     has SettingValue $.current-value is rw;
     has Array @.files = [];
@@ -189,6 +190,24 @@ method load() {
                 for @($setting.aur-packages[0]) -> $package {
                     if $package && $package.Str {
                         Logging.log("Adding package: $package");
+                        @packages.push($package.Str);
+                    }
+                }
+            }
+        }
+
+        return @packages;
+    }
+    
+    method get-installed-flatpak-packages() {
+        my Str @packages;
+
+        for %!settings.values -> $setting {
+            Logging.log("Checking setting: {$setting.name}");
+            if $setting.flatpak-packages && $setting.current-value && $setting.flatpak-packages[0] {
+                for @($setting.flatpak-packages[0]) -> $package {
+                    if $package && $package.Str {
+                        Logging.log("Adding flatpak package: $package");
                         @packages.push($package.Str);
                     }
                 }
@@ -624,6 +643,7 @@ method load() {
                 required-by-chroot => $setting.required-by-chroot,
                 arch-packages => $setting.arch-packages.deepmap(*.clone),
                 aur-packages => $setting.aur-packages.deepmap(*.clone),
+                flatpak-packages => $setting.flatpak-packages.deepmap(*.clone),
                 default-value => $setting.default-value,
                 current-value => $setting.current-value,
                 files => $setting.files.deepmap(*.clone),

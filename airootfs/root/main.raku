@@ -26,6 +26,7 @@ use AskForYesNo;
 use Chroot;
 use Desktop;
 use Dialogs;
+use Flatpak;
 use Font;
 use Hostname;
 use Internet;

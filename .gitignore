@@ -23,3 +23,4 @@ airootfs/root/settings/
 airootfs/root/folders/
 airootfs/root/config_hash.txt
 airootfs/root/config_date.txt
+.aider*
