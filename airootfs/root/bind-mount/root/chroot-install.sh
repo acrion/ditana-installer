@@ -117,8 +117,55 @@ export PATH="$HOME/.raku/bin:$PATH"
     echo -e "\033[32m--- Adding $USER_NAME to wheel group ---\033[0m"
     usermod -aG wheel "$USER_NAME" # Note file 99-wheel-group installed by package ditana-filesystem
 
+# === DIAGNOSTIC BLOCK ===
+    {
+        echo "=== DIAGNOSTIC: state before subshell exit ==="
+        date
+        echo "--- Process tree ---"
+        ps auxf
+        echo "--- All processes with name patterns flatpak/ostree/bwrap/portal ---"
+        ps -ef | grep -E 'flatpak|ostree|bwrap|portal|gdbus|dconf' | grep -v grep
+        echo "--- File descriptors of all processes pointing to pipes ---"
+        for p in /proc/[0-9]*; do
+            pid=$(basename "$p")
+            cmd=$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null | head -c 200)
+            [ -z "$cmd" ] && continue
+            for fd in /proc/$pid/fd/*; do
+                target=$(readlink "$fd" 2>/dev/null) || continue
+                case "$target" in
+                    pipe:*|socket:*)
+                        printf '%s  fd=%s  %s  cmd=%s\n' \
+                            "$pid" "$(basename "$fd")" "$target" "$cmd"
+                        ;;
+                esac
+            done
+        done | sort
+        echo "--- D-Bus services (system bus) ---"
+        timeout 3 dbus-send --system --print-reply \
+            --dest=org.freedesktop.DBus /org/freedesktop/DBus \
+            org.freedesktop.DBus.ListNames 2>/dev/null || echo "(dbus query failed)"
+        echo "--- systemd-style runaway descriptors ---"
+        ls -la /proc/self/fd/
+        echo "=== END DIAGNOSTIC ==="
+    } >> /var/log/install_ditana.log 2>&1
+    # === END DIAGNOSTIC BLOCK ===
+
+    echo -e "\033[32m--- Cleaning up flatpak background helpers ---\033[0m"
+    pkill -TERM -f 'flatpak-system-helper' 2>/dev/null || true
+    pkill -TERM -f 'xdg-.*-portal'         2>/dev/null || true
+    pkill -TERM -f '^ostree '              2>/dev/null || true
+    sleep 1
+    pkill -KILL -f 'flatpak-system-helper' 2>/dev/null || true
+
+    # Second diagnostic snapshot AFTER cleanup
+    {
+        echo "=== DIAGNOSTIC: state after cleanup ==="
+        ps -ef | grep -E 'flatpak|ostree|bwrap|portal' | grep -v grep
+        echo "=== END DIAGNOSTIC 2 ==="
+    } >> /var/log/install_ditana.log 2>&1
+
     touch /var/log/chroot_installation_finished
-    echo -e "\033[32m--- Leaving subshell in chroot-install.sh ---\033[0m"    
+    echo -e "\033[32m--- Leaving subshell in chroot-install.sh ---\033[0m"
 } 2>&1 | tee -a /var/log/install_ditana.log
 
 if [[ ! -f /var/log/chroot_installation_finished ]]; then
