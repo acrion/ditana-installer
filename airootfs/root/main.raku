@@ -91,6 +91,12 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) ret
                         }
                         ask-for-setting($selected-dialog);
                     }
+                    when 'ask-for-yes-no' {
+                        if Settings.instance.get('tmux') {
+                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,fg=white,bg=black] $selected-dialog-name #[align=right,fg=green,bg=green] $current-dialog-name ← <Back> "};
+                        }
+                        ask-for-yes-no($selected-dialog);
+                    }
                     when 'procedure' {
                         my $name = $selected-dialog<name>;
                         if $name eq 'review-summary-and-start-installation' {
