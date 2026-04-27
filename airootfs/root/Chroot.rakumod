@@ -107,15 +107,94 @@ sub genfstab() is export {
     '/mnt/etc/fstab'.IO.spurt($fstab);
 }
 
+sub check-for-overridden-explicit-providers(Str $output, @explicit-packages) {
+    # Detect cases where pacman's non-interactive default provider selection
+    # contradicts an explicitly requested package.
+    #
+    # When pacman finds multiple providers for a soname or virtual dependency,
+    # it silently picks provider #1. This is only a real problem when an
+    # explicitly requested package is *among the alternatives but is not the
+    # default* — in that case the soname resolver has overridden the explicit
+    # request. The check raises only in this specific contradiction case;
+    # mere ambiguity without a contradicted explicit preference is silent.
+    # Hence: no false positives by construction (at the cost of not flagging
+    # ambiguities where no explicit preference was ever expressed).
+
+    my %explicit = @explicit-packages.map: { $_ => True };
+    my @lines = $output.lines;
+    my @conflicts;
+
+    my $i = 0;
+    while $i < @lines.elems {
+        unless @lines[$i].contains("providers available for") {
+            $i++;
+            next;
+        }
+
+        my $marker = @lines[$i].trim;
+        my @providers;
+        my $j = $i + 1;
+
+        # Collect provider names until we hit the prompt or an empty line.
+        # Lines look like "   1) iptables  2) iptables-legacy" possibly
+        # interleaved with ":: Repository core" headers (which simply
+        # contain no "N) name" pattern and contribute nothing).
+        while $j < @lines.elems {
+            my $line = @lines[$j];
+            last if $line.contains("Enter a number");
+            last if $line.trim eq '';
+
+            my @names = ($line ~~ m:g/ \d+ \) \s+ ( <[\w.+\-]>+ ) /).map(*[0].Str);
+            @providers.append(@names);
+            $j++;
+        }
+
+        if @providers {
+            my $default = @providers[0];
+            my @explicit-in-set = @providers.grep: { %explicit{$_} };
+
+            if @explicit-in-set && !%explicit{$default} {
+                @conflicts.push: %(
+                    marker    => $marker,
+                    providers => @providers.clone,
+                    default   => $default,
+                    explicit  => @explicit-in-set,
+                );
+            }
+        }
+
+        $i = $j + 1;
+    }
+
+    return unless @conflicts;
+
+    my $msg = "pacstrap selected default providers that contradict the explicit package list:\n\n";
+    for @conflicts -> $c {
+        $msg ~= "  {$c<marker>}\n";
+        $msg ~= "    Providers offered:    { $c<providers>.join(', ') }\n";
+        $msg ~= "    Default (chosen):     { $c<default> }\n";
+        $msg ~= "    Explicitly requested: { $c<explicit>.join(', ') }\n\n";
+    }
+    die $msg;
+}
+
 sub pacstrap() is export {
     my @native-packages = Settings.instance.get-installed-native-packages;
     Logging.echo(@native-packages.gist);
 
     # At this point, the system time is synchronized. We log the status here to include it in bug reports (should include "System clock synchronized: yes").
     run-and-echo("timedatectl", "status");
-    
+
     # In case of an error, we retry once, in case the error was related to a temporary download issue
-    run-and-echo("pacstrap", "-K", "/mnt", |@native-packages, :retry(2));
+    my $pacstrap-output = run-and-echo("pacstrap", "-K", "/mnt", |@native-packages, :retry(2));
+
+    # When pacman has multiple providers for a soname/virtual dep, it picks
+    # provider #1 non-interactively. We flag this only when the chosen
+    # default contradicts an explicitly requested package — never on mere
+    # ambiguity, to avoid false positives. Skipped for release builds.
+    unless Settings.instance.get('release-version') {
+        check-for-overridden-explicit-providers($pacstrap-output, @native-packages);
+    }
 
     # Remove cached package files to free disk space
     shell "rm -f /mnt/var/cache/pacman/pkg/*.pkg.tar.*";

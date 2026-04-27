@@ -90,14 +90,6 @@ Unlike the packages in previous categories, the following do not have Ditana-spe
 - [python-pywebview](https://github.com/r0x0r/pywebview)
 - [stress-ng](https://github.com/ColinIanKing/stress-ng)
 
-##### Chaotic-AUR Integration
-
-Ditana utilizes [Chaotic-AUR](https://github.com/chaotic-aur) to streamline the installation process of AUR packages. This integration significantly reduces build times and computational overhead by providing pre-built packages from the AUR. By default, Chaotic-AUR support is enabled in Ditana, but users have the option to disable it during the installation process.
-
-We extend our heartfelt gratitude to the maintainers of Chaotic-AUR for their invaluable contribution to the Arch Linux community. Their work greatly enhances the user experience by making AUR packages more accessible and easier to manage.
-
-It’s worth noting that the packages listed in this "Repackaged AUR Contributions" section are not available in Chaotic-AUR. These AUR packages are repackaged for the Ditana repository because they are either dependencies for other Ditana-specific packages listed in the previous categories, or for the Ditana installer. By including these repackaged AUR contributions, we ensure a smooth and integrated experience for Ditana users, maintaining consistency across the entire system.
-
 ### Ditana Repository
 
 Main server: https://ditana.org/ditana

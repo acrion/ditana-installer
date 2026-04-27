@@ -46,10 +46,6 @@ sub add-repos-and-sync() is export {
         '--task-run', 
         "%*ENV<HOME>/bind-mount/root/sparrow/tasks/pacman\@enable_multilib={$s.get('enable-multilib') ?? 'y' !! 'n' }";
 
-    if $s.get('enable-chaotic-aur') {
-        run-and-log "%*ENV<HOME>/bind-mount/root/enable-chaotic-aur.sh", 'y';
-    }
-
     Logging.log("Enabling the Ditana repository");
     run-and-log "%*ENV<HOME>/bind-mount/root/enable-ditana.sh";
 

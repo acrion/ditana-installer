@@ -31,13 +31,12 @@ export PATH="$HOME/.raku/bin:$PATH"
 
     echo -e "\033[32m--- Configuring Arch multilib repository --- \033[0m"
     s6 --task-run "sparrow/tasks/pacman@enable_multilib=$ENABLE_MULTILIB"
-    ./enable-chaotic-aur.sh "$ENABLE_CHAOTIC_AUR"
     echo -e "\033[32m--- Enabling the Ditana repository --- \033[0m"
     ./enable-ditana.sh
     echo -e "\033[32m--- Signing Ditana repository --- \033[0m"
     ./sign-ditana.sh
     echo -e "\033[32m--- Syncing new repositories ---\033[0m"
-    pacman -Sy # Sync multilib and chaotic-aur
+    pacman -Sy # Sync multilib
 
     if ! getent group "$USER_GROUP"; then
         groupadd -g "$USER_GROUP" "$USER_NAME"
