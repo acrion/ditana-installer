@@ -329,9 +329,6 @@ END
                 $current-index++;
                 $silent-exit-code=0
             }
-            when 3 { # return from sub-category-selection, see process-categories
-                $silent-exit-code=1
-            }
             when 0xff | 1 { # Escape or Cancel
                 $current-index = $current-index > 0 ?? $current-index - 1 !! 0;
                 $silent-exit-code=1
