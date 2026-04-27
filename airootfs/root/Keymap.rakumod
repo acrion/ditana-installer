@@ -310,6 +310,11 @@ sub copy-console-keyboard-configuration() is export {
         Logging.log("copy-console-keyboard-configuration: copying custom map $map-source to $map-dest");
         $map-dest.IO.parent.mkdir();
         $map-source.IO.copy($map-dest);
+        # Note: embedding this map into the initramfs (via FILES= in
+        # mkinitcpio.conf) happens later in install-and-configure-bootloader.sh.
+        # We cannot use a drop-in in /etc/mkinitcpio.conf.d/ because Arch's
+        # kernel preset files set ALL_config="/etc/mkinitcpio.conf", which
+        # makes mkinitcpio ignore drop-ins (see mkinitcpio(8) -c option).
     }
 }
 

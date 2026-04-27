@@ -118,7 +118,27 @@ sub adjust-mtu-if-needed() is export {
     }
 }
 
+sub proxy-is-running(--> Bool) {
+    # bash supports </dev/tcp/host/port for TCP connection tests.
+    my $proc = run 'timeout', '1.5', 'bash', '-c',
+                   '</dev/tcp/10.0.2.2/9129',
+                   :out, :err;
+    my $available = $proc.exitcode == 0;
+
+    Logging.log("Proxy check on 10.0.2.2:9129 -> "
+                ~ ($available ?? "running" !! "unreachable"));
+    return $available;
+}
+
 sub rate-mirrors() is export {
-    show-dialog-raw('--infobox', "Checking server speeds...", 4, 65);
-    run-and-log "rate-mirrors", "--allow-root", "--save=/etc/pacman.d/mirrorlist", "arch"
+    if Settings.instance.get('virtual-environment') && proxy-is-running() {
+        Logging.log("Using pacoloco proxy for mirrorlist");
+        "/etc/pacman.d/mirrorlist".IO.spurt(
+            "Server = http://10.0.2.2:9129/repo/archlinux/\$repo/os/\$arch\n"
+        );
+    } else {
+        show-dialog-raw('--infobox', "Checking server speeds...", 4, 65);
+        run-and-log "rate-mirrors", "--allow-root",
+                    "--save=/etc/pacman.d/mirrorlist", "arch";
+    }
 }

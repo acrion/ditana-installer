@@ -34,13 +34,21 @@ sub update-terminal-font($silent-exit-code) returns Int is export {
     return $silent-exit-code if $silent-exit-code != 0; # only do this if user navigated forward
 
     my $hook-path = '/tmp/ditana-set-font.sh';
-    if $hook-path.IO.e {
-        Logging.log("Detected hook file that changed the terminal font size, skipping update-terminal-font (which created the hook).");
+    my $hook-already-applied = $hook-path.IO.e;
+
+    if $hook-already-applied {
+        # The previous installer session wrote this hook, the wrapper script
+        # sourced it (running setfont and exporting DISPLAY_SIZE), then
+        # restarted us. The visible font is already correct, but the
+        # Settings cache of this fresh process is empty - so we still need
+        # to recompute terminal-font below and persist it for later use by
+        # configure-terminal-font(). DISPLAY_SIZE is restored via the
+        # detect= entry for "display-size" in hardware-detection.kdl.
+        Logging.log("Detected hook file that changed the terminal font size, skipping setfont (already ran in wrapper script).");
         Logging.log("Content of hook file:");
         Logging.log("{$hook-path.IO.slurp}");
         $hook-path.IO.unlink;
         Settings.instance.set("set-font-hook-exists", False);
-        return $silent-exit-code
     }
 
     my $terminal-columns = Settings.instance.get("terminal-columns");
@@ -73,21 +81,23 @@ sub update-terminal-font($silent-exit-code) returns Int is export {
     Logging.log("Display resolution (not necessarily its native resolution): $display-width × $display-height");
 
     my $terminal-dpi = sqrt($display-width² + $display-height²) / $display-size;
-    
+
     my $desired-font-pt = 10;
     my $font-size = find-closest-font-size($desired-font-pt, $terminal-dpi);
     Logging.log("Font size nearest to {$desired-font-pt}pt: $font-size");
 
     my $terminal-font = $font-size > 12 ?? "ter-1{$font-size}b" !! "ter-1{$font-size}n";
 
-    if Settings.instance.get('tmux') {
-        $hook-path.IO.spurt("setfont $terminal-font\nexport DISPLAY_SIZE=$display-size");
-        die "Interrupting installer to change font size of virtual terminal."
-    } else {
-        qqx{setfont $terminal-font};
-    }
-
     Settings.instance.set("terminal-font", "$terminal-font");
+
+    if !$hook-already-applied {
+        if Settings.instance.get('tmux') {
+            $hook-path.IO.spurt("setfont $terminal-font\nexport DISPLAY_SIZE=$display-size");
+            die "Interrupting installer to change font size of virtual terminal."
+        } else {
+            qqx{setfont $terminal-font};
+        }
+    }
 
     return $silent-exit-code;
 }

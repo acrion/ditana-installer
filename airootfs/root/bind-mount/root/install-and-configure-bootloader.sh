@@ -45,6 +45,29 @@ raku -MSparrow6::DSL -e "
   }
 ";
 
+# Append a path to FILES=(...) in /etc/mkinitcpio.conf if not already present.
+# Drop-in files in /etc/mkinitcpio.conf.d/ would be ignored because the kernel
+# preset files set ALL_config="/etc/mkinitcpio.conf" (passes -c to mkinitcpio,
+# disables drop-in processing - see mkinitcpio(8)).
+add_to_mkinitcpio_files() {
+    local path="$1"
+    if ! grep -qF "$path" /etc/mkinitcpio.conf; then
+        sed -i \
+            -e 's|^FILES=(\(.*\))|FILES=(\1 '"$path"')|' \
+            -e 's|^FILES=( |FILES=(|' \
+            /etc/mkinitcpio.conf
+        touch .mkinitcpio.changed
+    fi
+}
+
+# Embed the custom console keymap into the initramfs so that
+# systemd-vconsole-setup can find it during the early udev-triggered service
+# invocation, before /etc on the real root is fully visible to that context.
+if [[ -f /etc/vconsole-ditana.map ]]; then
+    echo -e "\033[32m--- Embedding /etc/vconsole-ditana.map into initramfs ---\033[0m"
+    add_to_mkinitcpio_files /etc/vconsole-ditana.map
+fi
+
 if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
     # If the root partition is encrypted, embed the key file into the
     # system initramfs. This allows the initramfs to unlock the pool
@@ -54,7 +77,7 @@ if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
     # and is therefore inaccessible without the passphrase.
     if [[ "$ENCRYPT_ROOT_PARTITION" == "y" ]]; then
         echo -e "\033[32m--- Embedding ZFS key file into initramfs for single-prompt boot ---\033[0m"
-        sed -i 's|^FILES=()|FILES=(/etc/zfs/ditana-root.key)|' /etc/mkinitcpio.conf
+        add_to_mkinitcpio_files /etc/zfs/ditana-root.key
     fi
 
     echo -e "\033[32m--- Installing Kernel modules for the Zettabyte File System (zfs-dkms) ---\033[0m"
@@ -221,7 +244,7 @@ else # GRUB (used for all non-zfs file systems)
     fi
 
     grub-mkconfig -o /boot/grub/grub.cfg
-
+    
     if [[ -f .mkinitcpio.changed ]]; then
         mkinitcpio -P
     fi
