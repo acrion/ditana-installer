@@ -32,9 +32,10 @@ sub create-mimeapps-list() is export {
 
     my %mime;
 
-    # Text editor — priority: vscode > fresh > nvim
+    # Text editor — priority: vscode > zed > fresh > nvim
     my $text-editor = do {
         if $s.get("install-vscode")     { "code.desktop" }
+        elsif $s.get("install-zed")     { "dev.zed.Zed.desktop" }
         elsif $s.get("install-fresh")   { "fresh.desktop" }
         else                            { "nvim.desktop" }
     };
@@ -51,11 +52,18 @@ sub create-mimeapps-list() is export {
         }
     }
 
-    # Web browser
-    if $s.get("install-librewolf") {
+    # Web browser — radiolist member is the user's chosen primary browser.
+    # Only one of the four is true at any time, so order does not matter.
+    my $browser-desktop;
+    $browser-desktop = "librewolf.desktop"                  if $s.get("install-librewolf");
+    $browser-desktop = "firefox.desktop"                    if $s.get("install-firefox");
+    $browser-desktop = "com.brave.Browser.desktop"          if $s.get("install-brave");
+    $browser-desktop = "net.mullvad.MullvadBrowser.desktop" if $s.get("install-mullvad-browser");
+
+    if $browser-desktop {
         for <text/html text/xml application/xhtml+xml application/xml
              x-scheme-handler/http x-scheme-handler/https> -> $type {
-            %mime{$type} = "librewolf.desktop";
+            %mime{$type} = $browser-desktop;
         }
     }
 
@@ -171,13 +179,15 @@ sub create-mimeapps-list() is export {
         }
     }
 
-    # Terminal emulator scheme handler (consumed by Nautilus, some GTK file managers,
-    # and certain "Open Terminal Here" actions). Priority matches the KDL block order
-    # and the last-writer-wins behaviour of the /etc/environment TERMINAL entry:
-    # install-foot overrides install-alacritty when both are selected.
+    # Terminal emulator scheme handler (consumed by Nautilus, some GTK file
+    # managers, and certain "Open Terminal Here" actions). The Terminal
+    # Emulator radiolist enforces mutual exclusion, so only one of the
+    # four `install-X` flags is true and assignment order does not matter.
     my $terminal-desktop;
-    $terminal-desktop = "Alacritty.desktop" if $s.get("install-alacritty");
-    $terminal-desktop = "foot.desktop"  if $s.get("install-foot");
+    $terminal-desktop = "footclient.desktop"            if $s.get("install-foot");
+    $terminal-desktop = "Alacritty.desktop"             if $s.get("install-alacritty");
+    $terminal-desktop = "kitty.desktop"                 if $s.get("install-kitty");
+    $terminal-desktop = "com.mitchellh.ghostty.desktop" if $s.get("install-ghostty");
     %mime{"x-scheme-handler/terminal"} = $terminal-desktop if $terminal-desktop;
 
     # Write
@@ -189,3 +199,4 @@ sub create-mimeapps-list() is export {
     $mimeapps-path.IO.spurt($content);
     Logging.log("Created MIME applications list at $mimeapps-path");
 }
+
