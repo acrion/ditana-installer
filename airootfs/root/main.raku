@@ -248,7 +248,7 @@ sub main() {
             Logging.log("Simulation mode: detected Git branch '$branch'");
         }
 
-        my $config-tag = $branch eq 'main' ?? 'latest' !! 'develop';
+        my $config-tag = $branch eq 'main' ?? 'latest' !! 'develop-latest';
         my $config-url = "https://github.com/acrion/ditana-config/releases/download/$config-tag/ditana-config.tar.gz";
 
         my $download = run('curl', '-fsSL', $config-url, '-o', '/tmp/ditana-config.tar.gz', :out, :err);
