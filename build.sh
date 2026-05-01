@@ -73,7 +73,7 @@ if [[ "$current_branch" != "main" ]]; then
     # cleanup trap (set further below) still revert the patch.
     trap reverse_patch_if_needed EXIT
     git status
-    DITANA_CONFIG_TAG="develop"
+    DITANA_CONFIG_TAG="develop-latest"
 else
     DITANA_CONFIG_TAG="latest"
 fi
