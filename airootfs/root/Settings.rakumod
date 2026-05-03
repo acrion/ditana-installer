@@ -50,6 +50,7 @@ class Setting {
     has Array @.first-login-commands =[];
     has Array @.login-commands =[];
     has Array @.autostart = [];  # list of [onlyshowin, script-path] pairs
+    has Array @.mime-defaults = []; # list of [desktop-file, mime1, mime2, ...]
 }
 
 class Settings {
@@ -198,7 +199,7 @@ method load() {
 
         return @packages;
     }
-    
+
     method get-installed-flatpak-packages() {
         my Str @packages;
 
@@ -216,7 +217,25 @@ method load() {
 
         return @packages;
     }
-    
+
+    method get-mime-defaults() {
+        my %mimes;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.mime-defaults && $setting.mime-defaults[0];
+
+            for @($setting.mime-defaults[0]) -> $entry {
+                my $desktop-file = $entry[0].Str;
+                # Der erste Eintrag ist die Desktop-Datei, der Rest sind MIME-Typen
+                for 1..^$entry.elems -> $i {
+                    my $mime-type = $entry[$i].Str;
+                    %mimes{$mime-type} = $desktop-file;
+                }
+            }
+        }
+        return %mimes;
+    }
+
     method get-required-by-chroot() {
         my Str @result;
 
@@ -654,7 +673,8 @@ method load() {
                 login-scripts => $setting.login-scripts.deepmap(*.clone),
                 first-login-commands => $setting.first-login-commands.deepmap(*.clone),
                 login-commands => $setting.login-commands.deepmap(*.clone),
-                autostart => $setting.autostart.deepmap(*.clone)
+                autostart => $setting.autostart.deepmap(*.clone),
+                mime-defaults => $setting.mime-defaults.deepmap(*.clone)
             );
         }
         return %( settings => %cloned, order => %!settings.get-order() );
