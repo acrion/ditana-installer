@@ -259,24 +259,6 @@ method load() {
         return @files;
     }
 
-    method validate-referenced-files() {
-        my @missing;
-        for %!settings.values -> $setting {
-            next unless $setting.files && $setting.files[0];
-            for @($setting.files[0]) -> $file {
-                next unless $file;
-                my $path = "folders{$file.Str}";
-                unless $path.IO.e {
-                    @missing.push("{$setting.name}: $path");
-                }
-            }
-        }
-        if @missing {
-            die "The following files referenced in settings.json are missing:\n"
-              ~ @missing.join("\n");
-        }
-    }
-    
     method !resolve-script-line(Str $line --> Str) {
         if self!is-code($line) {
             my $code = $line.substr(1, *-1);
@@ -314,22 +296,6 @@ method load() {
             }
         }
         return @steps;
-    }
-
-    method validate-chroot-scripts() {
-        my @invalid;
-        for %!settings.values -> $setting {
-            next unless $setting.chroot-script && $setting.chroot-script[0];
-            for @($setting.chroot-script[0]) -> $line {
-                if $line && $line.Str.contains('/etc/skel/') {
-                    @invalid.push("{$setting.name}: $line");
-                }
-            }
-        }
-        if @invalid {
-            die "The following chroot-script steps reference /etc/skel/, which is invalid because chroot-script is executed after user creation. Use early-chroot-script instead:\n"
-              ~ @invalid.join("\n");
-        }
     }
 
     method get-root-script-steps() {

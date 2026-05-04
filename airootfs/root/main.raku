@@ -295,11 +295,7 @@ Timestamp:   $config-date
 This unique identifier is saved in your installed system and can be queried later using the 'lsb_release -cs' command.
 END
         show-dialog-raw('--title', 'Installer Configuration', '--msgbox', $msg, 19, 75);
-
         show-dialog-raw('--title', 'Ditana GNU/Linux Installer', '--infobox', "\nDetecting Hardware...", 10, 50);
-
-        Settings.instance.validate-referenced-files();
-        Settings.instance.validate-chroot-scripts();
     }
 
     if Settings.instance.get('tmux') {
