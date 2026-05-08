@@ -242,9 +242,9 @@ sub add-early-chrooted-step(Str $commands) is export {
 sub generate-chroot-script() is export {
     "bind-mount/root/installation-steps.sh".IO.spurt("");  # clear file
     "bind-mount/root/early-installation-steps.sh".IO.spurt(""); # NEU: clear early file
-    
+
     my $s = Settings.instance;
-    
+
     for $s.get-early-chroot-script-steps -> $step {
         add-early-chrooted-step($step);
     }
@@ -355,7 +355,7 @@ sub generate-session-setup-script() is export {
     my $s = Settings.instance;
     my @once-lines = $s.get-first-login-commands();
     my @always-lines = $s.get-login-commands();
-    
+
     return unless @once-lines || @always-lines;
 
     my $setup-script-path = get-session-setup-script-path();

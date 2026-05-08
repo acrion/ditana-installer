@@ -64,11 +64,11 @@ class Settings {
     has %.installation-steps is InsertionOrderedHash;
     has SetHash $!evaluated-expressions;
     has SetHash $!modified-settings;
-    
+
     submethod TWEAK() {
         self.load();
     }
-    
+
 method load() {
         %!settings = InsertionOrderedHash.new;
         %!installation-steps = InsertionOrderedHash.new;
@@ -156,7 +156,7 @@ method load() {
                 Logging.log("Loaded setting $name, its value will be calculated later.");
             }
         }
-        
+
         self!update-dependent-settings();
     }
 
@@ -246,7 +246,7 @@ method load() {
 
         return @result;
     }
-    
+
     method get-files-for-enabled-settings() {
         my Str @files;
         for %!settings.values -> $setting {
@@ -381,7 +381,7 @@ method load() {
         my $current-value = self.get($setting-name);
         $current-value.defined ^^ $new-value.defined || ($new-value.defined && $new-value ne $current-value)
     }
-    
+
     method set($name, $value) {
         if self.different-value($name, $value) {
             $!modified-settings = SetHash.new;
@@ -397,27 +397,27 @@ method load() {
     method !is-code($str) {
         return $str ~~ /^ '`' .* '`' $/;
     }
-    
+
     method set-to-default($var) {
         my $default-value = %!settings{$var}.default-value;
-        
+
         while self!is-code($default-value) {
             $default-value = self!evaluate-logical-dependency($var, $default-value);
         }
 
         self.set($var, $default-value)
     }
-    
+
     method !set-setting($name, $value) {
         die "Unknown setting: $name" unless %!settings{$name}:exists;
-        
+
         Logging.log("Setting $name to $value");
         %!settings{$name}.current-value = $value;
         $!modified-settings.set($name);
-        
+
         self!update-dependent-settings($name);
     }
-    
+
     method !update-dependent-settings($name=Nil) {
         if $name {
             Logging.log("Updating settings that depend on $name...");
@@ -456,7 +456,7 @@ method load() {
 
         self!evaluate-logical-dependency($name, $available);
     }
-    
+
     method installation-step-is-available($name) is export {
         my $available = %!installation-steps{$name}<available>;
 
@@ -477,13 +477,13 @@ method load() {
 
     method get-installation-step(@path, $name) {
         my $current = %!installation-steps;
-        
+
         for @path -> $path-segment {
             if $current{$path-segment} && $current{$path-segment}<type> eq 'categories' {
                 $current = $current{$path-segment}<categories>;
                 next;
             }
-            
+
             my $found = False;
             for $current.list -> $item {
                 if $item<name> eq $path-segment {
@@ -496,11 +496,11 @@ method load() {
             }
             die "get-installation-step: Did not find '$path-segment' in list" unless $found;
         }
-        
+
         for $current.list -> $item {
             return $item if $item<name> eq $name;
         }
-        
+
         die "get-installation-step: did not find '$name' in '{@path.gist}'";
     }
 
@@ -509,10 +509,10 @@ method load() {
         die "Attribute '$attribute' in installation step '$name' of '{@path.gist}' is undefined." unless $installation-step{$attribute}.defined;
         $installation-step{$attribute} = $value;
     }
-    
+
     method modify-setting($name, $attribute, $value) is export {
         die "Setting '$name' not found" unless %!settings{$name}:exists;
-        die "Attribute '$attribute' in setting '$name' is undefined." 
+        die "Attribute '$attribute' in setting '$name' is undefined."
             unless %!settings{$name}."$attribute"().defined;
         %!settings{$name}."$attribute"() = $value;
     }
@@ -524,7 +524,7 @@ method load() {
 
     method !evaluate-logical-dependency-internal($name-of-setting, $code-including-backticks) {
         my $indent = ' ' x ($!evaluated-expressions.elems * 2);
-        
+
         if $!evaluated-expressions{$code-including-backticks} {
             Logging.log("$indent  Circular dependency detected for: $code-including-backticks");
             return Any;
@@ -532,24 +532,24 @@ method load() {
         $!evaluated-expressions.set($code-including-backticks);
 
         my $code = $code-including-backticks.substr(1, *-1); # remove backticks
-        
+
         # Check for common configuration errors
         if $code eq 'true' || $code eq 'false' {
             die "Error in '$name-of-setting': Boolean literals 'true' or 'false' must not be enclosed in backticks. " ~
                 "Use plain boolean values in JSON: true or false (without quotes or backticks).";
         }
-        
+
         if $code ~~ /^\d+$/ {
             die "Error in '$name-of-setting': Numeric literals must not be enclosed in backticks. " ~
                 "Use plain numeric values in JSON: $code (without quotes or backticks).";
         }
-        
+
         my @variables = $code.match(/<[a..z A..Z _]><[a..z A..Z 0..9 \-_]>*/, :g)
                             .grep(* !~~ any('OR', 'AND', 'NOT', 'True', 'False'))
                             .map(*.Str);
-        
+
         Logging.log("$indent  $name-of-setting = $code (found variables: {@variables})");
-        
+
         my $evaluated = $code;
         for @variables -> $var {
             my $val = %!settings{$var};
@@ -579,16 +579,20 @@ method load() {
 
                 if $value.defined {
                     my $modified-value = $value ~~ Bool ?? "Tristate.new(" ~ $value ~ ")" !! $value;
-                    $evaluated ~~ s:g/<<$var>>/$modified-value/;
+                    # Kebab-aware identifier boundaries: `-` is part of our setting names,
+                    # so the standard word-boundary atoms `<<` and `>>` (which treat `-` as
+                    # a break) would substitute `install-cosmic` inside `install-cosmic-files`.
+                    # We require explicit non-identifier neighbours instead.
+                    $evaluated ~~ s:g/<!after <[\w\-]>> $var <!before <[\w\-]>>/$modified-value/;
                 } else {
-                    $evaluated ~~ s:g/<<$var>>/Tristate.new(Any)/;
+                    $evaluated ~~ s:g/<!after <[\w\-]>> $var <!before <[\w\-]>>/Tristate.new(Any)/;
                 }
             } else {
                 Logging.log("$indent  Dependent variable $var is undefined.");
                 return Any
             }
         }
-        
+
         CATCH {
             die "$_: Code: '$code', evaluated to '$evaluated'";
         }
@@ -599,16 +603,16 @@ method load() {
         $evaluated = $evaluated.subst("Tristate.new(False)", "False", :g);
         Logging.log("$indent  $name-of-setting = $evaluated = $result");
         return $result
-    }    
+    }
 
     method get-dialog($dialog-name) {
-        %!settings.pairs.map(*.value).grep({ 
+        %!settings.pairs.map(*.value).grep({
             .dialog-name eq $dialog-name && self.is-available(.name)
         }).List;
     }
 
     method get-unavailable-dialog-settings($dialog-name) {
-        %!settings.pairs.map(*.value).grep({ 
+        %!settings.pairs.map(*.value).grep({
             .dialog-name eq $dialog-name && !self.is-available(.name)
         }).List;
     }
@@ -650,7 +654,7 @@ method load() {
         if !%backup<settings>.defined || !%backup<order>.defined {
             die "Invalid backup structure: missing 'settings' or 'order' key";
         }
-        
+
         %!settings = InsertionOrderedHash.new;
         for @(%backup<order>) -> $key {
             if !%backup<settings>{$key}.defined {
@@ -666,13 +670,13 @@ method load() {
 
         for %!settings.kv -> $name, $setting {
             next unless %other{$name}:exists;
-            
+
             my $other-value = %other{$name}.current-value;
             my $current-value = $setting.current-value;
 
             my $is-internal = !$setting.short-description;
             my $dialog-description = $setting.dialog-name ?? "{$setting.dialog-name} " !! "";
-            
+
             my $difference-line = '';
             if !$other-value.defined {
                 $difference-line = "{$dialog-description}«{$setting.name}»: undefined --> $current-value\n" if $current-value.defined;
@@ -684,7 +688,7 @@ method load() {
                 my $description = $is-internal ?? $setting.name !! $setting.short-description;
                 $difference-line = "{$dialog-description}«{$description}»: $other-value --> $current-value\n";
             }
-            
+
             if $difference-line {
                 if $is-internal {
                     $internal-differences ~= $difference-line;
@@ -693,12 +697,12 @@ method load() {
                 }
             }
         }
-        
+
         my $output = '';
         $output ~= "\nThe following related settings will be updated and can be reviewed or adjusted in the corresponding dialogs:\n\n" ~ $normal-differences if $normal-differences;
         $output ~= "\n" if $output && $internal-differences;
         $output ~= "Required System Adjustments:\n\n" ~ $internal-differences if $internal-differences;
-        
+
         return $output;
     }
 
