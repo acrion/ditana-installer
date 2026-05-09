@@ -26,7 +26,7 @@ export PATH="$HOME/.raku/bin:$PATH"
 
 {
     set -e
-    
+
     mount -a
 
     echo -e "\033[32m--- Configuring Arch multilib repository --- \033[0m"
@@ -53,16 +53,16 @@ export PATH="$HOME/.raku/bin:$PATH"
     source early-installation-steps.sh
     # restore current directory (potentially changed by early-installation-steps.sh)
     cd "$HOME"
-    
+
     echo -e "\033[32m--- Creating user $USER_NAME with UID $USER_ID and GID $USER_GROUP ---\033[0m"
     useradd -m -u "$USER_ID" -g "$USER_GROUP" "$USER_NAME"
-    
-    # Create the temporary builduser. We need it to use makepkg and pikaur
+
+    # Create the temporary builduser. We need it to use makepkg and paru
     echo -e "\033[32m--- Creating temporary build user ---\033[0m"
     useradd -m builduser
     usermod -aG wheel builduser
     TEMP_SUDOERS=$(mktemp)
-    echo 'builduser ALL=(ALL) NOPASSWD: /usr/bin/pacman, /usr/bin/pikaur' > "$TEMP_SUDOERS"
+    echo 'builduser ALL=(ALL) NOPASSWD: /usr/bin/pacman, /usr/bin/paru' > "$TEMP_SUDOERS"
     echo 'Defaults:builduser env_keep += "EDITOR"' >> "$TEMP_SUDOERS"
 
     if visudo -c -f "$TEMP_SUDOERS"; then
@@ -100,7 +100,7 @@ export PATH="$HOME/.raku/bin:$PATH"
     fi
 
     if is_package_available "$SPELL_CHECKER"; then
-        runuser -u builduser -- pikaur -S "$SPELL_CHECKER" --noconfirm || true
+        runuser -u builduser -- paru -S "$SPELL_CHECKER" --noconfirm || true
         echo -e "\033[32m--- Installing spell checker '$SPELL_CHECKER' for $LOWERCASE_LOCALE ---\033[0m"
     else
         echo -e "\033[33m--- Unable to install spell checker for $MAIN_LOCALE because '$SPELL_CHECKER' is not available ---\033[0m"
@@ -170,7 +170,7 @@ while true; do
 
     if ! PW_OUTPUT=$(is_secure_password "$USER_PASSWORD" 2>&1); then
         echo "User entered insecure password." >> /var/log/install_ditana.log
-        
+
         # Ask user if they want to use the insecure password anyway
         if dialog --title 'Insecure Password' --yes-label 'Enter Secure Password' --no-label 'Use Anyway' \
                   --yesno "$PW_OUTPUT\n\nWould you like to enter a more secure password?" 10 80
@@ -217,7 +217,7 @@ clear
             fi
         fi
         echo -e "\033[32m--- Finished first snapshot ---\033[0m"
-    fi    
+    fi
 } 2>&1 | tee -a /var/log/install_ditana.log
 
 echo "Showing dialog: The system installation is finished, please confirm to reboot." >>/var/log/install_ditana.log

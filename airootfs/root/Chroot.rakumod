@@ -231,7 +231,7 @@ sub chroot-installation() is export {
 sub generate-aur-package-installation-script() is export {
     for Settings.instance.get-installed-aur-packages {
         add-chrooted-step("echo -e '\\033[32m--- Installing $_ ---\\033[0m'");
-        add-chrooted-step("runuser -u builduser -- pikaur -S $_ --noconfirm || true")
+        add-chrooted-step("runuser -u builduser -- paru -S $_ --noconfirm || true")
     }
 }
 
@@ -250,7 +250,7 @@ sub generate-chroot-script() is export {
     }
 
     # Check if a package is available natively or in the AUR
-    # This function is used as an alternative to pikaur -Si, which requires systemd (unavailable in chroot)
+    # This function is used as an alternative to paru -Si, which requires systemd (unavailable in chroot)
     add-chrooted-step(q:to/FUNC/.chomp);
     is_package_available() {
         local package_name="$1"
