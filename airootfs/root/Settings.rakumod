@@ -226,7 +226,7 @@ method load() {
 
             for @($setting.mime-defaults[0]) -> $entry {
                 my $desktop-file = $entry[0].Str;
-                # Der erste Eintrag ist die Desktop-Datei, der Rest sind MIME-Typen
+                # The first entry is the desktop file; the rest are MIME types
                 for 1..^$entry.elems -> $i {
                     my $mime-type = $entry[$i].Str;
                     %mimes{$mime-type} = $desktop-file;

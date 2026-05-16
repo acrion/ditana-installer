@@ -69,10 +69,10 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) ret
             qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $previous-dialog-name ← <Back> #[align=centre,fg=white,bg=black] $current-dialog-name #[align=right,fg=green,bg=green] $previous-dialog-name ← <Back> "};
         }
         $selected-category = configure-and-show-dialog($dialog);
-        
+
         if $selected-category.chars > 0 {
             my $selected-dialog = @($dialog<categories>).first(*<name> eq $selected-category);
-            
+
             if $selected-dialog {
                 my $selected-dialog-name = kebab-to-title($selected-dialog<name>);
                 given $selected-dialog<type> {
@@ -186,7 +186,7 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
     }
 
     my $result=$silent-exit-code;
-    
+
     given $installation-step<type> {
         when 'categories' {
             $result = process-categories($installation-step, $previous-dialog-name, $current-dialog-name);
@@ -225,6 +225,22 @@ sub debug-info() {
 
     say $debug-info;
     Logging.log($debug-info);
+}
+
+# Setup procedures (those whose dispatch function takes no arguments and
+# does not declare `returns Int`) perform one-time configuration: pacman
+# sync, keyring update, mirror rating, swap default, etc. They must run
+# at most once per installer session, regardless of how often the user
+# navigates back and forward across them. Interactive procedures (which
+# take $silent-exit-code or return Int) remain re-entrant.
+my %setup-procedure-ran;
+
+sub is-setup-procedure($installation-step --> Bool) {
+    return False unless $installation-step<type> eq 'procedure';
+    my $name = $installation-step<name>;
+    return False unless %dispatch{$name}:exists;
+    my &proc := %dispatch{$name};
+    return &proc.arity == 0 && &proc.returns !~~ Int;
 }
 
 sub main() {
@@ -316,18 +332,41 @@ END
 
     while $current-index < @installation-steps.elems {
         my $installation-step = @installation-steps[$current-index];
-        my $result = Settings.instance.installation-step-is-available($installation-step<name>)
-            ?? process-installation-step($installation-step,$current-index,$silent-exit-code)
+        my $name = $installation-step<name>;
+
+        # Skip setup procedures that have already run in this session. This
+        # makes them idempotent across the entire navigation graph: forward
+        # re-entry after a Back-Then-Forward sequence as well as direct
+        # backward traversal. Interactive procedures (those whose dispatch
+        # function takes $silent-exit-code or returns Int) are never marked
+        # here and remain re-entrant in both directions, so dialogs like
+        # `choose-region-or-timezone` or `select-disk` stay reachable when
+        # the user navigates back through them.
+        if %setup-procedure-ran{$name} {
+            Logging.log("Skipping already-executed setup procedure '$name'");
+            $current-index = $silent-exit-code == 0
+                ?? $current-index + 1
+                !! ($current-index > 0 ?? $current-index - 1 !! 0);
+            next;
+        }
+
+        my $result = Settings.instance.installation-step-is-available($name)
+            ?? process-installation-step($installation-step, $current-index, $silent-exit-code)
             !! $silent-exit-code;
 
         given $result {
             when 0 { # OK / Proceed
+                # Record a successful forward pass through a setup procedure
+                # so that any future visit (forward or backward) skips it.
+                if is-setup-procedure($installation-step) {
+                    %setup-procedure-ran{$name} = True;
+                }
                 $current-index++;
-                $silent-exit-code=0
+                $silent-exit-code = 0;
             }
             when 0xff | 1 { # Escape or Cancel
                 $current-index = $current-index > 0 ?? $current-index - 1 !! 0;
-                $silent-exit-code=1
+                $silent-exit-code = 1;
             }
         }
     }

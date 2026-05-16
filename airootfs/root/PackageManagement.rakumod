@@ -25,11 +25,6 @@ use RunAndLog;
 use Settings;
 
 sub add-repos-and-sync() is export {
-    state $added-repos is default(False);
-    return if $added-repos;
-    $added-repos = True;
-    return unless Settings.instance.get('real-install');
-    
     my $s = Settings.instance;
 
     return unless $s.get('real-install');
@@ -38,12 +33,12 @@ sub add-repos-and-sync() is export {
     establish-internet-connection();
 
     show-dialog-raw('--infobox', "Downloading software information...", 4, 65);
-    
+
     run-and-log 'pacman-key', '--init'; # initialize pacman keyring
 
     Logging.log("Configuring Arch multilib repository");
-    run-and-log 's6', 
-        '--task-run', 
+    run-and-log 's6',
+        '--task-run',
         "%*ENV<HOME>/bind-mount/root/sparrow/tasks/pacman\@enable_multilib={$s.get('enable-multilib') ?? 'y' !! 'n' }";
 
     Logging.log("Enabling the Ditana repository");
@@ -68,7 +63,7 @@ sub update-mirrorlist is export {
     # Update the Live ISO's pacman mirrorlist to use its latest version, rather than the one from ISO build time
     show-dialog-raw('--infobox', "Finding download servers...", 4, 65);
     run-and-log("pacman", "-Sy", "--noconfirm", "pacman-mirrorlist");
-    
+
     # Use the updated mirrorlist if pacnew was created
     my $pacnew = "/etc/pacman.d/mirrorlist.pacnew".IO;
     if $pacnew.e {

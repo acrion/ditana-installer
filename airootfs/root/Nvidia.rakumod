@@ -52,11 +52,11 @@ sub get-nvidia-driver-version($pci-id) is export {
             return Nil;
         }
     }
-    
+
     show-dialog-raw('--infobox', "Checking the required driver version for your NVIDIA graphics card with PCI ID $pci-id...", 5, 52);
-    
+
     my $nvidia_legacy_gpu_page = download-and-filter-nvidia-legacy-page();
-    
+
     unless $nvidia_legacy_gpu_page {
         Logging.log("get-nvidia-driver-version: We fallback to a cached version of https://www.nvidia.com/en-us/drivers/unix/legacy-gpu to check if PCI ID $pci-id requires a legacy driver.");
         $nvidia_legacy_gpu_page='/root/cached_legacy_gpu_page.html'; # provided during ISO generation by build.sh
@@ -74,7 +74,7 @@ sub check-nvidia($silent-exit-code) returns Int is export {
     $checked-nvidia = True;
 
     my $s = Settings.instance;
-    
+
     return $silent-exit-code unless $s.get('nvidia-pci-id');
 
     my $pci-id = $s.get('nvidia-pci-id');
@@ -106,7 +106,7 @@ sub check-nvidia($silent-exit-code) returns Int is export {
         my $nvidia-driver-version = get-nvidia-driver-version($pci-id);
 
         if $nvidia-driver-version eq 'latest' {
-            # The GPU is not listed as legacy on the NVIcached_open_gpu_page.txtDIA page, but also not in the open-source
+            # The GPU is not listed as legacy on the NVIDIA page, but also not in the open-source
             # GPU list. This indicates a Maxwell, Pascal, or Volta GPU (the NVIDIA legacy page has
             # not yet been updated to include 580.xx as a legacy tier as of 2025-12). These GPUs
             # require the nvidia-580xx-dkms proprietary driver.
