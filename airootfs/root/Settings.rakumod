@@ -425,15 +425,18 @@ method load() {
             Logging.log("Updating all dependent settings...");
         }
         for %!settings.kv -> $dependent-name, $setting {
-            next if $!modified-settings{$dependent-name} && %!settings{$dependent-name}.current-value.defined; # Skip settings that have already been assigned a value in the context of recursive calls
             my $expr = $setting.default-value;
             next if $expr !~~ Str;
             next unless self!is-code($expr); # Skip settings that do not depend on code
             next if $name && $expr !~~ /$name/;  # Skip if this setting isn’t part of the expression
+
             my $new-value = self!evaluate-logical-dependency($dependent-name, $expr);
+
             if $new-value.defined {
-                Logging.log("Setting $dependent-name to $new-value");
-                self!set-setting($dependent-name, $new-value);
+                if self.different-value($dependent-name, $new-value) {
+                    Logging.log("Setting $dependent-name to $new-value");
+                    self!set-setting($dependent-name, $new-value);
+                }
             } else {
                 Logging.log("Value for dependent setting $dependent-name could not be determined due to undefined dependent settings.")
             }
@@ -525,11 +528,11 @@ method load() {
     method !evaluate-logical-dependency-internal($name-of-setting, $code-including-backticks) {
         my $indent = ' ' x ($!evaluated-expressions.elems * 2);
 
-        if $!evaluated-expressions{$code-including-backticks} {
-            Logging.log("$indent  Circular dependency detected for: $code-including-backticks");
+        if $!evaluated-expressions{$name-of-setting} {
+            Logging.log("$indent  Circular dependency detected for: $name-of-setting");
             return Any;
         }
-        $!evaluated-expressions.set($code-including-backticks);
+        $!evaluated-expressions.set($name-of-setting);
 
         my $code = $code-including-backticks.substr(1, *-1); # remove backticks
 
