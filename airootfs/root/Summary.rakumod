@@ -30,7 +30,7 @@ sub add-to-list($list, $item) {
 sub get-list-of-mitigations() {
     my $s = Settings.instance;
     my $list = "";
-    
+
     $list = add-to-list($list, "        Spectre Variant 2 (spectre_v2=on)") if $s.get('kernel-option-spec2');
     $list = add-to-list($list, "        L1 Terminal Fault (l1tf=full,force)") if $s.get('kernel-option-l1tff');
     $list = add-to-list($list, "        MDS (mds=full,nosmt)") if $s.get('kernel-option-mdsfu');
@@ -41,7 +41,7 @@ sub get-list-of-mitigations() {
     $list = add-to-list($list, "        SRSO (spec_rstack_overflow=ibpb spectre_v2_user=on)") if $s.get('kernel-option-srsom');
     $list = add-to-list($list, "        Gather Data Sampling (gather_data_sampling=force)") if $s.get('kernel-option-gdsfo');
     $list = add-to-list($list, "        RFDS (reg_file_data_sampling=on)") if $s.get('kernel-option-rfdso');
-    
+
     return $list;
 }
 
@@ -50,7 +50,6 @@ sub get-kernel-description() {
     return "Standard Kernel (Stable)" if $s.get('install-standard-stable-kernel');
     return "Standard Kernel (LTS)" if $s.get('install-standard-lts-kernel');
     return "Hardened Kernel (Stable)" if $s.get('install-hardened-stable-kernel');
-    return "Hardened Kernel (LTS)" if $s.get('install-hardened-lts-kernel');
     return "Realtime Kernel (LTS)" if $s.get('install-realtime-lts-kernel');
     return "Zen Kernel (Stable)" if $s.get('install-zen-kernel');
     return "Undefined";
@@ -95,7 +94,7 @@ sub get-kernel-params-description() {
     Logging.log("kernel-option-mitof = {$s.get('kernel-option-mitof')}");
     Logging.log("total-ram-gib       = {$s.get('total-ram-gib')}");
     Logging.log("install-zram        = {$s.get('install-zram')}");
-    
+
     if $s.get('kernel-option-sysrq') &&
        $s.get('kernel-option-vfsca') == ($s.get('total-ram-gib')>=24) &&
        $s.get('kernel-option-compa') == ($s.get('total-ram-gib')>=24) &&
@@ -133,7 +132,7 @@ sub get-kernel-params-description() {
        !$s.get('kernel-option-mitof') {
         return "Recommended (Ditana customized)";
     }
-    
+
     unless $s.get('kernel-option-sysrq') ||
        $s.get('kernel-option-vfsca') ||
        $s.get('kernel-option-compa') ||
@@ -171,7 +170,7 @@ sub get-kernel-params-description() {
        $s.get('kernel-option-mitof') {
         return "Kernel Default";
     }
-    
+
     return "Customized by user";
 }
 
@@ -179,19 +178,19 @@ sub get-mitigations-description() {
     my $s = Settings.instance;
     my $description = "";
     my $mitigation-list = get-list-of-mitigations();
-    
+
     if $mitigation-list {
         $description = "Enforced High Security Mitigations for this CPU:\n\n$mitigation-list";
     }
-    
+
     if $s.get('kernel-option-mitof') {
         $description ~= "Security Risk! All mitigations for this CPU’s vulnerabilities have been disabled. This affects many more vulnerabilities than those listed in the CPU Vulnerability Mitigation Options dialog. ";
     }
-    
+
     if $s.get('kernel-option-ibtof') {
         $description ~= "Security Risk! The Mitigation for Intel Branch Target Injection has been disabled.";
     }
-    
+
     return $description || "Kernel default";
 }
 
@@ -228,7 +227,7 @@ CPU Vulnerability Mitigations: $mitigations-description
 
 By pressing the Escape-Key you may navigate backwards and make changes. Note that the $nvidia-mention
 Kernel and Boot Init System settings are available in the Menu «Advanced settings».";
-    
+
     my %dialog-result = show-dialog-raw(
         '--defaultno',
         '--no-collapse',
@@ -236,6 +235,6 @@ Kernel and Boot Init System settings are available in the Menu «Advanced settin
         $instruction,
         $instruction.lines.elems+4,
         98);
-    
+
     return %dialog-result<status>;
 }
