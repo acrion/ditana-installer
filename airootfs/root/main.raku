@@ -66,7 +66,7 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) ret
     my $selected-category;
     repeat {
         if Settings.instance.get('tmux') {
-            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $previous-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $current-dialog-name #[align=right,fg=#21262d,bg=#21262d] $previous-dialog-name ← <Back> "};
+            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $previous-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $current-dialog-name #[align=right,fg=#21262d,bg=#21262d] $previous-dialog-name ← <Back> "};
         }
         $selected-category = configure-and-show-dialog($dialog);
 
@@ -81,19 +81,19 @@ sub process-categories($dialog, $previous-dialog-name, $current-dialog-name) ret
                     }
                     when 'checklist'|'radiolist' {
                         if Settings.instance.get('tmux') {
-                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $selected-dialog-name #[align=right,fg=#21262d,bg=#21262d] $current-dialog-name ← <Back> "};
+                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $selected-dialog-name #[align=right,fg=#21262d,bg=#21262d] $current-dialog-name ← <Back> "};
                         }
                         configure-and-show-dialog($selected-dialog);
                     }
                     when 'ask-for-setting' {
                         if Settings.instance.get('tmux') {
-                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $selected-dialog-name #[align=right,fg=#21262d,bg=#21262d] $current-dialog-name ← <Back> "};
+                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $selected-dialog-name #[align=right,fg=#21262d,bg=#21262d] $current-dialog-name ← <Back> "};
                         }
                         ask-for-setting($selected-dialog);
                     }
                     when 'ask-for-yes-no' {
                         if Settings.instance.get('tmux') {
-                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $selected-dialog-name #[align=right,fg=#21262d,bg=#21262d] $current-dialog-name ← <Back> "};
+                            qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $current-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $selected-dialog-name #[align=right,fg=#21262d,bg=#21262d] $current-dialog-name ← <Back> "};
                         }
                         ask-for-yes-no($selected-dialog);
                     }
@@ -165,7 +165,7 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
         Logging.echo($log-entry);
 
         if Settings.instance.get('tmux') {
-            qqx{tmux set -g "status-format[0]" "#[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $current-dialog-name "}
+            qqx{tmux set -g "status-format[0]" "#[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $current-dialog-name "}
         }
     } else {
         Logging.log($log-entry);
@@ -173,14 +173,14 @@ sub process-installation-step($installation-step, $current-index, $silent-exit-c
         if Settings.instance.get('tmux') {
             if $current-index > 0 {
                 if $current-index < @installation-steps.elems-1 {
-                    qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $previous-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $current-dialog-name #[align=right,fg=white,bg=black] <Next> → $next-dialog-name "}
+                    qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $previous-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $current-dialog-name #[align=right,fg=white,bg=black] <Next> → $next-dialog-name "}
                 }
                 else
                 {
-                    qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $previous-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $current-dialog-name #[align=right,fg=#21262d,bg=#21262d] $previous-dialog-name ← <Back> "}
+                    qqx{tmux set -g "status-format[0]" "#[align=left,fg=white,bg=black] $previous-dialog-name ← <Back> #[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $current-dialog-name #[align=right,fg=#21262d,bg=#21262d] $previous-dialog-name ← <Back> "}
                 }
             } elsif $current-index < @installation-steps.elems-1 {
-                qqx{tmux set -g "status-format[0]" "#[align=centre,bg=black,fg=#39c5cf]●#[fg=white] $current-dialog-name #[align=right,fg=white,bg=black] <Next> → $next-dialog-name"}
+                qqx{tmux set -g "status-format[0]" "#[align=centre,bg=black,fg=#39c5cf]•#[fg=white] $current-dialog-name #[align=right,fg=white,bg=black] <Next> → $next-dialog-name"}
             }
         }
     }
@@ -244,6 +244,7 @@ sub is-setup-procedure($installation-step --> Bool) {
 }
 
 sub main() {
+
     if !'/tmp/ditana-set-font.sh'.IO.e {
         welcome();
 
