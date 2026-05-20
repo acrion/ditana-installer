@@ -1,0 +1,44 @@
+# Ditana installer dialog theme.
+# Requires the OSC P palette from the installer entry point.
+
+use_shadow = OFF
+use_colors = ON
+
+screen_color                = (WHITE,BLACK,OFF)
+dialog_color                = (WHITE,BLACK,OFF)
+title_color                 = (YELLOW,BLACK,ON)
+border_color                = (YELLOW,BLACK,OFF)
+border2_color               = (YELLOW,BLACK,OFF)
+
+button_active_color         = (BLACK,YELLOW,ON)
+button_inactive_color       = (WHITE,BLACK,OFF)
+button_key_active_color     = (BLACK,YELLOW,ON)
+button_key_inactive_color   = (RED,BLACK,OFF)
+button_label_active_color   = (BLACK,YELLOW,ON)
+button_label_inactive_color = (WHITE,BLACK,OFF)
+
+inputbox_color              = (WHITE,BLACK,OFF)
+inputbox_border_color       = (YELLOW,BLACK,OFF)
+inputbox_border2_color      = (YELLOW,BLACK,OFF)
+
+menubox_color               = (WHITE,BLACK,OFF)
+menubox_border_color        = (YELLOW,BLACK,OFF)
+menubox_border2_color       = (YELLOW,BLACK,OFF)
+item_color                  = (WHITE,BLACK,OFF)
+item_selected_color         = (BLACK,YELLOW,ON)
+tag_color                   = (YELLOW,BLACK,ON)
+tag_selected_color          = (BLACK,YELLOW,ON)
+tag_key_color               = (YELLOW,BLACK,ON)
+tag_key_selected_color      = (BLACK,YELLOW,ON)
+
+check_color                 = (WHITE,BLACK,OFF)
+check_selected_color        = (BLACK,YELLOW,ON)
+
+uarrow_color                = (YELLOW,BLACK,ON)
+darrow_color                = (YELLOW,BLACK,ON)
+position_indicator_color    = (YELLOW,BLACK,ON)
+gauge_color                 = (YELLOW,BLACK,ON)
+form_active_text_color      = (BLACK,YELLOW,ON)
+form_text_color             = (WHITE,BLACK,OFF)
+form_item_readonly_color    = (BLACK,WHITE,OFF)
+itemhelp_color              = (WHITE,BLACK,OFF)
