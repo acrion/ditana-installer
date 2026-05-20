@@ -32,7 +32,7 @@ sub connected-to-internet() returns Bool {
         Logging.log("No internet connection ditana.org and kernel.org (simulated)");
         return False;
     }
-    
+
     if run('curl', '-s', '--head', '--fail', 'https://ditana.org', :err(False), :out(False)).exitcode == 0 {
         Logging.log("Verified internet connection to ditana.org");
         return True;
@@ -42,7 +42,7 @@ sub connected-to-internet() returns Bool {
         Logging.log("Verified internet connection to kernel.org");
         return True;
     }
-    
+
     Logging.log("No internet connection ditana.org and kernel.org");
     return False;
 }
@@ -171,7 +171,7 @@ sub establish-internet-connection() is export {
                     '--infobox', "\nScanning Wi-Fi networks with device {%device-name<value>}...",
                     10, 50
                 );
-                
+
                 run('iwctl', 'station', %device-name<value>, 'scan', :out(False), :err(False));
                 my %ssid = choose-ssid(%device-name<value>);
 
@@ -222,6 +222,7 @@ sub establish-internet-connection() is export {
                             else {
                                 # The temporary file initialize-wifi.sh contains the Wi-Fi password.
                                 # It is executed and then deleted by folders/usr/lib/ditana/initialize-system-as-root
+                                "folders/usr/lib/ditana".IO.mkdir;
                                 my $wifi-script = 'folders/usr/lib/ditana/initialize-wifi.sh'.IO;
                                 $wifi-script.spurt("nmcli dev wifi connect '$ssid' password '$ssid-passphrase'\n");
                                 $wifi-script.IO.chmod(0o700);

@@ -343,7 +343,7 @@ sub format-and-mount-root-partition(Str $partition) {
         my $mount-opts = $s.get('disable-atimes') ?? 'noatime' !! '';
 
         Logging.echo("Mounting the root partition $target-partition");
-        run-and-echo('mount', '-o', $mount-opts, $target-partition, '/mnt');
+        run-and-echo('mount', '-t', $filesystem, '-o', $mount-opts, $target-partition, '/mnt');
 
         if $s.get('btrfs-filesystem') {
             $mount-opts = ',' ~ $mount-opts if $mount-opts;
@@ -352,9 +352,9 @@ sub format-and-mount-root-partition(Str $partition) {
             run-and-echo('btrfs', 'subvolume', 'create', '/mnt/@home');
             run-and-echo('umount', '/mnt');
 
-            run-and-echo('mount', '-o', "subvol=@,compress=zstd{$mount-opts}", $target-partition, '/mnt');
+            run-and-echo('mount', '-t', 'btrfs', '-o', "subvol=@,compress=zstd{$mount-opts}", $target-partition, '/mnt');
             run-and-echo('mkdir', '/mnt/home');
-            run-and-echo('mount', '-o', "subvol=@home,compress=zstd{$mount-opts}", $target-partition, '/mnt/home');
+            run-and-echo('mount', '-t', 'btrfs', '-o', "subvol=@home,compress=zstd{$mount-opts}", $target-partition, '/mnt/home');
         }
     }
 }
@@ -376,7 +376,8 @@ sub partition-with-sgdisk(Str $install-disk) {
     run-and-echo('sgdisk', '--clear', $disk);
 
     my $create-efi-partition = False;
-    my $create-bios-partition = False;
+    my $create-bios-zfs-partition = False;
+    my $create-bios-grub-partition = False;
 
     if $s.get('uefi') {
         if $s.get('bootloader-partition') eq 'new' {
@@ -386,11 +387,15 @@ sub partition-with-sgdisk(Str $install-disk) {
             Logging.log("Won’t create an EFI partition, because '{$s.get('bootloader-partition')}' on other disk will be used");
         }
     } else {
-        Logging.log("Not an EFI system, therefore a BIOS system partition will be created on $install-disk");
-        $create-bios-partition = $s.get('zfs-filesystem');
+        Logging.log("Not an EFI system. Determining correct BIOS bootloader partition type...");
+        if $s.get('zfs-filesystem') {
+            $create-bios-zfs-partition = True;
+        } else {
+            $create-bios-grub-partition = True;
+        }
     }
 
-    # Step 2: bootloader partition (EFI or BIOS), if needed.
+    # Step 2: bootloader partition (EFI, BIOS-Syslinux, oder BIOS-GRUB)
     if $create-efi-partition {
         my $n = $next-partnum++;
         run-and-echo('sgdisk',
@@ -399,7 +404,7 @@ sub partition-with-sgdisk(Str $install-disk) {
             "--change-name={$n}:ditana-efi",
             $disk);
         Logging.log("Created EFI partition (partition $n)");
-    } elsif $create-bios-partition {
+    } elsif $create-bios-zfs-partition {
         my $n = $next-partnum++;
         # 512 MiB BIOS partition holds syslinux + zfsbootmenu. The active/boot
         # flag is set via the legacy BIOS bootable attribute (-A 2).
@@ -409,7 +414,16 @@ sub partition-with-sgdisk(Str $install-disk) {
             "--change-name={$n}:ditana-bios",
             "--attributes={$n}:set:2",
             $disk);
-        Logging.log("Created BIOS system partition (partition $n)");
+        Logging.log("Created BIOS system partition for ZFS/Syslinux (partition $n)");
+    } elsif $create-bios-grub-partition {
+        my $n = $next-partnum++;
+        # 2 MiB unformatted partition exclusively for GRUB's core.img on GPT disks
+        run-and-echo('sgdisk',
+            "--new={$n}:0:+2M",
+            "--typecode={$n}:EF02",
+            "--change-name={$n}:ditana-grub-core",
+            $disk);
+        Logging.log("Created BIOS boot partition for GRUB (partition $n)");
     }
 
     # Step 3: boot partition (only for non-ZFS layouts; ZFS holds /boot itself).
@@ -451,6 +465,15 @@ sub partition-with-sgdisk(Str $install-disk) {
     # because udev can briefly hold devices open right after sgdisk returns.
     run-and-echo('partprobe', $disk, :retry(5));
     run-and-echo('udevadm', 'settle');
+
+    # Fix for legacy BIOS systems (e.g. Dell Precision/Latitude):
+    # Some older BIOSes refuse to execute the MBR boot code on a GPT disk
+    # unless the boot flag (0x80) is set on the protective MBR partition (0xEE).
+    unless $s.get('uefi') {
+        Logging.log("Setting protective MBR boot flag for legacy BIOS compatibility");
+        run-and-echo('parted', '-s', $disk, 'disk_set', 'pmbr_boot', 'on');
+    }
+
     run-and-echo('sync');
     run-and-echo('lsblk');
 }
@@ -491,11 +514,21 @@ sub partition-drive() is export {
 
     Logging.log("Detected partitions of $install-disk: {@partitions.gist}");
 
-    my $create-efi-partition = $s.get('uefi') && $s.get('bootloader-partition') eq 'new';
-    my $create-bios-partition = !$s.get('uefi') && $s.get('zfs-filesystem');
+    Logging.echo("Wiping potential leftover signatures on newly created partitions");
+    for @partitions -> $part {
+        run-and-echo-allow-fail('wipefs', '-a', $part);
+    }
 
-    if $create-efi-partition || $create-bios-partition {
+    my $create-efi-partition = $s.get('uefi') && $s.get('bootloader-partition') eq 'new';
+    my $create-bios-zfs-partition = !$s.get('uefi') && $s.get('zfs-filesystem');
+    my $create-bios-grub-partition = !$s.get('uefi') && !$s.get('zfs-filesystem');
+
+    if $create-efi-partition || $create-bios-zfs-partition {
         $s.set('bootloader-partition', @partitions[$partition-index]);
+        $partition-index++;
+    } elsif $create-bios-grub-partition {
+        # Skip the GRUB core partition (EF02). It must remain unformatted.
+        # grub-install will automatically detect it by its typecode.
         $partition-index++;
     }
 
@@ -512,7 +545,7 @@ sub partition-drive() is export {
 
     if $create-efi-partition {
         run-and-echo('mkfs.fat', '-F32', '-n', 'ditana-efi', $s.get('bootloader-partition'));
-    } elsif $create-bios-partition {
+    } elsif $create-bios-zfs-partition {
         run-and-echo('mkfs.ext4', '-F', '-L', 'ditana-bios', $s.get('bootloader-partition'));
     }
 

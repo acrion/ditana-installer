@@ -192,10 +192,10 @@ list_special_packages() {
     echo "Identifying special packages..."
     local firmware_pkgs=()
     local module_pkgs=()
-    
+
     sudo pacman -Fy >/dev/null
     sudo pkgfile --update >/dev/null
-    
+
     while read -r package; do
         if pkg_files=$(timeout 3s pkgfile -l "$package" 2>/dev/null); then
             if echo "$pkg_files" | grep -q "/usr/lib/firmware"; then
@@ -214,11 +214,11 @@ list_special_packages() {
             fi
         fi
     done < "packages.x86_64"
-    
+
     echo -n "These packages of packages.x86_64 install into /usr/lib/firmware:"
     printf " %s" "${firmware_pkgs[@]}"
     echo
-    
+
     echo -n "These packages of packages.x86_64 install into /usr/lib/modules:"
     printf " %s" "${module_pkgs[@]}"
     echo
@@ -256,6 +256,7 @@ read -rp "Choose a key by number for signing or press enter for 'No signing': " 
 if [[ "$choice" -gt 0 && "$choice" -le "${#key_list[@]}" ]]; then
     IFS=',' read -r selected_key selected_signer <<< "${key_list[$((choice - 1))]}"
     echo "Selected GPG Key ID: $selected_key"
+
 
     zef upgrade Sparrow6
     zef upgrade Tomty
@@ -298,7 +299,7 @@ zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/roo
 
 # Terminate any running keyboxd process to prevent conflicts with root-level GPG operations in mkarchiso.
 # The keyboxd daemon is part of the GnuPG package and is started automatically by GPG whenever the keybox database is accessed.
-# Currently, a user-owned keyboxd process is running, because we accessed it above. It holds locks or permissions that interfere
+# Currently, a root-owned keyboxd process is running, because we accessed it above. It holds locks or permissions that interfere
 # with root-level operations in mkarchiso, leading to conflicts.
 sudo pkill keyboxd
 
