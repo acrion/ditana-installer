@@ -56,23 +56,64 @@ echo "export DITANA_BRANCH=$current_branch"    >>airootfs/root/ditana-version.sh
 # copied into the ISO verbatim. The patch is reverted via the shared helper
 # below — an early EXIT trap catches failures that happen before the
 # mode-specific cleanup trap takes over.
+#
+# use-testing-repo.patch covers two independent things: which pacman repository
+# the ISO installs from (enable-ditana.sh, packages.x86_64, pacman.conf) and how
+# the ISO is named (profiledef.sh). They are separable, because an ISO built
+# from a branch is sometimes needed to test the installer itself against the
+# packages real users actually get. Only the repository part is optional; the
+# "Testing" name and version always stay, since such a build skips various
+# checks regardless of where its packages came from.
+#
+# The choice is offered only when a Testing ISO is being built. Set
+# DITANA_USE_OFFICIAL_REPO=y or =n to answer it non-interactively; a build with
+# no terminal attached keeps the previous behaviour and uses the testing
+# repository, so unattended builds are unaffected.
+TESTING_PATCH_ARGS=()
+
+select_testing_repository() {
+    local answer
+
+    if [[ -n "${DITANA_USE_OFFICIAL_REPO:-}" ]]; then
+        answer="$DITANA_USE_OFFICIAL_REPO"
+    elif [[ -t 0 ]]; then
+        echo
+        echo "Branch '$current_branch' builds a Testing ISO."
+        echo "  N) install from the ditana-testing repository (default)"
+        echo "  y) install from the official ditana repository"
+        read -r -p "Use the official repository? [y/N] " answer
+    else
+        answer="n"
+    fi
+
+    if [[ "${answer,,}" == y* ]]; then
+        echo "Using the official Ditana repository; patching the ISO name only."
+        TESTING_PATCH_ARGS=(--include=profiledef.sh)
+    else
+        echo "Using the ditana-testing repository."
+    fi
+}
+
 reverse_patch_if_needed() {
     if [[ "$current_branch" != "main" ]]; then
         git status
         echo "Reversing patch..."
-        git apply --reverse use-testing-repo.patch
+        git apply --reverse "${TESTING_PATCH_ARGS[@]}" use-testing-repo.patch
         echo "Finished reversing patch."
         git status
     fi
 }
 
 if [[ "$current_branch" != "main" ]]; then
-    echo "Applying patch to use testing repo..."
-    git apply use-testing-repo.patch
+    select_testing_repository
+    echo "Applying patch..."
+    git apply "${TESTING_PATCH_ARGS[@]}" use-testing-repo.patch
     # Register an early cleanup so failures between here and the mode-specific
     # cleanup trap (set further below) still revert the patch.
     trap reverse_patch_if_needed EXIT
     git status
+    # The configuration tarball follows the branch, not the package repository:
+    # a branch build tests the installer configuration of that branch.
     DITANA_CONFIG_TAG="develop-latest"
 else
     DITANA_CONFIG_TAG="latest"

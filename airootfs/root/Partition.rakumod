@@ -188,7 +188,24 @@ sub cleanup-existing-zfs(Str $install-disk) {
     # therefore export every imported pool before touching the disk.
     Logging.echo("Removing any existing ZFS pools, as ZFS can persist even after repartitioning and cause conflicts with the current installation:");
 
-    run-and-echo('modprobe', 'zfs');
+    # The live ISO ships zfs-dkms, but the module is absent whenever DKMS could
+    # not build it for the ISO's kernel - an upstream timing issue between a
+    # kernel release and OpenZFS supporting it. That must never abort an
+    # installation onto a different file system, so loading it is best-effort.
+    #
+    # Skipping the rest is safe: a pool cannot be imported without the module,
+    # so there are no device handles to release, and the residual on-disk ZFS
+    # labels this routine would clear are removed by the wipefs pass in
+    # wipe-disk() anyway.
+    run-and-echo-allow-fail('modprobe', 'zfs');
+
+    # .e rather than .d: on a missing path .d returns a Failure that throws the
+    # moment it is evaluated as a condition, which would crash in exactly the
+    # situation this check exists for.
+    unless '/sys/module/zfs'.IO.e {
+        Logging.echo("The ZFS kernel module is unavailable, so no pool can be imported. Skipping ZFS cleanup - residual labels are removed when the disk is wiped.");
+        return;
+    }
 
     # List imported pools. If the kernel module is loaded but no pool is
     # imported, `zpool list` prints "no pools available" to stderr and exits 0,

@@ -273,15 +273,64 @@ else # GRUB (used for all non-zfs file systems)
 
       grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Ditana
 
+      # The fallback image must not carry a copy of grub.cfg. Embedding the
+      # file itself produced an image that was already stale by the time the
+      # first kernel update regenerated the real configuration, and on a fresh
+      # installation it captured a grub.cfg that grub-mkconfig had not written
+      # yet - a firmware falling back to \EFI\BOOT\BOOTX64.EFI then dropped
+      # into the GRUB shell instead of booting. Embed a stub that locates and
+      # runs the real configuration at boot time instead.
+      #
+      # Two locations are tried because /boot may be a separate partition
+      # (bootimage-partition), in which case grub.cfg sits at /grub/grub.cfg
+      # rather than /boot/grub/grub.cfg. The partition map and filesystem
+      # modules are loaded explicitly: a standalone image starts with its
+      # prefix on (memdisk), where nothing has enumerated the disks yet.
+      FALLBACK_CFG=$(mktemp)
+      cat >"$FALLBACK_CFG" <<'EOF'
+insmod part_gpt
+insmod part_msdos
+insmod fat
+insmod ext2
+insmod btrfs
+insmod xfs
+
+if search --no-floppy --file --set=root /grub/grub.cfg; then
+    configfile /grub/grub.cfg
+fi
+
+if search --no-floppy --file --set=root /boot/grub/grub.cfg; then
+    configfile /boot/grub/grub.cfg
+fi
+
+echo "Ditana fallback loader: no grub.cfg found on any partition."
+echo "The system is bootable via the regular 'Ditana GNU/Linux' firmware entry."
+sleep 30
+EOF
+
       mkdir -p /boot/efi/EFI/BOOT
-      grub-mkstandalone -O x86_64-efi -o /boot/efi/EFI/BOOT/BOOTX64.EFI "boot/grub/grub.cfg=/boot/grub/grub.cfg"
+      grub-mkstandalone -O x86_64-efi -o /boot/efi/EFI/BOOT/BOOTX64.EFI \
+                        "boot/grub/grub.cfg=$FALLBACK_CFG"
+      rm -f "$FALLBACK_CFG"
 
       # Ensure compatibility with non-standard UEFI implementations
       cp /boot/efi/EFI/BOOT/BOOTX64.EFI /boot/efi/shellx64.efi
 
-
-      efibootmgr --create --disk "/dev/$INSTALL_DISK" --part 1 --label "Ditana GNU/Linux" --loader /EFI/Ditana/grubx64.efi
+      # The EFI System Partition is not necessarily partition 1 of the install
+      # disk: when the user keeps an existing ESP, it may live on an entirely
+      # different disk. bootloader-parent-disk and bootloader-partition-index
+      # are derived from the actual partition (see Partition.rakumod) and are
+      # what the ZFS branch above already uses.
+      echo -e "\033[32m--- Registering GRUB on EFI System Partition disk ${BOOTLOADER_PARENT_DISK}, partition number ${BOOTLOADER_PARTITION_INDEX} ---\033[0m"
+      efibootmgr --create \
+                 --disk "/dev/${BOOTLOADER_PARENT_DISK}" \
+                 --part "${BOOTLOADER_PARTITION_INDEX}" \
+                 --label "Ditana GNU/Linux" \
+                 --loader "\\EFI\\Ditana\\grubx64.efi" \
+                 --unicode
     else
+        # For BIOS + GRUB no bootloader partition is created, so the GRUB core
+        # goes to the install disk itself; bootloader-parent-disk is unset here.
         grub-install --target=i386-pc "/dev/$INSTALL_DISK"
     fi
 
