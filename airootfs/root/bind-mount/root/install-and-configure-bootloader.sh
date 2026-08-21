@@ -60,9 +60,10 @@ add_to_mkinitcpio_files() {
             -e 's|^FILES=(\(.*\))|FILES=(\1 '"$path"')|' \
             -e 's|^FILES=( |FILES=(|' \
             "$conf"
-        # Only the system mkinitcpio.conf needs a deferred -P rebuild at the
-        # end of this script. ZBM's mkinitcpio.conf is rebuilt by an explicit
-        # generate-zbm call right after we finish modifying it.
+        # The flag drives the -P rebuild the GRUB branch runs at the end of this
+        # script; the ZFS branch rebuilds unconditionally and ignores it. ZBM's
+        # own mkinitcpio.conf needs neither, because generate-zbm rebuilds that
+        # image right after we finish modifying it.
         if [[ "$conf" == "/etc/mkinitcpio.conf" ]]; then
             touch .mkinitcpio.changed
         fi
@@ -89,32 +90,51 @@ if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
         add_to_mkinitcpio_files /etc/zfs/ditana-root.key
     fi
 
-    echo -e "\033[32m--- Installing Kernel modules for the Zettabyte File System (zfs-dkms) ---\033[0m"
+    # pacstrap installs these three, declared on the 'zfs-filesystem' setting in
+    # ditana-config. Naming a missing one here keeps the failure legible: without
+    # zfs-dkms, mkinitcpio below reports a missing module and the kernel
+    # compatibility hint would point at the wrong cause; without zfsbootmenu, the
+    # configuration read further down does not exist.
+    for ZFS_PKG in zfs-dkms zfs-utils zfsbootmenu; do
+        if ! pacman -Qq "$ZFS_PKG" >/dev/null 2>&1; then
+            echo -e "\033[31m--- ERROR: $ZFS_PKG is not installed ---\033[0m"
+            echo -e "\033[31m--- Expected from the Ditana repository via the 'zfs-filesystem' setting ---\033[0m"
+            exit 1
+        fi
+    done
 
-    PACMAN_LOG_FILE=$(mktemp)
-    pacman -S --noconfirm zfs-dkms 2>&1 | tee "$PACMAN_LOG_FILE" # generates initramfs
-    PACMAN_EXIT=${PIPESTATUS[0]}
+    # DKMS compiled the module during pacstrap, but the initramfs generated
+    # alongside it predates the mkinitcpio.conf written above - it carries
+    # neither the zfs hook nor the keymap hook nor the embedded key file, so the
+    # pool could not be imported at boot. Regenerating is therefore
+    # unconditional here, unlike in the GRUB branch below.
+    #
+    # A kernel that OpenZFS does not support yet leaves DKMS without a module,
+    # which pacstrap only warns about. It surfaces here, as mkinitcpio failing
+    # to find it.
+    echo -e "\033[32m--- Regenerating initramfs with the ZFS configuration ---\033[0m"
 
-    if grep -q "module not found: 'zfs'" "$PACMAN_LOG_FILE"; then
-        echo -e "\033[31m--- ERROR: ZFS modules compilation failed ---\033[0m"
+    MKINITCPIO_LOG_FILE=$(mktemp)
+    mkinitcpio -P 2>&1 | tee "$MKINITCPIO_LOG_FILE"
+    MKINITCPIO_EXIT=${PIPESTATUS[0]}
+
+    if grep -q "module not found: 'zfs'" "$MKINITCPIO_LOG_FILE"; then
+        echo -e "\033[31m--- ERROR: the ZFS kernel module was not built ---\033[0m"
         echo -e "\033[31m--- This is likely due to kernel version incompatibility with OpenZFS ---\033[0m"
         echo -e "\033[31m--- Check selected kernel version compatibility with current OpenZFS version on https://github.com/openzfs/zfs/releases ---\033[0m"
         echo -e "\033[31m--- Installation cannot continue with ZFS filesystem ---\033[0m"
-        rm -f "$PACMAN_LOG_FILE"
+        rm -f "$MKINITCPIO_LOG_FILE"
         exit 1
     fi
 
-    if [[ $PACMAN_EXIT -ne 0 ]]; then
-        echo -e "\033[31m--- ERROR: pacman failed to install zfs-dkms ---\033[0m"
-        rm -f "$PACMAN_LOG_FILE"
+    if [[ $MKINITCPIO_EXIT -ne 0 ]]; then
+        echo -e "\033[31m--- ERROR: mkinitcpio failed to generate the initramfs ---\033[0m"
+        rm -f "$MKINITCPIO_LOG_FILE"
         exit 1
     fi
 
-    rm -f "$PACMAN_LOG_FILE"
-    echo -e "\033[32m--- ZFS modules successfully installed and compiled ---\033[0m"
-
-    echo -e "\033[32m--- Installing zfsbootmenu ---\033[0m"
-    runuser -u builduser -- paru -S zfsbootmenu --noconfirm
+    rm -f "$MKINITCPIO_LOG_FILE"
+    echo -e "\033[32m--- Initramfs successfully generated ---\033[0m"
 
     echo -e "\033[32m--- Content of /etc/zfsbootmenu/mkinitcpio.conf ---\033[0m"
     cat /etc/zfsbootmenu/mkinitcpio.conf
