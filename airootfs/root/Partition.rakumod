@@ -495,9 +495,45 @@ sub partition-with-sgdisk(Str $install-disk) {
     run-and-echo('lsblk');
 }
 
+# An installation onto ZFS needs the module in the live environment, and every
+# step that would reveal its absence comes after the disk has been repartitioned
+# and formatted: cleanup-existing-zfs() tolerates a missing module by design, so
+# the first hard failure is `zpool create`, reporting only that the modules
+# cannot be auto-loaded. By then the previous system is gone.
+#
+# The module is missing when DKMS could not build it for the ISO's kernel, which
+# happens whenever that kernel is ahead of what OpenZFS supports. Checking here
+# turns that into a refusal to start, with the disk still intact.
+sub require-zfs-module() {
+    # The running kernel is what decides this, and nothing else in the
+    # installation log names it - the summary reports the kernel selected for
+    # the target system, which is a different thing.
+    my $kernel = qx{uname -r}.trim;
+    Logging.echo("Installation medium is running kernel $kernel");
+
+    return if '/sys/module/zfs'.IO.e;
+
+    run-and-echo-allow-fail('modprobe', 'zfs');
+    return if '/sys/module/zfs'.IO.e;
+
+    Logging.echo("The ZFS kernel module is not available on kernel $kernel.");
+    show-dialog-raw('--msgbox',
+        "The ZFS kernel module cannot be loaded on this installation medium "
+        ~ "\(kernel $kernel\).\n\n"
+        ~ "Installing onto ZFS is not possible from this medium. Nothing has "
+        ~ "been written to the disk.\n\n"
+        ~ "Choose a different file system, or use an installation medium whose "
+        ~ "kernel OpenZFS supports.",
+        '14', '70');
+    die "ZFS was selected, but the ZFS kernel module is unavailable on kernel $kernel.";
+}
+
 sub partition-drive() is export {
     my $s = Settings.instance;
     my $install-disk = $s.get('install-disk');
+
+    # Before anything destructive happens.
+    require-zfs-module() if $s.get('zfs-filesystem');
 
     if $s.get('change-nvme-lba-format') {
         Logging.echo("Formatting $install-disk with LBAF index {$s.get('optimal-lba-format-index')}");

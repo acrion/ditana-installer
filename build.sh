@@ -344,6 +344,33 @@ zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/roo
 # with root-level operations in mkarchiso, leading to conflicts.
 sudo pkill keyboxd
 
+# The ISO boots the LTS kernel, because OpenZFS regularly lags behind a new
+# mainline release and a medium whose kernel it does not support cannot create a
+# pool. The mainline kernel is nevertheless installed: b43-firmware depends on
+# `linux>=3.2`, so pacstrap pulls it in, and DKMS then builds the ZFS module for
+# the LTS kernel only.
+#
+# Boot entries naming the mainline kernel therefore produce a medium that boots
+# but cannot install onto ZFS. That is not hypothetical: syncing the archiso
+# profile to a new upstream release has already reverted these four files once,
+# and the ISO built from them failed at `zpool create`. The build refuses now
+# rather than in a VM an hour later.
+check_boot_entries_use_lts() {
+    local offenders
+    offenders=$(grep -lE '(vmlinuz-linux|initramfs-linux\.img)([^-]|$)' \
+        syslinux/archiso_sys-linux.cfg \
+        syslinux/archiso_pxe-linux.cfg \
+        efiboot/loader/entries/*.conf 2>/dev/null || true)
+
+    if [[ -n "$offenders" ]]; then
+        echo "ERROR: these boot entries reference the mainline kernel, but the ISO ships linux-lts:" >&2
+        echo "$offenders" | sed 's/^/  /' >&2
+        echo "Point them at vmlinuz-linux-lts / initramfs-linux-lts.img." >&2
+        exit 1
+    fi
+}
+check_boot_entries_use_lts
+
 echo "Creating ISO..."
 
 echo "selected_signer: '$selected_signer'"
