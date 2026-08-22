@@ -51,6 +51,7 @@ iwd
 jfsutils
 jq
 kitty-terminfo
+kmscon-terminfo
 ldns
 less
 lftp
@@ -87,7 +88,7 @@ nfs-utils
 nilfs-utils
 nmap
 noto-fonts
-ntfs-3g
+ntfsprogs
 nvme-cli
 open-iscsi
 open-vm-tools
