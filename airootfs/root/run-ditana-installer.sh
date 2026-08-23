@@ -32,7 +32,21 @@ apply_vt_palette() {
 export DIALOGRC=/root/installer.dialogrc
 apply_vt_palette  # (A) Before the rescue-mode dialog further down.
 
-if [[ "$(whoami)" == "root" ]] && [[ ! -f /tmp/ditana-set-font.sh ]] && blkid -L "ditana-root"; then
+# The rescue prompt below is the one dialog the installer draws before Raku
+# starts, so the answer file's own gate cannot reach it. It would wait forever
+# on a machine that already carries a Ditana installation -- exactly the case
+# a nightly test loop reinstalling over yesterday's run produces. An answer
+# file means somebody wants an installation, not a rescue system, so this
+# repeats just enough of Autoinstall's search to know one is there.
+answer_file_present() {
+    grep -q 'ditana\.autoinstall=' /proc/cmdline 2>/dev/null && return 0
+    [[ -e /dev/disk/by-label/DITANA_AUTO ]] && return 0
+    [[ -f /root/autoinstall.kdl ]] && return 0
+    return 1
+}
+
+if [[ "$(whoami)" == "root" ]] && [[ ! -f /tmp/ditana-set-font.sh ]] \
+   && ! answer_file_present && blkid -L "ditana-root"; then
     if dialog --yesno "Detected Ditana installation. Enter rescue system?" 5 56; then
         source ./rescue.sh
         exit 0

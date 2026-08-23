@@ -300,8 +300,17 @@ echo "$(( ${#key_list[@]} + 1 ))) No signing"
 
 ZEF_SWITCHES=""
 
-read -rp "Choose a key by number for signing or press enter for 'No signing': " choice
-if [[ "$choice" -gt 0 && "$choice" -le "${#key_list[@]}" ]]; then
+# With no terminal attached, read fails and `set -e` would end the build here
+# -- which is where an unattended build of a Testing ISO stopped. Falling
+# through to "No signing" is the honest answer: a machine with no terminal has
+# nobody to pick a key, and the build host that runs this deliberately holds
+# none. DITANA_SIGNING_CHOICE answers the prompt in advance, the same way
+# DITANA_USE_OFFICIAL_REPO answers the one above.
+choice="${DITANA_SIGNING_CHOICE:-}"
+if [[ -z "$choice" && -t 0 ]]; then
+    read -rp "Choose a key by number for signing or press enter for 'No signing': " choice
+fi
+if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice > 0 && choice <= ${#key_list[@]} )); then
     IFS=',' read -r selected_key selected_signer <<< "${key_list[$((choice - 1))]}"
     echo "Selected GPG Key ID: $selected_key"
 
