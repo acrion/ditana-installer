@@ -37,20 +37,30 @@ image.
 C<autoinstall.kdl>. The "config drive" pattern: attach a small image beside the
 installation medium and change nothing else.
 
-=item C</root/autoinstall.kdl>, baked into a custom ISO.
+=item C<autoinstall.kdl> beside the installer -- C</root/autoinstall.kdl> in an
+ISO built with one in it, and the file next to C<main.raku> when the installer
+is started from a checkout.
 
-Two modes:
+What the file does not name keeps the value the installer would have offered:
+either the default in C<ditana-config> or what was detected for this hardware.
+That is not a guess. It is the same answer an interactive run pre-selects, and
+overriding a detected value would mean choosing something that does not fit
+the machine.
 
-=item C<strict> (the default) stops if the file leaves any question
-unanswered. A provisioning system must not have a machine silently installed
-with a guessed answer.
+What has no such value is a different matter, and the run stops there rather
+than inventing one. Two kinds:
 
-=item C<defaults> fills what the file does not name with the value the
-installer detected for this hardware. Convenient for a user who wants to
-answer three questions and accept the rest.
+=item A question with nothing behind it -- the user name is empty until
+somebody types one. The step names the settings it is missing and the run
+stops before anything is written.
 
-Both refuse to guess about a question the installer cannot answer itself --
-which disk to erase has no safe default in either mode.
+=item A question the installer cannot answer at all: which disk to erase,
+whether to overwrite an EFI partition another system boots from, the
+passphrase for an encrypted root. Those reach their dialog, and the dialog
+gate stops the run and names the box.
+
+There is deliberately no lenient mode. A value from the configuration is an
+answer, a missing value is not, and no third case turned out to exist.
 
 =end pod
 
@@ -58,6 +68,7 @@ use v6.d;
 use JSON::Fast;
 use Logging;
 use Settings;
+use Tristate;
 
 class Autoinstall {
     my Autoinstall $instance;
@@ -69,17 +80,23 @@ class Autoinstall {
 
     has Bool $.active is rw = False;
     has Str  $.path is rw = '';
-    has Str  $.mode is rw = 'strict';
     has Str  $.source is rw = '';
     has %.answers;
-    has %.post-install;
 
     # The kernel command line is the provider-facing entry point; the label and
     # the baked-in file exist for the cases where it cannot be set.
     my constant CMDLINE-KEY = 'ditana.autoinstall';
     my constant VOLUME-LABEL = 'DITANA_AUTO';
-    my constant BAKED-IN = '/root/autoinstall.kdl';
     my constant MOUNTPOINT = '/run/ditana-autoinstall';
+
+    #| autoinstall.kdl beside the installer itself. In an ISO that is
+    #| /root/autoinstall.kdl; in a simulated run started from a checkout it is
+    #| the file next to main.raku, which is how the mechanism can be exercised
+    #| without building an image first. Deriving it rather than hard-coding
+    #| /root keeps both cases on the same code path.
+    method !baked-in(--> Str) {
+        $*PROGRAM.parent.child('autoinstall.kdl').absolute;
+    }
 
     #| Find an answer file and return its local path, or Nil.
     method !locate(--> Str) {
@@ -89,7 +106,8 @@ class Autoinstall {
         my $from-label = self!from-labelled-volume();
         return $from-label if $from-label;
 
-        return BAKED-IN if BAKED-IN.IO.e;
+        my $baked-in = self!baked-in();
+        return $baked-in if $baked-in.IO.e;
         Nil;
     }
 
@@ -180,13 +198,14 @@ class Autoinstall {
         }
         my $data = from-json($json);
 
-        self.mode = self!scalar($data<mode>) // 'strict';
-        unless self.mode eq 'strict' | 'defaults' {
-            die "Autoinstall: mode must be 'strict' or 'defaults', not '{self.mode}'";
-        }
-
-        if $data<post-install>:exists {
-            %!post-install = $data<post-install>;
+        # An answer file has exactly one block. Anything else is named and
+        # rejected for the same reason a misspelt setting is: a block that is
+        # read and ignored looks from the outside exactly like a block that
+        # was applied.
+        my @stray = $data.keys.grep(* ne 'settings');
+        if @stray {
+            die "Autoinstall: $path has no place for {@stray.sort.join(', ')}. "
+              ~ "An answer file holds one block, 'settings'.";
         }
 
         my $settings = $data<settings> // {};
@@ -211,9 +230,22 @@ class Autoinstall {
             die "Autoinstall: no such setting(s): {@unknown.sort.join(', ')}";
         }
 
-        for %!answers.kv -> $name, $value {
-            Settings.instance.set($name, $value);
-            Logging.log("Autoinstall: $name = $value");
+        # Setting one value re-evaluates every setting whose default is an
+        # expression naming it, so an answer applied early can be overwritten
+        # by the dependency update that a later answer triggers. The settings
+        # dialogs have the same problem and solve it the same way: apply
+        # everything, then assert it again once nothing else will move. reset()
+        # rather than set() because by then the value is already there, and
+        # set() would consider it unchanged and do nothing.
+        #
+        # Sorted, so that two runs of the same file do the same thing in the
+        # same order and a log can be compared against another log.
+        for %!answers.keys.sort -> $name {
+            Settings.instance.set($name, %!answers{$name});
+            Logging.log("Autoinstall: $name = {%!answers{$name}}");
+        }
+        for %!answers.keys.sort -> $name {
+            Settings.instance.reset($name, %!answers{$name});
         }
 
         self.active = True;
@@ -231,50 +263,107 @@ class Autoinstall {
         $value;
     }
 
-    #| True when every question this step would ask has an answer, so the step
-    #| can be skipped without asking anything.
-    method step-is-answered($step --> Bool) {
-        return False unless self.active;
+    #| The settings a step would ask about, or Nil when that cannot be said.
+    #|
+    #| Nil is not the empty list. It means "this step decides for itself what
+    #| it asks" -- every procedure, and a dialog that turns out to have no
+    #| settings on this machine. Such a step is always entered, and whatever
+    #| it does ask reaches the dialog gate, which stops the run and names the
+    #| box. That is what lets this mapping be incomplete without an
+    #| installation ever hanging on a question nobody answered.
+    method settings-of-step($step) {
         my $name = $step<name>;
 
         given $step<type> {
             when 'ask-for-setting' | 'ask-for-yes-no' {
-                return %!answers{$name}:exists;
+                return ($name,);
             }
             when 'radiolist' | 'checklist' {
+                # Settings the dialog would not show on this machine are not
+                # questions it asks, so an answer file need not carry them.
                 my @settings = Settings.instance.get-dialog($name);
-                return False unless @settings;
-                return !@settings.map(*.name).grep({ !(%!answers{$_}:exists) });
+                return Nil unless @settings;
+                return @settings.map(*.name).List;
             }
             when 'categories' {
+                # A category menu is navigation: it asks nothing itself, and
+                # skipping it is what the user does by walking straight to
+                # «Review Summary and Start». The children that are
+                # procedures -- the summary, the optional swap size -- offer
+                # an adjustment to a value that is already set, so a child
+                # with no settings of its own adds no question here either.
                 my @children = ($step<categories> // []).list;
-                return False unless @children;
-                return !@children.grep({ !self.step-is-answered($_) });
+                return Nil unless @children;
+                my @names;
+                for @children -> $child {
+                    my $of-child = self.settings-of-step($child);
+                    @names.append(|$of-child) with $of-child;
+                }
+                return @names.List;
             }
             default {
-                # A procedure decides for itself whether it needs to ask.
-                # Nothing is assumed here: if it does ask, show-dialog-raw
-                # stops the run and names it, which is how a missing entry
-                # surfaces as a clear error instead of a hung installation.
-                return False;
+                return Nil;
             }
         }
     }
 
-    #| In defaults mode an unanswered setting keeps what the installer
-    #| detected. In strict mode the run stops instead, naming what is missing.
-    method require-answered(@names) {
-        return if self.mode eq 'defaults';
-        my @missing = @names.grep({ !(%!answers{$_}:exists) });
-        return unless @missing;
-        die "Autoinstall (strict): unanswered setting(s): {@missing.sort.join(', ')}\n"
-          ~ "Add them to the answer file, or set mode \"defaults\" to accept "
-          ~ "the values detected for this machine.";
+    #| Does this setting hold an answer already, without anybody having been
+    #| asked?
+    #|
+    #| A value out of ditana-config or out of hardware detection counts, and
+    #| has to: it is what an interactive dialog would arrive pre-selected
+    #| with, and a file that had to repeat all of it would break every time
+    #| the configuration gained a checkbox. What does not count is a setting
+    #| standing empty -- the user name until somebody types one -- or a
+    #| Tristate whose value is still unknown.
+    method !holds-an-answer(Str $name --> Bool) {
+        my $value = Settings.instance.get($name);
+        return False without $value;
+        return $value.value.defined if $value ~~ Tristate;
+        return $value.trim.chars > 0 if $value ~~ Str;
+        True;
+    }
+
+    #| True when this step has nothing left to ask and can be passed over.
+    #|
+    #| A step with a setting that holds no answer at all stops the run here
+    #| rather than at its dialog: this is the last point at which the settings
+    #| behind a step are known, so the message can name them instead of naming
+    #| a box.
+    method step-can-be-skipped($step --> Bool) {
+        return False unless self.active;
+
+        my $settings = self.settings-of-step($step);
+        return False without $settings;
+
+        my @unanswered = $settings.grep({
+            !(%!answers{$_}:exists) && !self!holds-an-answer($_)
+        });
+        return True unless @unanswered;
+
+        die "Autoinstall: '{$step<name>}' asks about "
+          ~ "{@unanswered.sort.join(', ')}, which has no value and which the "
+          ~ "answer file does not name.\nAdd it to the answer file.";
     }
 }
 
 sub autoinstall-active(--> Bool) is export {
     Autoinstall.instance.active;
+}
+
+#| True when an answer file is in charge and provides every one of these
+#| settings.
+#|
+#| This is what a procedure asks before drawing a box. A procedure is not
+#| skipped the way a plain question step is, because it usually derives
+#| further settings from the answer -- select-disk also records the boot
+#| device and the partition that already holds a bootloader -- and skipping it
+#| would leave those empty for everything downstream. So the procedure runs
+#| and only the box is left out.
+sub autoinstall-answers(*@names --> Bool) is export {
+    my $autoinstall = Autoinstall.instance;
+    return False unless $autoinstall.active;
+    !@names.grep({ !($autoinstall.answers{$_}:exists) });
 }
 
 sub autoinstall(--> Autoinstall) is export {

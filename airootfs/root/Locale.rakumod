@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Autoinstall;
 use Dialogs;
 use Settings;
 use Timezone;
@@ -133,7 +134,26 @@ sub choose-main-locale() returns Int is export {
         @menu-options.append($code, $description);
         %menu-descriptions{$code} = $description;
     }
-    
+
+    # An answer file that names `locale` has named the primary locale with it:
+    # a full locale is built from the two menus as "<main>_<sub>", so "en_US"
+    # can only have come from "en". Deriving it rather than demanding a second
+    # line keeps the file down to the one setting an operator thinks in.
+    if autoinstall-answers('main-locale') || autoinstall-answers('locale') {
+        my $answered = Settings.instance.get('main-locale');
+        unless $answered {
+            $answered = $0.Str if Settings.instance.get('locale') ~~ / ^ (\w+) _ /;
+        }
+        unless $answered && (%menu-descriptions{$answered}:exists) {
+            die "Autoinstall: '$answered' is not a primary locale on this system. "
+              ~ "The ones that are: {%menu-descriptions.keys.sort.join(' ')}.";
+        }
+        Logging.log("Autoinstall: primary locale $answered is answered, not asking");
+        Settings.instance.set('main-locale', $answered);
+        Settings.instance.set('main-locale-description', %menu-descriptions{$answered});
+        return 0;
+    }
+
     # Priority: previous choice (back-navigation) > detected language
     my $preferred = Settings.instance.get('main-locale') || detected-language();
 
@@ -171,6 +191,20 @@ sub choose-main-locale() returns Int is export {
 sub choose-sub-locale() returns Int is export {
     state $temp-file = qx{mktemp}.chomp;
     my $main-locale = Settings.instance.get('main-locale');
+
+    # The answered locale is already in Settings; all that is left is to
+    # establish that the system can generate it. An unavailable locale would
+    # otherwise reach locale.gen, fail there, and leave the installed system
+    # falling back to C.
+    if autoinstall-answers('locale') {
+        my $answered = Settings.instance.get('locale');
+        unless '/etc/locale.gen'.IO.lines.grep(/^ '#'? \s* $answered '.UTF-8 UTF-8'/) {
+            die "Autoinstall: '$answered' is not a locale this system can generate. "
+              ~ "See /etc/locale.gen for the ones that are.";
+        }
+        Logging.log("Autoinstall: locale $answered is answered, not asking");
+        return 0;
+    }
 
     qqx{grep -E "^#?$main-locale" /etc/locale.gen | grep "\\.UTF-8 UTF-8" | sed 's/#\\? *\\(\\S\\+\\)\\.UTF-8 UTF-8/\\1/' | sed "s/$main-locale\\_//" | sort -u > $temp-file};
 

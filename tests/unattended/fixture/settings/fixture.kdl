@@ -1,0 +1,29 @@
+// The settings the fixture installation steps refer to. See
+// installation-steps.kdl beside this file for why the fixture exists.
+
+- name="user-name" default-value=""
+- name="encrypt-root-partition" default-value=#false
+- name="timezone" default-value=""
+- name="install-disk" default-value=""
+- name="install-disk-description" default-value=""
+
+// A radiolist dialog: several settings sharing one dialog-name.
+- name="profile-default" dialog-name="User Profile" short-description="Standard" default-value=#true {
+    arch-packages ""
+}
+- name="profile-server" dialog-name="User Profile" short-description="Server" default-value=#false {
+    arch-packages ""
+}
+
+// A checklist dialog. `install-extra-unavailable` is never available, which is
+// what proves that step-is-answered asks about the settings a dialog would
+// really show rather than about every setting that names it.
+- name="install-extra-editor" dialog-name="Extras" short-description="An editor" default-value=#false {
+    arch-packages "vim"
+}
+- name="install-extra-shell" dialog-name="Extras" short-description="A shell" default-value=#false {
+    arch-packages "zsh"
+}
+- name="install-extra-unavailable" dialog-name="Extras" short-description="Never shown" available="`profile-server AND NOT profile-server`" default-value=#false {
+    arch-packages ""
+}

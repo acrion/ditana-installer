@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Autoinstall;
 use Dialogs;
 use Settings;
 use Logging;
@@ -54,6 +55,14 @@ multi ask-for-yes-no(:$title = '', :$instruction, :$default = True, :$yes-label=
 }
 
 multi ask-for-yes-no($dialog) is export {
+    # A procedure that delegates its question to this multi is answered as
+    # soon as the setting behind it is -- confirm-nvme-format is one. The
+    # answer is already in Settings, so there is nothing to do but say so.
+    if autoinstall-answers($dialog<name>) {
+        Logging.log("Autoinstall: '{$dialog<name>}' is answered ({Settings.instance.get($dialog<name>)}), not asking");
+        return 0;
+    }
+
     my $title = kebab-to-title($dialog<name>);
     my $instruction = $dialog<instruction>;
     my $default = Settings.instance.get($dialog<name>);

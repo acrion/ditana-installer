@@ -22,6 +22,7 @@ use AskForYesNo;
 use Dialogs;
 use JSON::Fast;
 use RunAndLog;
+use Autoinstall;
 use Settings;
 use Logging;
 
@@ -174,6 +175,26 @@ sub check_efi($silent-exit-code) returns Int is export {
     }
 
     my $install-disk = Settings.instance.get("install-disk");
+
+    # Everything below is one question in several shapes: make a new EFI
+    # partition on the installation disk, or adopt one that already exists.
+    # An answered bootloader-partition settles all of them.
+    #
+    # There is no default worth guessing here. Overwriting an EFI partition
+    # can leave operating systems on *other* disks unbootable, and on a
+    # machine that boots nothing yet the question never comes up at all -- so
+    # an unanswered file simply reaches the boxes below and stops there.
+    if autoinstall-answers('bootloader-partition') {
+        my $answered = Settings.instance.get('bootloader-partition');
+        unless $answered eq 'new' || $answered.IO.e {
+            die "Autoinstall: bootloader-partition = '$answered' is neither "
+              ~ "\"new\" nor a partition on this machine. Use \"new\" for a "
+              ~ "fresh EFI partition on $install-disk.";
+        }
+        Logging.log("Autoinstall: bootloader partition '$answered' is answered, not asking");
+        return 0;
+    }
+
     my $common-dialog-text="If you are installing Ditana on a removable drive and want to keep it independent, or if you are installing on an internal drive and want to keep each disc independent, select «new» to create a separate EFI partition on $install-disk. To switch between operating systems you need to change the boot device via the UEFI interface at boot time (usually with keys like F8..F12).\n\nAlternatively, if you want a boot menu to appear automatically each time you boot, making it easier to choose an operating system, select";
 
     return Settings.instance.get("current-bootloader-partition")

@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Autoinstall;
 use JSON::Fast;
 use Dialogs;
 use Settings;
@@ -89,8 +90,22 @@ sub choose-keymap-layout() returns Int is export {
         @menu-options.append: $code, $name;
     }
 
-    # Priority: previous choice > sub-locale (e.g. "de_CH" → "ch") > detected country code
     my @layouts = @menu-options.rotor(2).map(*.[0]);
+
+    if autoinstall-answers('keymap-layout') {
+        my $answered = Settings.instance.get('keymap-layout');
+        # A layout X11 does not know produces a keyboard that types something
+        # else than what the operator asked for -- on a machine they will
+        # reach over the network, with a password to enter.
+        unless @layouts.grep($answered) {
+            die "Autoinstall: '$answered' is not a keyboard layout. "
+              ~ "Run 'localectl list-x11-keymap-layouts' for the ones that are.";
+        }
+        Logging.log("Autoinstall: keyboard layout $answered is answered, not asking");
+        return 0;
+    }
+
+    # Priority: previous choice > sub-locale (e.g. "de_CH" → "ch") > detected country code
     my $preferred = '';
 
     with Settings.instance.get('keymap-layout') -> $prev {
@@ -189,6 +204,20 @@ sub choose-keymap-variant($silent-exit-code) returns Int is export {
     # Priority: previous choice (if still valid for this layout)
     #         > <main-locale>_nodeadkeys > <main-locale> > nodeadkeys
     my @variants = $list-of-keymap-variants.lines;
+
+    if autoinstall-answers('keymap-variant') {
+        my $answered = Settings.instance.get('keymap-variant');
+        # The empty string is a real answer here and the common one: it means
+        # the plain layout, without any of its variants.
+        unless $answered eq '' || @variants.grep($answered) {
+            die "Autoinstall: '$answered' is not a variant of keyboard layout "
+              ~ "'$keymap-layout'. The ones that are: {@variants.join(' ')}. "
+              ~ "Leave keymap-variant empty for the layout itself.";
+        }
+        Logging.log("Autoinstall: keyboard variant '$answered' is answered, not asking");
+        return 0;
+    }
+
     my $preferred = '';
 
     with Settings.instance.get('keymap-variant') -> $prev {
@@ -328,6 +357,14 @@ sub copy-xorg-keyboard-configuration() is export {
 }
 
 sub test-keymap() returns Int is export {
+    # This step exists so that somebody can type on the keyboard they just
+    # chose. Under an answer file there is nobody at it, and no setting comes
+    # out of the box either.
+    if autoinstall-active() {
+        Logging.log("Autoinstall: not offering the keyboard test");
+        return 0;
+    }
+
     my $input=qx{mktemp}.chomp;
     my $description = (Settings.instance.get("keymap-layout")
         ~ " " ~ Settings.instance.get("keymap-variant")).trim();

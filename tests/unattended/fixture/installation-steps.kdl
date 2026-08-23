@@ -1,0 +1,37 @@
+// A miniature installer configuration for the answer-file tests.
+//
+// It is deliberately not a copy of ditana-config: the tests are about how an
+// answer file is matched against whatever configuration is loaded, not about
+// the real one, and a fixture that never changes keeps a failure pointing at
+// the answer-file code rather than at last week's configuration commit.
+//
+// No setting here carries a `detect` expression, so loading it runs no
+// hardware detection and the result is the same on every machine.
+
+- name="user-name" type="ask-for-setting" validation="name" instruction="""
+User name for the new system.
+"""
+
+- name="encrypt-root-partition" type="ask-for-yes-no" instruction="""
+Encrypt the root partition?
+"""
+
+- name="User Profile" type="radiolist" instruction="""
+Pick a profile.
+"""
+
+- name="Extras" type="checklist" instruction="""
+Pick what to install.
+"""
+
+- name="Configuration Categories" type="categories" {
+    categories {
+        - name="User Profile" type="radiolist" instruction="Pick a profile."
+        - name="Extras" type="checklist" instruction="Pick what to install."
+    }
+}
+
+- name="choose-region-or-timezone" type="procedure"
+- name="choose-specific-timezone" type="procedure"
+- name="select-disk" type="procedure"
+- name="switch-on-logging" type="procedure"

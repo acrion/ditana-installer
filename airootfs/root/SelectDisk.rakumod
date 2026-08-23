@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Autoinstall;
 use Dialogs;
 use JSON::Fast;
 use RunAndLog;
@@ -113,6 +114,26 @@ sub select-disk() returns Int is export {
 
     my @menu-options = $device-list.map({ .key, .value }).flat;
     my %device-descriptions = $device-list;
+
+    # The disk is the one answer with no safe default in either mode, so the
+    # procedure runs either way -- it is also where the boot device and any
+    # existing EFI partition are recorded, which everything downstream needs.
+    # Only the menu is left out, and only when the file names the disk.
+    if autoinstall-answers('install-disk') {
+        my $answered = Settings.instance.get('install-disk');
+        # Erasing the wrong disk is not a mistake anyone can take back, and
+        # device names are not stable across boots -- which is exactly why the
+        # answer is checked against what this machine has right now, and why
+        # the run stops rather than falling back to a disk of its own choosing.
+        unless %device-descriptions{$answered}:exists {
+            die "Autoinstall: '$answered' is not a disk this machine can be "
+              ~ "installed on. The ones that are: "
+              ~ "{%device-descriptions.keys.sort.join(', ')}.";
+        }
+        Logging.log("Autoinstall: installation disk $answered is answered, not asking");
+        Settings.instance.set('install-disk-description', %device-descriptions{$answered});
+        return 0;
+    }
 
     my $dialog-text = "\nPlease select a disk for installation. This will determine where Ditana will be installed. All data on the selected disk will be erased. Please note that device names (first column) are not unique and may differ for each boot process. The second column shows the model name of the device, its capacity and the current list of partitions.";
 

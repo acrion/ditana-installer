@@ -368,7 +368,17 @@ END
         # nothing left to ask. Skipping it is not a shortcut: the settings it
         # would have written are already set, so what follows sees exactly the
         # state an interactive run would have produced.
-        if autoinstall().step-is-answered($installation-step) {
+        #
+        # Availability is decided first, and has to be: strict mode stops at a
+        # step the answer file left open, and a step this machine never shows
+        # is not one the operator left open.
+        if Settings.instance.installation-step-is-available($name)
+        && autoinstall().step-can-be-skipped($installation-step) {
+            # Not showing the input box must not mean not applying its rules.
+            validate-answered-setting($installation-step)
+                if $installation-step<type> eq 'ask-for-setting'
+                && autoinstall-answers($name);
+
             Logging.log("Autoinstall: '$name' is answered, skipping");
             $current-index++;
             $silent-exit-code = 0;

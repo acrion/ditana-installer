@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Autoinstall;
 use Dialogs;
 use Settings;
 use Logging;
@@ -64,6 +65,26 @@ sub choose-region-or-timezone() returns Int is export {
     my @patterns = <Etc CET CST EET EST GMT HST MET MST NZ PRC PST ROC ROK UCT UTC Universal W-SU WET>;
 
     my @timezones = qx{timedatectl list-timezones}.lines;
+
+    # The two timezone steps are a region menu followed by a menu of that
+    # region's zones. An answered timezone names both at once, so neither menu
+    # has anything left to offer: leaving @zones empty makes
+    # choose-specific-timezone take the branch it already has for a region
+    # that is a timezone in itself, such as Japan.
+    if autoinstall-answers('timezone') {
+        my $answered = Settings.instance.get('timezone');
+        # A misspelt zone would otherwise reach the installed system as a
+        # broken /etc/localtime, and nobody would notice until the clock was
+        # wrong. The list of what exists is right here.
+        unless @timezones.grep($answered) {
+            die "Autoinstall: '$answered' is not a time zone. "
+              ~ "Run 'timedatectl list-timezones' for the ones that are.";
+        }
+        Logging.log("Autoinstall: time zone $answered is answered, not asking");
+        $region-or-timezone = $answered;
+        @zones = ();
+        return 0;
+    }
 
     for @patterns -> $pattern {
         @other.append: @timezones.grep(/$pattern/);
