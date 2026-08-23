@@ -140,6 +140,19 @@ popd
 cp /tmp/json-kdl-converter/target/release/json-kdl-converter airootfs/root/
 rm -rf /tmp/json-kdl-converter
 
+# The Raku modules the installer uses. airootfs/root/.raku becomes /root/.raku
+# in the ISO and is therefore the ordinary home repository there.
+#
+# This has to happen before the tests below and not only before the ISO: on a
+# host whose Raku carries no JSON::Fast of its own -- the build VM -- the
+# tests would otherwise fail on a missing module instead of on anything they
+# assert. Module tests of the third-party distributions are skipped, as they
+# always were for a build nobody signs; the tests that matter here are
+# Ditana's own.
+mkdir -p airootfs/root/.raku
+zef --force-install --contained --/test --/test-depends \
+    -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
+
 # The answer-file tests run on every build, including a quick one and one
 # nobody signs. They take a couple of seconds, need neither network nor root,
 # and they guard the point at which an unattended installation either proceeds
@@ -298,7 +311,6 @@ for i in "${!key_list[@]}"; do
 done
 echo "$(( ${#key_list[@]} + 1 ))) No signing"
 
-ZEF_SWITCHES=""
 
 # With no terminal attached, read fails and `set -e` would end the build here
 # -- which is where an unattended build of a Testing ISO stopped. Falling
@@ -325,7 +337,6 @@ else
     echo "No signing selected."
     selected_signer="(none)"
     selected_key=""
-    ZEF_SWITCHES="--/test --/test-depends"
 fi
 
 cleanup() {
@@ -350,9 +361,6 @@ LABEL="Ditana"
 if [[ "$current_branch" != "main" ]]; then
     LABEL+="-Testing"
 fi
-
-mkdir -p airootfs/root/.raku
-zef --force-install --contained $ZEF_SWITCHES -to="inst#/$(realpath airootfs/root/.raku)" install JSON::Fast Sparrow6
 
 # Terminate any running keyboxd process to prevent conflicts with root-level GPG operations in mkarchiso.
 # The keyboxd daemon is part of the GnuPG package and is started automatically by GPG whenever the keybox database is accessed.

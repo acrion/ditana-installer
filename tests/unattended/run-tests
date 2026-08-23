@@ -37,6 +37,16 @@ if [[ ! -x json-kdl-converter ]]; then
     exit 1
 fi
 
+# The installer's own modules come from airootfs/root/.raku, which is
+# /root/.raku in the ISO and therefore the ordinary home repository there.
+# Outside the ISO it is nobody's home, so a test run has to name it -- on the
+# build host there is no other JSON::Fast to be had, and without this the
+# tests fail on a missing module rather than on anything they assert.
+RAKU_REPO=$(readlink -f ../../airootfs/root/.raku)
+if [[ -d "$RAKU_REPO" ]]; then
+    export RAKULIB="inst#$RAKU_REPO"
+fi
+
 failed=0
 for test in ./*.t; do
     echo "== $test"
