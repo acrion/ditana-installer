@@ -196,7 +196,7 @@ sub establish-internet-connection() is export {
                 } else {
                     Logging.log("User selected ssid, now get password.");
                     my $ssid = %ssid<value>;
-                    my $ssid-passphrase = qqx{dialog --stdout --insecure --passwordbox "Please enter the password for Wi-Fi '$ssid'" 10 50};
+                    my $ssid-passphrase = ask-for-passphrase("Please enter the password for Wi-Fi '$ssid'");
 
                     if $ssid-passphrase {
                         show-dialog-raw(

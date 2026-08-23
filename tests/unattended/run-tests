@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2026 acrion innovations GmbH
+# Authors: Stefan Zipproth, s.zipproth@acrion.ch
+#
+# This file is part of Ditana Installer, see
+# https://github.com/acrion/ditana-installer and https://ditana.org/installer.
+#
+# Ditana Installer is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ditana Installer is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
+
+# The tests for unattended installation. They need no network, no terminal and
+# no root, and they run against the fixture configuration beside them rather
+# than against the one ditana-config publishes, so a failure here is about the
+# installer and not about last week's configuration commit.
+
+set -euo pipefail
+
+cd "$(dirname "$(readlink -f "$0")")"
+
+# Settings.rakumod and Autoinstall.rakumod both call json-kdl-converter as a
+# sibling of the running program. build.sh builds it from the configuration
+# archive; without it there is nothing to test against, and saying so beats a
+# stack trace about a missing file.
+if [[ ! -x json-kdl-converter ]]; then
+    echo "json-kdl-converter is missing (build.sh builds it into airootfs/root/)." >&2
+    exit 1
+fi
+
+failed=0
+for test in ./*.t; do
+    echo "== $test"
+    if ! raku "$test"; then
+        failed=1
+    fi
+done
+
+exit $failed

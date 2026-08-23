@@ -140,6 +140,13 @@ popd
 cp /tmp/json-kdl-converter/target/release/json-kdl-converter airootfs/root/
 rm -rf /tmp/json-kdl-converter
 
+# The answer-file tests run on every build, including a quick one and one
+# nobody signs. They take a couple of seconds, need neither network nor root,
+# and they guard the point at which an unattended installation either proceeds
+# on an answer it was given or stops -- an ISO that gets that wrong is one
+# nobody can safely leave alone, which is the only kind this ISO gets used for.
+tests/unattended/run-tests
+
 if [[ "${1:-}" == "--quick" ]]; then
     # --- Quick rebuild mode: only replace airootfs/root in existing ISO ---
     ensure_package_installed squashfs-tools

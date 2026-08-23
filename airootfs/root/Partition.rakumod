@@ -53,7 +53,7 @@ sub encrypt-luks(Str $partition) {
     Logging.echo("Encrypting partition $partition");
 
     loop {
-        my $passphrase = qx{dialog --stdout --insecure --passwordbox 'Please enter a passphrase for the encrypted root partition' 10 50};
+        my $passphrase = ask-for-passphrase('Please enter a passphrase for the encrypted root partition');
 
         unless $passphrase {
             show-dialog-raw('--msgbox', 'Please specify a passphrase.', '10', '50');
@@ -66,7 +66,7 @@ sub encrypt-luks(Str $partition) {
             next;
         }
 
-        my $confirm-passphrase = qx{dialog --stdout --insecure --passwordbox 'Please confirm the passphrase' 10 50};
+        my $confirm-passphrase = ask-for-passphrase('Please confirm the passphrase');
 
         if $confirm-passphrase {
             if $confirm-passphrase eq $passphrase {
@@ -129,7 +129,7 @@ sub create-zfs-pool(Str $partition) {
         my $confirm-passphrase;
 
         loop {
-            my $passphrase = qx{dialog --stdout --insecure --passwordbox 'Please enter a passphrase for the encrypted root partition' 10 50};
+            my $passphrase = ask-for-passphrase('Please enter a passphrase for the encrypted root partition');
 
             unless $passphrase {
                 show-dialog-raw('--msgbox', 'Please specify a passphrase.', '10', '50');
@@ -142,7 +142,7 @@ sub create-zfs-pool(Str $partition) {
                 next;
             }
 
-            my $confirm-passphrase = qx{dialog --stdout --insecure --passwordbox 'Please confirm the passphrase' 10 50};
+            my $confirm-passphrase = ask-for-passphrase('Please confirm the passphrase');
 
             if $confirm-passphrase {
                 if $passphrase eq $confirm-passphrase {

@@ -155,14 +155,49 @@ sub format-package-list($packages) {
 }
 
 #| Dialog boxes that only tell the user something. They have no answer to
-#| wait for, so an unattended run can log them and move on.
-my constant NON-QUESTIONS = <--infobox --msgbox --gauge --programbox --tailbox>;
+#| wait for, so an unattended run can log them and move on. --msgbox,
+#| --textbox and --pause do wait for a keypress, but only to acknowledge what
+#| they show; nothing about the installation depends on it.
+my constant NON-QUESTIONS = <
+    --gauge --infobox --mixedgauge --msgbox --pause
+    --prgbox --programbox --progressbox --tailbox --tailboxbg --textbox
+>;
+
+#| Boxes that ask. Listed rather than derived, because the decision has to be
+#| made from a fixed set: whatever is in neither list is unknown, and an
+#| unknown box is treated as a question.
+my constant QUESTIONS = <
+    --buildlist --calendar --checklist --dselect --editbox --form --fselect
+    --inputbox --inputmenu --menu --mixedform --passwordbox --passwordform
+    --radiolist --rangebox --timebox --treeview --yesno
+>;
+
+#| The box option out of a dialog command line, or Nil if it names none.
+#|
+#| Scanning for the first option that is not --title is not enough: dialog
+#| takes any number of common options before the box, and --no-collapse,
+#| --default-item or --ok-label appearing first would make the welcome screen
+#| look like a question and stop an unattended run that had nothing to answer.
+#| So the box is recognised by name, from the two lists above.
+sub dialog-box-option(@args) is export {
+    @args.map(*.Str).first({ $_ ~~ any(NON-QUESTIONS) || $_ ~~ any(QUESTIONS) });
+}
+
+#| Would this dialog wait for an answer? An unrecognised box counts as one:
+#| dialog gains options over time, and the cost of the two mistakes is not
+#| symmetric -- a wrongly stopped run says which box it stopped at, while a
+#| wrongly skipped question silently installs a machine nobody answered for.
+sub dialog-is-a-question(@args --> Bool) is export {
+    my $box = dialog-box-option(@args);
+    return True unless $box;
+    !($box ~~ any(NON-QUESTIONS));
+}
 
 sub show-dialog-raw(*@args) is export {
     if autoinstall-active() {
-        my $box = @args.first({ $_.Str.starts-with('--') && $_.Str ne '--title' });
-        if $box && $box.Str ~~ any(NON-QUESTIONS) {
-            Logging.log("Autoinstall: not showing {$box.Str}: {@args.grep(*.Str.chars > 20).head // ''}");
+        unless dialog-is-a-question(@args) {
+            my $box = dialog-box-option(@args);
+            Logging.log("Autoinstall: not showing $box: {@args.grep(*.Str.chars > 20).head // ''}");
             return { value => '', status => 0 };
         }
         # Every question the answer file did not cover ends up here. Stopping
@@ -171,7 +206,7 @@ sub show-dialog-raw(*@args) is export {
         # exactly like one that is still working, and it would sit there until
         # the timeout on the other end gives up hours later.
         die "Autoinstall: the installer wants to ask something the answer file "
-          ~ "does not cover ({$box // 'unknown dialog'}).\n"
+          ~ "does not cover ({dialog-box-option(@args) // 'unknown dialog'}).\n"
           ~ "Full dialog: {@args.map(*.Str).join(' ')}";
     }
 
@@ -191,10 +226,30 @@ sub show-dialog-raw(*@args) is export {
     my $promise = $proc.start;
     my $status = await $promise;
     
-    return { 
-        value => $output.Str, 
-        status => $status.exitcode 
+    return {
+        value => $output.Str,
+        status => $status.exitcode
     }
+}
+
+#| Ask for a passphrase and return it, or the empty string if the box was
+#| cancelled.
+#|
+#| The passphrase boxes are the only ones that do not go through
+#| show-dialog-raw, because --insecure and --stdout put the typed characters
+#| on a path of their own. They still have to reach the same stop under an
+#| answer file: without this they were four dialogs an unattended run would
+#| have waited at forever, which is precisely the failure the gate exists to
+#| turn into an error.
+sub ask-for-passphrase(Str $prompt --> Str) is export {
+    if autoinstall-active() {
+        die "Autoinstall: the installer wants to ask something the answer file "
+          ~ "does not cover (--passwordbox).\n"
+          ~ "Full dialog: --insecure --passwordbox $prompt";
+    }
+
+    my $quoted = "'" ~ $prompt.subst("'", "'\\''", :g) ~ "'";
+    qqx{dialog --stdout --insecure --passwordbox $quoted 10 50};
 }
 
 sub show-categories-dialog($dialog) {
