@@ -43,11 +43,11 @@ rm -rf airootfs/root/settings/
 rm -rf airootfs/root/folders/
 
 # Where the several gigabytes an ISO build needs are put down. /var/tmp and
-# not /tmp: /tmp is a tmpfs on Arch, and a quick rebuild unpacks the squashfs
-# and writes a new one beside it, which is more than twice the size of the
-# image. On the build VM's 5.9 GiB tmpfs that produced a truncated
-# airootfs.sfs and an xorriso failure about reading a file it had just
-# written.
+# not /tmp, because /tmp is a tmpfs on Arch and this does not fit in RAM with
+# room to spare: a quick rebuild holds the unpacked tree and a new squashfs at
+# the same time, which on the build VM came to 5.0 of its 5.9 GiB. The full
+# build's own work directory reached 4.1 GiB in the same place. Neither has
+# failed for want of space yet; both are one larger package set away from it.
 BUILD_TMP=${DITANA_BUILD_TMP:-/var/tmp}
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
@@ -223,6 +223,12 @@ if [[ "${1:-}" == "--quick" ]]; then
     # Use low compression for speed — this is a dev build
     sudo mksquashfs "$QUICK_TMP/squashfs-root" "$QUICK_TMP/airootfs.sfs" \
         -comp zstd -Xcompression-level 1 -b 1M
+    # mksquashfs has to run as root to read the tree, and root's umask on
+    # Ditana is 027, so what it leaves behind is -rw-r----- root:root. Step 4
+    # runs xorriso as the build user, which then cannot open the file it is
+    # asked to put into the ISO -- and says so as "Problems with reading disk
+    # file", after 0.0 seconds and with no mention of permissions.
+    sudo chown "$(id -u):$(id -g)" "$QUICK_TMP/airootfs.sfs"
     sudo rm -rf "$QUICK_TMP/squashfs-root"
 
     # Step 4: Patch the squashfs back into the ISO
