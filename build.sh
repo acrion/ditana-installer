@@ -105,6 +105,14 @@ reverse_patch_if_needed() {
 }
 
 if [[ "$current_branch" != "main" ]]; then
+    # The patched pacman.conf includes /etc/pacman.d/ditana-testing-mirrorlist,
+    # and mkarchiso reads that file on the *host*. A host that installs from the
+    # production repository has no reason to carry it, which is how the first
+    # Testing ISO on the build VM failed -- with "no usable package
+    # repositories configured", several minutes in and naming nothing.
+    # Installing it changes no repository the host itself uses: it puts a
+    # mirrorlist in place that the host's own pacman.conf does not include.
+    ensure_package_installed ditana-testing-mirrorlist
     select_testing_repository
     echo "Applying patch..."
     git apply "${TESTING_PATCH_ARGS[@]}" use-testing-repo.patch
