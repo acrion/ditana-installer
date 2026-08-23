@@ -24,16 +24,66 @@ use Settings;
 
 my @active-mounts;
 
+#| Symlinks that were in the way of a bind mount, and what they pointed at.
+my @displaced-symlinks;
+
+#| Make $target somewhere a bind mount can be attached, and return what it was
+#| pointing at if it was a symlink -- the empty string otherwise.
+#|
+#| A symlink here is not an empty spot to put a file in. Everything that
+#| touches the path follows it: writing the placeholder writes through it, and
+#| `mount --bind` attaches to whatever it resolves to. The target's symlinks
+#| are absolute and resolved against the *running* system, not against /mnt,
+#| so both end up at a file the live environment is using.
+#|
+#| That is not hypothetical. /mnt/etc/resolv.conf is a symlink to
+#| /run/systemd/resolve/stub-resolv.conf, which ditana-filesystem ships so the
+#| installed system resolves through systemd-resolved. Creating the
+#| placeholder emptied the live environment's own resolv.conf, and the bind
+#| mount then attached that file to itself -- leaving the chroot with a
+#| dangling symlink and no nameserver at all. pacman inside it failed on every
+#| mirror with "Could not resolve host", after 4.6 GB had already been
+#| installed.
+sub prepare-bind-target(Str $target --> Str) is export {
+    my $displaced = '';
+
+    if $target.IO.l {
+        my $link = run('readlink', $target, :out, :err);
+        $displaced = $link.out.slurp(:close).trim;
+        $link.err.slurp(:close);
+        unlink $target;
+    }
+
+    $target.IO.spurt unless $target.IO.e;
+    $displaced;
+}
+
+#| Put back the symlink a bind mount displaced. The installed system needs it:
+#| without it, /etc/resolv.conf would be the empty regular file that stood in
+#| for it during the installation, and the installed system would resolve
+#| nothing.
+sub restore-bind-target(Str $target, Str $link) is export {
+    return unless $link;
+    unlink $target if $target.IO.e && !$target.IO.l;
+    # IO::Path.symlink creates a link *named* by its argument and pointing at
+    # the invocant, so the link text is the invocant here.
+    $link.IO.symlink($target);
+}
+
 sub create-bind-mount(Str $source, Str $target) is export {
-    
+
     if $source.IO.d {
         mkdir $target unless $target.IO.d;
     } else {
         my $target-dir = $target.IO.dirname;
         mkdir $target-dir unless $target-dir.IO.d;
-        $target.IO.spurt;
+        my $displaced = prepare-bind-target($target);
+        if $displaced {
+            Logging.echo("'$target' was a symlink to '$displaced'; put aside for the bind mount and restored afterwards");
+            @displaced-symlinks.push: [$target, $displaced];
+        }
     }
-    
+
     run-and-echo("mount", "--bind", $source, $target);
     @active-mounts.push: $target;
     Logging.echo("Created bind mount from '$source' to '$target'");
@@ -51,6 +101,13 @@ sub cleanup-mounts() is export {
         Logging.echo("Unmounted '$mount'");
     }
     @active-mounts = ();
+
+    # Only once nothing is mounted over them any more.
+    for @displaced-symlinks.reverse -> ($target, $link) {
+        restore-bind-target($target, $link);
+        Logging.echo("Restored the symlink '$target' -> '$link'");
+    }
+    @displaced-symlinks = ();
 }
 
 sub mount-bootimage-partition() is export {
