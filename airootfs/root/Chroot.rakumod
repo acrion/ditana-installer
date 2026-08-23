@@ -44,7 +44,41 @@ sub create-hostid() is export {
 
 sub copy-files-into-chroot-before-pacstrap() is export {
     run-and-echo("chown", "-R", "root:root", "%*ENV<HOME>/folders");
-    run-and-echo("rsync", "--recursive", "--times", "--no-perms", "--executability", "--verbose", "%*ENV<HOME>/folders-before-pacstrap/", "/mnt/")
+
+    # --no-perms leaves the permissions of anything rsync creates to the
+    # umask, and the installer inherits 027 from login.defs. The directories
+    # on the way to the files below are therefore created as 0750 -- among
+    # them /usr, because folders-before-pacstrap carries usr/lib/os-release.
+    #
+    # pacstrap then installs into a /usr that already exists, and pacman does
+    # not change the permissions of a directory it finds. It says so, twice,
+    # in the middle of installing 700 packages:
+    #
+    #     warning: directory permissions differ on /mnt/usr/
+    #     filesystem: 750  package: 755
+    #
+    # The installed system then has a /usr no ordinary user can traverse, so
+    # nothing on it can be executed by anyone but root. The first thing that
+    # tried was `su - <user> -c ...` in a chroot script, which failed with
+    # "failed to execute /usr/bin/bash: Permission denied" -- a message that
+    # points at bash, which is fine, rather than at the directory above it.
+    #
+    # 022 is what these directories are meant to have; --chmod does not help
+    # here, because rsync applies it only together with --perms, and --perms
+    # is what this deliberately does not want for the files.
+    run-and-echo("sh", "-c", before-pacstrap-rsync("%*ENV<HOME>/folders-before-pacstrap", "/mnt"));
+}
+
+#| The command copy-files-into-chroot-before-pacstrap runs, with the source
+#| and target left open.
+#|
+#| Separate so that tests/installer/before-pacstrap-modes.t can run exactly
+#| this into a directory of its own: what it is checking is the mode of the
+#| directories the copy creates, and a test that reproduced the command would
+#| stop checking this one the day somebody edited it.
+sub before-pacstrap-rsync(Str $source, Str $target --> Str) is export {
+    "umask 022; exec rsync --recursive --times --no-perms --executability --verbose "
+    ~ "'$source/' '$target/'";
 }
 
 sub copy-files-into-chroot-after-pacstrap() is export {
