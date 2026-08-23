@@ -166,7 +166,7 @@ zef --force-install --contained --/test --/test-depends \
 # and they guard the point at which an unattended installation either proceeds
 # on an answer it was given or stops -- an ISO that gets that wrong is one
 # nobody can safely leave alone, which is the only kind this ISO gets used for.
-tests/unattended/run-tests
+tests/installer/run-tests
 
 if [[ "${1:-}" == "--quick" ]]; then
     # --- Quick rebuild mode: only replace airootfs/root in existing ISO ---

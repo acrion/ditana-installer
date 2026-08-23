@@ -10,7 +10,7 @@ This repository contains the **interpreter**. The data it interprets — every s
 - An `archiso`-based ISO build configuration (`profiledef.sh`, `packages.x86_64`, `pacman.conf`, `efiboot/`, `grub/`, `syslinux/`).
 - The `build.sh` ISO generator.
 - A bundled snapshot of `ditana-config` (`airootfs/root/ditana-config.tar.gz`) used as a fallback when the runtime download fails.
-- Sparrow6 tests under `tests/configuration/` for automated configuration changes, and Raku tests under `tests/unattended/` for the answer file.
+- Sparrow6 tests under `tests/configuration/` for automated configuration changes, and Raku tests under `tests/installer/` for the answer file.
 - `CONTRIBUTING.md` — the contributor guide, including how to run the installer in simulation mode without touching your system.
 
 ## How the pieces fit together

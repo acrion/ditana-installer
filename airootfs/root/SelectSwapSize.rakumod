@@ -23,6 +23,44 @@ use Settings;
 use Logging;
 use RunAndLog;
 
+#| How much of the installation disk should become swap, in GiB.
+#|
+#| Enough swap to reach 32 GiB of total memory, but never so much that the
+#| installation no longer fits: at most a fifth of the disk, and at most
+#| whatever is left once the installation itself has its share.
+#|
+#| Arithmetic only, so that the rules above can be checked without a disk --
+#| see tests/installer/swap-size.t, which exists because the last two bounds
+#| can both come out negative on a small disk. They did: 24 GiB of disk gave
+#| -21, sgdisk was handed `--new=2:0:+-21G`, and partitioning failed with
+#| three lines that named the partition and not the reason.
+sub swap-recommendation-gib($total-ram-gib, $disk-gib --> Int) is export {
+    my $recommended = (32 - $total-ram-gib).floor;
+    my $fifth-of-disk = ($disk-gib / 5).floor;
+    my $typical-required-gib-during-installation = 45;
+    my $left-over = ($disk-gib - $typical-required-gib-during-installation).floor;
+
+    if $recommended <= 0 {
+        Logging.log("Swap recommendation: No swap partition suggested, as the system has 32 GB or more RAM.");
+        return 0;
+    }
+
+    if $recommended > $fifth-of-disk {
+        $recommended = $fifth-of-disk;
+        Logging.log("Swap recommendation: Aiming for 32 GiB of total memory requires more than 20% of the installation disk capacity.");
+    }
+    if $recommended > $left-over {
+        $recommended = $left-over;
+        Logging.log("Swap recommendation: Aiming for 32 GiB of total memory reduces the available disk space below $typical-required-gib-during-installation.");
+    }
+
+    # A disk smaller than the installation needs makes both bounds negative.
+    # No swap is the only answer that means anything then; whether the
+    # installation fits at all is a different question, and one the disk
+    # itself will answer soon enough.
+    max($recommended, 0);
+}
+
 # Pure computation, no side effects
 sub compute-swap-recommendation() {
     my $s = Settings.instance;
@@ -32,30 +70,13 @@ sub compute-swap-recommendation() {
     my $size-of-install-disk-str = query-blockdevices("-d -o SIZE /dev/$install-disk")[0]<size>;
     my $size-of-install-disk-gib = query-blockdevices("-d -o SIZE -b /dev/$install-disk")[0]<size> / 1024 / 1024 / 1024;
 
-    my $recommended-swap-size-gib = (32 - $total-ram-gib).floor;
-    my $max-swap-size-gib = ($size-of-install-disk-gib / 5).floor;
-    my $typical-required-gib-during-installation = 45;
-    my $max-swap-size-gib-b = ($size-of-install-disk-gib - $typical-required-gib-during-installation).floor;
-
-    if $recommended-swap-size-gib < 0 {
-        $recommended-swap-size-gib = 0;
-        Logging.log("Swap recommendation: No swap partition suggested, as the system has 32 GB or more RAM.");
-    } else {
-        if $recommended-swap-size-gib > $max-swap-size-gib {
-            $recommended-swap-size-gib = $max-swap-size-gib;
-            Logging.log("Swap recommendation: Aiming for 32 GiB of total memory requires more than 20% of the installation disk capacity.");
-        }
-        if $recommended-swap-size-gib > $max-swap-size-gib-b {
-            $recommended-swap-size-gib = $max-swap-size-gib-b;
-            Logging.log("Swap recommendation: Aiming for 32 GiB of total memory reduces the available disk space below $typical-required-gib-during-installation.");
-        }
-    }
+    my $recommended-swap-size-gib = swap-recommendation-gib($total-ram-gib, $size-of-install-disk-gib);
 
     Logging.log("Recommended swap size: $recommended-swap-size-gib GiB.");
 
     return %(
         recommended => $recommended-swap-size-gib,
-        max         => $max-swap-size-gib,
+        max         => ($size-of-install-disk-gib / 5).floor,
         disk-str    => $size-of-install-disk-str,
     );
 }
