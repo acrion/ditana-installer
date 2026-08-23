@@ -19,6 +19,7 @@
 
 use v6.d;
 use Logging;
+use Autoinstall;
 use Settings;
 
 sub calculate-indent(Str $text) {
@@ -153,7 +154,27 @@ sub format-package-list($packages) {
     return "@formatted.join(', ') and @pkg-array[*-1]";
 }
 
+#| Dialog boxes that only tell the user something. They have no answer to
+#| wait for, so an unattended run can log them and move on.
+my constant NON-QUESTIONS = <--infobox --msgbox --gauge --programbox --tailbox>;
+
 sub show-dialog-raw(*@args) is export {
+    if autoinstall-active() {
+        my $box = @args.first({ $_.Str.starts-with('--') && $_.Str ne '--title' });
+        if $box && $box.Str ~~ any(NON-QUESTIONS) {
+            Logging.log("Autoinstall: not showing {$box.Str}: {@args.grep(*.Str.chars > 20).head // ''}");
+            return { value => '', status => 0 };
+        }
+        # Every question the answer file did not cover ends up here. Stopping
+        # with the name of the box is the whole point: an unattended
+        # installation that waits for a keypress nobody will press looks
+        # exactly like one that is still working, and it would sit there until
+        # the timeout on the other end gives up hours later.
+        die "Autoinstall: the installer wants to ask something the answer file "
+          ~ "does not cover ({$box // 'unknown dialog'}).\n"
+          ~ "Full dialog: {@args.map(*.Str).join(' ')}";
+    }
+
     my @quoted-args = @args.map: {
         "'" ~ $_.Str.subst("'", "'\\''", :g) ~ "'"
     };

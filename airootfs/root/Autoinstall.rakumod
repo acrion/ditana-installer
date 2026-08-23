@@ -68,6 +68,7 @@ class Autoinstall {
     }
 
     has Bool $.active is rw = False;
+    has Str  $.path is rw = '';
     has Str  $.mode is rw = 'strict';
     has Str  $.source is rw = '';
     has %.answers;
@@ -141,12 +142,26 @@ class Autoinstall {
         $file;
     }
 
-    #| Find an answer file and apply it. Returns True when an unattended
-    #| installation is to run, False when no answer file is present at all.
+    #| Is an answer file present at all? Answered before the configuration is
+    #| downloaded and before Settings exists, because the dialogs shown during
+    #| those steps must already know not to wait for a keypress. Locating the
+    #| file needs neither -- only validating it does, and that happens later in
+    #| load().
+    method detect(--> Bool) {
+        return True if self.path;
+        my $found = self!locate();
+        return False unless $found;
+        self.path = $found;
+        self.active = True;
+        True;
+    }
+
+    #| Apply the answer file that detect() found. Must run after the
+    #| configuration is loaded: a setting can only be checked against the
+    #| settings that exist.
     method load(--> Bool) {
-        my $path = self!locate();
-        return False unless $path;
-        self.load-from($path);
+        return False unless self.detect();
+        self.load-from(self.path);
     }
 
     #| Read one answer file, check it against the settings that actually

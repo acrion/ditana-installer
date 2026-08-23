@@ -48,6 +48,7 @@ use Summary;
 use Timezone;
 use Uefi;
 use Welcome;
+use Autoinstall;
 
 my $log-on-screen = False;
 
@@ -244,6 +245,13 @@ sub is-setup-procedure($installation-step --> Bool) {
 }
 
 sub main() {
+    # Before the first dialog: from here on, a box that waits for an answer
+    # stops the run instead of hanging (see show-dialog-raw). Only whether an
+    # answer file exists is decided here -- reading it needs the configuration,
+    # which is downloaded a few lines below.
+    if autoinstall().detect() {
+        Logging.log("Autoinstall: answer file found, running unattended");
+    }
 
     if !'/tmp/ditana-set-font.sh'.IO.e {
         welcome();
@@ -320,6 +328,10 @@ END
         qx{tmux set -g status-style "bg=#21262d,fg=#e6edf3"};
     }
 
+    # Now that the configuration is loaded, the answer file can be checked
+    # against the settings that actually exist and applied to them.
+    autoinstall().load();
+
     my @installation-steps = Settings.get-installation-steps;
     my $current-index = 0;
 
@@ -349,6 +361,17 @@ END
             $current-index = $silent-exit-code == 0
                 ?? $current-index + 1
                 !! ($current-index > 0 ?? $current-index - 1 !! 0);
+            next;
+        }
+
+        # A step whose questions the answer file has already answered has
+        # nothing left to ask. Skipping it is not a shortcut: the settings it
+        # would have written are already set, so what follows sees exactly the
+        # state an interactive run would have produced.
+        if autoinstall().step-is-answered($installation-step) {
+            Logging.log("Autoinstall: '$name' is answered, skipping");
+            $current-index++;
+            $silent-exit-code = 0;
             next;
         }
 
