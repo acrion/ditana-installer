@@ -1,0 +1,41 @@
+// A server lacking a desktop: the tiniest answer file that deploys Ditana
+// without prompting any question.
+//
+// Everything unmentioned herein retains the value the installer originally
+// provided -- the default from ditana-config, or what it identified for this
+// machine. Thus, this file lists solely what lacks such a value, together
+// with the small set of items a server must not delegate to detection.
+//
+// Create a config drive from it and attach it next to the installation
+// medium:
+//
+//     ./make-config-drive examples/autoinstall-server.kdl ditana-auto.img
+
+settings {
+    // Nothing to fall back on: nobody has entered a user name so far, and no
+    // disk may be erased on a guess. Both halt the installation if omitted.
+    user-name "operator"
+    install-disk "vda"
+
+    // "new" creates a fresh EFI partition on install-disk. Omit this on a
+    // machine that already boots something – then the installer halts and
+    // queries instead of producing another system that cannot be booted.
+    bootloader-partition "new"
+
+    // A radiolist allows only one selection: designating one profile
+    // nullifies the rest. Server is the profile that installs no desktop
+    // environment at all.
+    profile-server #true
+
+    // The installer derives these from the network, which is the wrong source
+    // for a machine in a data centre: it would follow the address, not the
+    // operator.
+    timezone "Europe/Zurich"
+    locale "en_US"
+    keymap-layout "us"
+    keymap-variant ""
+
+    // Without a passphrase originating from somewhere, an encrypted root
+    // cannot be configured unattended.
+    encrypt-root-partition #false
+}

@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2026 acrion innovations GmbH
+# Authors: Stefan Zipproth, s.zipproth@acrion.ch
+#
+# This file is part of Ditana Installer, see
+# https://github.com/acrion/ditana-installer and https://ditana.org/installer.
+#
+# Ditana Installer is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ditana Installer is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
+
+# Build a config drive: a small FAT image labelled DITANA_AUTO carrying one
+# answer file. Attach it beside the installation medium and the installer
+# finds it -- no modified ISO, no kernel command line, nothing else changed.
+#
+#     ./make-config-drive examples/autoinstall-server.kdl ditana-auto.img
+#     qemu-system-x86_64 ... -drive file=ditana-auto.img,format=raw
+#
+# mkfs.fat and mcopy write the image without mounting it, so this needs no
+# root. That is the point: the nightly test loop builds one per run, and a
+# step that needs root is a step that needs a password or a sudoers rule.
+
+set -euo pipefail
+
+ANSWER_FILE="${1:-}"
+IMAGE="${2:-ditana-auto.img}"
+
+if [[ -z "$ANSWER_FILE" ]]; then
+    echo "usage: $(basename "$0") <answer-file.kdl> [image]" >&2
+    exit 1
+fi
+
+if [[ ! -f "$ANSWER_FILE" ]]; then
+    echo "$ANSWER_FILE does not exist." >&2
+    exit 1
+fi
+
+for tool in mkfs.fat mcopy; do
+    if ! command -v "$tool" >/dev/null; then
+        echo "$tool is missing (pacman -S dosfstools mtools)." >&2
+        exit 1
+    fi
+done
+
+# The label is what the installer looks for, and FAT allows eleven
+# characters -- DITANA_AUTO is exactly eleven.
+rm -f "$IMAGE"
+truncate -s 1M "$IMAGE"
+mkfs.fat -n DITANA_AUTO "$IMAGE" >/dev/null
+
+# Always as autoinstall.kdl: the installer looks for that name on the volume,
+# whatever the file was called on the way in.
+mcopy -i "$IMAGE" "$ANSWER_FILE" ::autoinstall.kdl
+
+echo "$IMAGE carries $(basename "$ANSWER_FILE") as autoinstall.kdl, labelled DITANA_AUTO."
