@@ -124,6 +124,37 @@ apply(q:to/KDL/, 'procedure');
 nok autoinstall().step-can-be-skipped(%steps<choose-region-or-timezone>),
     'a procedure is never assumed to be answered';
 
+# --- a radiolist is one choice, not several booleans ------------------------
+
+# profile-default is the configuration's #true. Naming only the other one has
+# to unset it, or every default expression asking about a profile would see
+# two of them at once -- which no interactive run can produce, because the
+# dialog unchecks the others.
+apply(q:to/KDL/, 'radiolist-one');
+    settings {
+        profile-server #true
+    }
+    KDL
+is Settings.instance.get('profile-default'), False,
+    'naming one option of a radiolist unsets the option the configuration had chosen';
+is Settings.instance.get('profile-server'), True,
+    'and leaves the named one chosen';
+
+throws-like { apply(q:to/KDL/, 'radiolist-two') }, Exception, message => /'profile-default' .* 'profile-server'/,
+    settings {
+        profile-default #true
+        profile-server #true
+    }
+    KDL
+    'naming two options of a radiolist stops the run rather than picking one';
+
+throws-like { apply(q:to/KDL/, 'radiolist-none') }, Exception, message => /'User Profile'/,
+    settings {
+        profile-default #false
+    }
+    KDL
+    'unsetting the only chosen option without naming another stops the run';
+
 # --- what the file need not name, and what it must --------------------------
 
 # The configuration's own answer is an answer. Demanding that a file repeat it

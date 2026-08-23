@@ -248,8 +248,59 @@ class Autoinstall {
             Settings.instance.reset($name, %!answers{$name});
         }
 
+        self!settle-radiolists();
+
         self.active = True;
         True;
+    }
+
+    #| Every radiolist step, however deeply the categories nest.
+    method !radiolist-dialogs(@steps = Settings.instance.installation-steps.values) {
+        my @names;
+        for @steps -> $step {
+            @names.push($step<name>) if $step<type> eq 'radiolist';
+            @names.append(|self!radiolist-dialogs(($step<categories> // []).list))
+                if $step<type> eq 'categories';
+        }
+        @names;
+    }
+
+    #| Make an answered radiolist exclusive, the way choosing in it would.
+    #|
+    #| A radiolist is one choice spread over several boolean settings, and the
+    #| dialog unchecks the others when one is checked. An answer file naming
+    #| only C<profile-server #true> would otherwise leave C<profile-default>
+    #| standing at the C<#true> the configuration gave it, and every default
+    #| expression that asks about a profile would then see two of them.
+    #|
+    #| Touching a radiolist at all therefore means owning it: the members the
+    #| file does not name go false. What that cannot repair -- naming two as
+    #| true, or naming the only true one as false -- stops the run, because
+    #| there is no way to tell which of the two the operator meant.
+    method !settle-radiolists() {
+        for self!radiolist-dialogs() -> $dialog-name {
+            my @settings = Settings.instance.get-dialog($dialog-name);
+            next unless @settings;
+            next unless @settings.grep({ %!answers{.name}:exists });
+
+            for @settings -> $setting {
+                next if %!answers{$setting.name}:exists;
+                next unless Settings.instance.get($setting.name);
+                Logging.log("Autoinstall: '$dialog-name' is answered, so "
+                          ~ "{$setting.name} goes false");
+                Settings.instance.set($setting.name, False);
+            }
+
+            my @chosen = @settings.map(*.name).grep({ Settings.instance.get($_) });
+            unless @chosen == 1 {
+                die "Autoinstall: '$dialog-name' is one choice out of "
+                  ~ "{@settings.elems}, and the answer file leaves "
+                  ~ (@chosen ?? "{@chosen.sort.join(' and ')} chosen"
+                             !! "none of them chosen")
+                  ~ ". Name exactly one of {@settings.map(*.name).sort.join(', ')} "
+                  ~ "as #true.";
+            }
+        }
     }
 
     #| KDL gives every node's arguments as a list; a setting takes one value.
