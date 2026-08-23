@@ -377,6 +377,14 @@ method load() {
         return %!settings{$name}.current-value;
     }
 
+    #| Whether a setting of this name was loaded from the configuration.
+    #| An answer file is checked against this rather than against a schema:
+    #| the configuration is downloaded at run time, so the running installer
+    #| is the only authority on which settings exist.
+    method setting-exists($name --> Bool) {
+        %!settings{$name}:exists;
+    }
+
     method different-value($setting-name, $new-value) {
         my $current-value = self.get($setting-name);
         $current-value.defined ^^ $new-value.defined || ($new-value.defined && $new-value ne $current-value)
