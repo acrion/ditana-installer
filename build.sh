@@ -42,6 +42,14 @@ rm -f  airootfs/root/installation-steps.kdl
 rm -rf airootfs/root/settings/
 rm -rf airootfs/root/folders/
 
+# Where the several gigabytes an ISO build needs are put down. /var/tmp and
+# not /tmp: /tmp is a tmpfs on Arch, and a quick rebuild unpacks the squashfs
+# and writes a new one beside it, which is more than twice the size of the
+# image. On the build VM's 5.9 GiB tmpfs that produced a truncated
+# airootfs.sfs and an xorriso failure about reading a file it had just
+# written.
+BUILD_TMP=${DITANA_BUILD_TMP:-/var/tmp}
+
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 
 source version.sh
@@ -181,7 +189,7 @@ if [[ "${1:-}" == "--quick" ]]; then
 
     echo "Quick rebuild: updating /root in $(basename "$ISO_FILE")..."
 
-    QUICK_TMP=$(mktemp -d)
+    QUICK_TMP=$(mktemp -d -p "$BUILD_TMP")
 
     cleanup_quick() {
         reverse_patch_if_needed
@@ -302,7 +310,7 @@ mv /tmp/nvidia_open_gpu_page.txt airootfs/root/cached_open_gpu_page.txt
 gpg --export --armor 3F8054C3FF755E5544E68516BC333E9AE877D45A >airootfs/root/bind-mount/root/ditana-key.asc
 
 sudo pacman -Sy
-TMP_ISO=/tmp/ditana-iso
+TMP_ISO=$BUILD_TMP/ditana-iso
 if [[ -n "$TMP_ISO" ]]; then
     sudo rm -rf "$TMP_ISO"
 fi
