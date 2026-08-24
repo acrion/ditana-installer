@@ -12,7 +12,7 @@ The first of these that exists takes precedence.
 
 ## The format
 
-KDL, the same language as the rest of the Ditana configuration, with one block:
+KDL, the same language as the rest of the Ditana configuration, with two blocks – one for the settings, one for the account password:
 
 ```kdl
 settings {
@@ -23,7 +23,7 @@ settings {
 }
 ```
 
-Each node designates a setting and holds exactly one value. Two values are an error, and so is a setting that does not exist – verified against the settings the active installer actually loaded, not against a schema stored elsewhere. The configuration is fetched at runtime, so the active installer is the sole authority on which settings exist, and it can respond with "no such setting" instead of silently overlooking a typo. A block apart from `settings` is disallowed for the same reason.
+Each node assigns a setting and contains exactly one value. Two values constitute an error, and so does a setting that does not exist – validated against the settings the active installer actually loaded, not against a schema stored elsewhere. The configuration is retrieved at runtime, so the active installer is the sole authority over which settings exist, and it may reply with "no such setting" instead of silently overlooking a typo. A block that is neither `settings` nor `passwords` is prohibited for the same reason.
 
 ## What you have to answer, and what you do not
 
@@ -39,6 +39,22 @@ There is intentionally no forgiving mode that completes the gaps. A value from t
 ### A radiolist is one choice
 
 Options such as the user profile are one choice spread over several boolean settings, and the dialog unchecks the others when one is checked. An answer file that touches a radiolist owns it: the members it does not name go false. Naming two of them as true, or unsetting the only true one without naming another, stops the run – there is no way to tell which one was meant.
+
+## Passwords
+
+The password for the user account is requested by a dialog within the chroot, which the installer’s own gate cannot access. An unattended run would stall there indefinitely, with the whole system already in place. So the answer file carries it, in a block of its own:
+
+```kdl
+passwords {
+    user "$6$..."
+}
+```
+
+Only hashes are accepted, and a plaintext password is refused with the command that produces one. This is not merely precaution: an answer file for a hosting provider resides on a provisioning server and is read by every entity that provisions a machine, so a readable password in one is a password that has already been exposed. Generate a hash using `openssl passwd -6` or `mkpasswd -m yescrypt`.
+
+The only account is `user`, which is whichever name `user-name` gives. Root has no password on Ditana and cannot acquire one here.
+
+An answer file lacking a `passwords` block proceeds unchallenged, since an interactive installation contains none either. The run then stops in the chroot, saying which block is missing.
 
 ## A complete example
 
@@ -56,9 +72,13 @@ settings {
     keymap-variant ""
     encrypt-root-partition #false
 }
+
+passwords {
+    user "$6$..."
+}
 ```
 
-Nine settings, and each one of them serves a purpose:
+Nine settings and one password hash, and each one of them serves a purpose:
 
 | Setting | Why it cannot be left out |
 |---|---|
@@ -99,5 +119,5 @@ The process might have been a script triggering keystrokes. It is an answer file
 
 ## What is not covered yet
 
-- An encrypted root. `encrypt-root-partition #true` reaches a passphrase box and stops there. A passphrase in a file that lives on a provisioning server is a different problem, and it has not been solved.
+- An encrypted root. `encrypt-root-partition #true` reaches a passphrase box and stops there. Unlike the account password, a LUKS passphrase cannot be a hash -- the disk needs the passphrase itself -- so the same answer is not available, and no other one has been settled on.
 - A post-installation hook a provider could hand over to. The block does not exist; naming it is rejected rather than ignored.

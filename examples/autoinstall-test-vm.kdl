@@ -1,0 +1,25 @@
+// What the nightly test installation installs.
+//
+// The same as autoinstall-server.kdl, with two differences that matter: the
+// disk is the virtio disk QEMU attaches, and the password is deliberately
+// public. It has to be, because this file is committed and the machine it
+// installs is thrown away at the end of every run.
+//
+// Never install anything else with it. The password is 'ditana-test' and
+// every individual who can read this repository knows it.
+
+settings {
+    user-name "operator"
+    install-disk "vda"
+    bootloader-partition "new"
+    profile-server #true
+    timezone "Europe/Zurich"
+    locale "en_US"
+    keymap-layout "us"
+    keymap-variant ""
+    encrypt-root-partition #false
+}
+
+passwords {
+    user "$6$DitanaTest$WWWIHVdfhsgAR3ujTSdDYtEHdg5.WV7pvuzeRs8HVMIquH8KzkvsoLO9LRHpGJjRbvupnEbZqoX/HZYENNA.M/"
+}

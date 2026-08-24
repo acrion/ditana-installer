@@ -158,6 +158,36 @@ is_secure_password() {
 cd "$HOME"
 set +e
 
+# The password is the one thing an unattended installation cannot be asked
+# for. This dialog is drawn from inside the chroot, so the installer's own
+# gate -- which stops the run at any box that waits for an answer -- cannot
+# see it: an unattended run would sit here for as long as anything waits for
+# it, having already installed the whole system.
+#
+# The hash comes from the answer file, which may carry hashes and nothing else:
+# such a file lives on a provisioning server and is read by everything that
+# provisions. -e means chpasswd is given the hash rather than a password, so
+# the strength check above does not apply and cannot -- the operator chose
+# this password somewhere else.
+if [[ "${AUTOINSTALL:-n}" == "y" ]]; then
+    if [[ -z "${USER_PASSWORD_HASH:-}" ]]; then
+        echo "Autoinstall: no password for $USER_NAME. The answer file needs a" \
+             "'passwords' block with a hash for 'user'; without one this" \
+             "installation would produce a machine nobody can log in to." \
+             | tee -a /var/log/install_ditana.log >&2
+        exit 1
+    fi
+    chpasswd -e <<< "${USER_NAME}:${USER_PASSWORD_HASH}"
+    if [[ $? -ne 0 ]]; then
+        echo "Autoinstall: chpasswd rejected the hash for $USER_NAME." \
+             | tee -a /var/log/install_ditana.log >&2
+        exit 1
+    fi
+    unset USER_PASSWORD_HASH
+    echo "Autoinstall: set the password of $USER_NAME from the answer file." \
+        >> /var/log/install_ditana.log
+else
+
 while true; do
     echo "Prompting the user to enter a password." >> /var/log/install_ditana.log
     if    ! USER_PASSWORD=$(dialog --stdout --insecure --passwordbox "Please enter a password for user $USER_NAME" 10 50) \
@@ -196,6 +226,8 @@ while true; do
         fi
     fi
 done
+
+fi
 
 clear
 

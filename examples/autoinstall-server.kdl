@@ -39,3 +39,15 @@ settings {
     // cannot be configured unattended.
     encrypt-root-partition #false
 }
+
+// A password is a hash and never anything else: an answer file for a hosting
+// provider resides on a provisioning server, where a readable password is
+// one that has already leaked. Make one with
+//
+//     openssl passwd -6
+//
+// and replace the line below -- as it stands it is an example and opens
+// nothing.
+passwords {
+    user "$6$REPLACE$THIS.WITH.THE.OUTPUT.OF.OPENSSL.PASSWD.6.OR.THE.INSTALLATION.WILL.REFUSE.IT"
+}

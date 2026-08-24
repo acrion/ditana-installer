@@ -82,6 +82,12 @@ class Autoinstall {
     has Str  $.path is rw = '';
     has Str  $.source is rw = '';
     has %.answers;
+    has %.passwords;
+
+    #| The accounts a password can be set for. 'user' is whichever name the
+    #| user-name setting gives; root has no password on Ditana and gets none
+    #| here, so that an answer file cannot quietly create one.
+    my constant PASSWORD-ACCOUNTS = <user>;
 
     # The kernel command line is the provider-facing entry point; the label and
     # the baked-in file exist for the cases where it cannot be set.
@@ -198,15 +204,17 @@ class Autoinstall {
         }
         my $data = from-json($json);
 
-        # An answer file has exactly one block. Anything else is named and
-        # rejected for the same reason a misspelt setting is: a block that is
-        # read and ignored looks from the outside exactly like a block that
-        # was applied.
-        my @stray = $data.keys.grep(* ne 'settings');
+        # Anything that is not one of the blocks below is named and rejected,
+        # for the same reason a misspelt setting is: a block that is read and
+        # ignored looks from the outside exactly like a block that was
+        # applied.
+        my @stray = $data.keys.grep(* !~~ any(<settings passwords>));
         if @stray {
             die "Autoinstall: $path has no place for {@stray.sort.join(', ')}. "
-              ~ "An answer file holds one block, 'settings'.";
+              ~ "An answer file holds 'settings' and 'passwords'.";
         }
+
+        self!read-passwords($data<passwords>, $path) if $data<passwords>:exists;
 
         my $settings = $data<settings> // {};
         unless $settings ~~ Associative {
@@ -300,6 +308,43 @@ class Autoinstall {
                   ~ ". Name exactly one of {@settings.map(*.name).sort.join(', ')} "
                   ~ "as #true.";
             }
+        }
+    }
+
+    #| The account passwords, as the hashes /etc/shadow stores.
+    #|
+    #| A block of their own and not settings, because they are not
+    #| configuration: they are per-machine secrets, they belong in no run
+    #| record, and there is nothing in ditana-config for them to be checked
+    #| against.
+    #|
+    #| Only hashes. An answer file for a hosting provider lives on a
+    #| provisioning server and is read by everything that provisions, so a
+    #| plaintext password in one is a password that has already leaked.
+    #| Refusing it is the point; accepting it "for convenience" would make the
+    #| whole file a place people put passwords.
+    method !read-passwords($block, Str $path) {
+        unless $block ~~ Associative {
+            die "Autoinstall: the 'passwords' block must contain named values";
+        }
+        for $block.kv -> $account, $raw {
+            unless $account ~~ any(PASSWORD-ACCOUNTS) {
+                die "Autoinstall: $path sets a password for '$account'. "
+                  ~ "The accounts an installation has are "
+                  ~ "{PASSWORD-ACCOUNTS.join(', ')}; 'user' is whichever name "
+                  ~ "the user-name setting gives.";
+            }
+            my $hash = self!scalar($raw);
+            # Every crypt format libxcrypt offers starts this way, and no
+            # password a person would type does.
+            unless $hash ~~ Str && $hash.starts-with('$') {
+                die "Autoinstall: the password for '$account' is not a hash. "
+                  ~ "An answer file may only carry hashes -- it is read by "
+                  ~ "everything that provisions a machine.\n"
+                  ~ "Make one with: openssl passwd -6, or mkpasswd -m yescrypt";
+            }
+            %!passwords{$account} = $hash;
+            Logging.log("Autoinstall: a password hash is given for '$account'");
         }
     }
 

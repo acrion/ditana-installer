@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Autoinstall;
 use Logging;
 use RunAndLog;
 use Settings;
@@ -256,6 +257,27 @@ sub generate-chroot-settings-file() is export {
         my $var = $_.uc.subst("-", "_", :g);
         Logging.log("get-required-by-chroot: $var=$value");
         $settings-file.spurt("$var=\"$value\"\n", :append);
+    }
+
+    # The chroot script asks for the user's password itself, with a dialog of
+    # its own inside the chroot -- somewhere the installer's gate cannot see
+    # and cannot stop. So it has to be told two things: that nobody is there
+    # to answer, and the hash to use instead. Without the first it would wait
+    # for a keypress for as long as anything waits for it.
+    if autoinstall-active() {
+        $settings-file.spurt("AUTOINSTALL=\"y\"\n", :append);
+        with autoinstall().passwords<user> -> $hash {
+            # Not logged, unlike everything above. A hash is not a password,
+            # but it is what an offline attack is run against, and the log is
+            # published with the run.
+            Logging.log("get-required-by-chroot: USER_PASSWORD_HASH=<given>");
+            # Single quotes, because a crypt hash is full of '$' and the file
+            # is sourced by a shell. Nothing in the crypt alphabet needs the
+            # escape below, but a quoting helper that only works for the input
+            # you expected is not a quoting helper.
+            my $quoted = "'" ~ $hash.subst("'", "'\\''", :g) ~ "'";
+            $settings-file.spurt("USER_PASSWORD_HASH=$quoted\n", :append);
+        }
     }
 
     Logging.log("get-required-by-chroot: end");
