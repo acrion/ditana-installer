@@ -24,6 +24,37 @@ cd "$HOME"
 source settings.sh
 export PATH="$HOME/.raku/bin:$PATH"
 
+# Every dialog in this script goes through here, the way every dialog in the
+# Raku installer goes through show-dialog-raw. This script runs inside the
+# chroot, where that gate cannot reach: a box drawn here would wait for a
+# keypress nobody is going to give, and an unattended installation would sit
+# at it -- finished, and indistinguishable from one still working -- until
+# whatever waits on the other end gives up.
+#
+# A box that only reports is logged and skipped. A box that asks stops the
+# installation and says what it wanted, which is the same trade the Raku gate
+# makes: a wrongly stopped run leaves a message, a wrongly skipped question
+# installs a machine nobody answered for.
+#
+# tests/installer/chroot-dialogs.t insists that no call in this file bypasses
+# this function. It is the kind of thing that gets forgotten once, and once is
+# enough.
+show_dialog() {
+    if [[ "${AUTOINSTALL:-n}" != "y" ]]; then
+        dialog "$@"
+        return
+    fi
+    case " $* " in
+        *" --msgbox "*|*" --infobox "*|*" --gauge "*|*" --programbox "*)
+            echo "Autoinstall: not showing: $*" >>/var/log/install_ditana.log
+            return 0
+            ;;
+    esac
+    echo "Autoinstall: the chroot wants to ask something the answer file does not cover: $*" \
+        | tee -a /var/log/install_ditana.log >&2
+    exit 1
+}
+
 {
     set -e
 
@@ -190,11 +221,11 @@ else
 
 while true; do
     echo "Prompting the user to enter a password." >> /var/log/install_ditana.log
-    if    ! USER_PASSWORD=$(dialog --stdout --insecure --passwordbox "Please enter a password for user $USER_NAME" 10 50) \
+    if    ! USER_PASSWORD=$(show_dialog --stdout --insecure --passwordbox "Please enter a password for user $USER_NAME" 10 50) \
        || [[ -z "$USER_PASSWORD" ]]
     then
         echo "User entered empty password." >> /var/log/install_ditana.log
-        dialog --msgbox "Please specify a password." 10 50
+        show_dialog --msgbox "Please specify a password." 10 50
         continue
     fi
 
@@ -202,7 +233,7 @@ while true; do
         echo "User entered insecure password." >> /var/log/install_ditana.log
 
         # Ask user if they want to use the insecure password anyway
-        if dialog --title 'Insecure Password' --yes-label 'Enter Secure Password' --no-label 'Use Anyway' \
+        if show_dialog --title 'Insecure Password' --yes-label 'Enter Secure Password' --no-label 'Use Anyway' \
                   --yesno "$PW_OUTPUT\n\nWould you like to enter a more secure password?" 10 80
         then
             echo "User chose to enter a more secure password." >> /var/log/install_ditana.log
@@ -213,7 +244,7 @@ while true; do
     fi
 
     echo "Prompting the user to confirm the password." >> /var/log/install_ditana.log
-    if CONFIRM_PASSWORD=$(dialog --stdout --insecure --passwordbox "Please confirm the password" 10 50)
+    if CONFIRM_PASSWORD=$(show_dialog --stdout --insecure --passwordbox "Please confirm the password" 10 50)
     then
         if [[ "$USER_PASSWORD" == "$CONFIRM_PASSWORD" ]]; then
             chpasswd <<< "${USER_NAME}:${USER_PASSWORD}"
@@ -222,7 +253,7 @@ while true; do
             break
         else
             echo "Passwords do not match." >> /var/log/install_ditana.log
-            dialog --msgbox "Passwords do not match. Please try again." 10 50
+            show_dialog --msgbox "Passwords do not match. Please try again." 10 50
         fi
     fi
 done
@@ -252,8 +283,18 @@ clear
     fi
 } 2>&1 | tee -a /var/log/install_ditana.log
 
-echo "Showing dialog: The system installation is finished, please confirm to reboot." >>/var/log/install_ditana.log
-dialog --msgbox "The system installation is finished, please confirm to reboot." 10 50
+# Nobody is there to confirm, and there is nothing to confirm either: the box
+# reports, it does not ask. The Raku installer skips boxes of this kind by
+# itself, but this one is drawn from inside the chroot, where that gate cannot
+# reach -- so an unattended run stood at a finished installation waiting for a
+# keypress until the deadline killed it.
+if [[ "${AUTOINSTALL:-n}" == "y" ]]; then
+    echo "Autoinstall: the system installation is finished; rebooting without confirmation." \
+        >>/var/log/install_ditana.log
+else
+    echo "Showing dialog: The system installation is finished, please confirm to reboot." >>/var/log/install_ditana.log
+    show_dialog --msgbox "The system installation is finished, please confirm to reboot." 10 50
+fi
 clear
 
 sync >>/var/log/install_ditana.log
