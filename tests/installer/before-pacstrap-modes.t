@@ -9,22 +9,25 @@ use Chroot;
 # into a /usr that already exists and does not change the permissions of a
 # directory it finds; it only warns.
 #
-# The installer runs with the umask from login.defs, which is 027 on Ditana.
-# That made /usr 0750, and on a 0750 /usr nothing can be executed by anyone
-# but root: the first non-root command in a chroot script died with
-# "failed to execute /usr/bin/bash: Permission denied".
+# A 0750 /usr cannot be traversed by anyone but root, so nothing on the
+# installed system can be executed by an ordinary user. The first non-root
+# command in a chroot script died with "failed to execute /usr/bin/bash:
+# Permission denied".
 #
-# What is checked here is the installer's own copy command, run into a
-# directory of its own -- not a reproduction of it, which would stop checking
-# the installer the day somebody edited one and not the other.
+# The source of this copy is a git checkout, and git records no directory
+# modes: they are whatever the umask of the shell that cloned the repository
+# was. So the test creates its source under the worst of those umasks and
+# insists the copy comes out right regardless -- inheriting the mode from
+# either side is precisely the defect.
+#
+# What runs is the installer's own command, not a reproduction of it, which
+# would stop checking the installer the day somebody edited one and not the
+# other.
 
 my $scratch = $*TMPDIR.child('ditana-before-pacstrap-modes');
 run('rm', '-rf', $scratch.absolute);
 my $source = $scratch.child('folders-before-pacstrap');
 my $target = $scratch.child('mnt');
-$source.child('usr/lib').mkdir;
-$source.child('usr/lib/os-release').spurt("NAME=\"Ditana GNU/Linux\"\n");
-$target.mkdir;
 
 #| The mode of a path, as the three octal digits chmod speaks.
 sub mode-of($path) {
@@ -34,24 +37,29 @@ sub mode-of($path) {
     $out;
 }
 
-# First the failure, so that the test says what it is protecting against and
-# not merely that today's command happens to work. This is the copy as it was:
-# the same rsync, taking its permissions from the installer's umask.
-run('sh', '-c', "umask 027; exec rsync --recursive --times --no-perms --executability "
-                ~ "'{$source.absolute}/' '{$target.absolute}/'", :out, :err);
-is mode-of($target.child('usr').absolute), '750',
-    'left to the installer\'s umask of 027, rsync creates a /usr no ordinary user can enter';
+# 027 is the umask the installer really runs with, and a checkout made under
+# it has directories a group member cannot enter and others cannot see at all.
+run('sh', '-c', "umask 027; mkdir -p '{$source.absolute}/usr/lib' '{$target.absolute}'"
+              ~ " && printf 'NAME=\"Ditana GNU/Linux\"\\n' > '{$source.absolute}/usr/lib/os-release'"
+              ~ " && printf '#!/bin/sh\\n' > '{$source.absolute}/usr/lib/probe.sh'"
+              ~ " && chmod u+x '{$source.absolute}/usr/lib/probe.sh'", :out, :err);
 
-# And now the installer's own command, verbatim.
-run('rm', '-rf', $target.absolute);
-$target.mkdir;
-run('sh', '-c', before-pacstrap-rsync($source.absolute, $target.absolute), :out, :err);
+is mode-of($source.child('usr').absolute), '750',
+    'the source really is a checkout of the kind that caused this';
+
+my @rsync = before-pacstrap-rsync($source.absolute, $target.absolute);
+my $proc = run(|@rsync, :out, :err);
+$proc.out.slurp(:close);
+$proc.err.slurp(:close);
+is $proc.exitcode, 0, 'the copy succeeds';
 
 is mode-of($target.child('usr').absolute), '755',
     '/usr is traversable, which is what lets a non-root user run anything at all';
 is mode-of($target.child('usr/lib').absolute), '755',
     'and so is every directory below it';
 is mode-of($target.child('usr/lib/os-release').absolute), '644',
-    'while the files stay unreadable to nobody and writable by root only';
+    'a plain file is readable by everyone and writable by root';
+is mode-of($target.child('usr/lib/probe.sh').absolute), '755',
+    'and a file that was executable stays executable, for everyone';
 
 done-testing;

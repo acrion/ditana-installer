@@ -45,40 +45,44 @@ sub create-hostid() is export {
 sub copy-files-into-chroot-before-pacstrap() is export {
     run-and-echo("chown", "-R", "root:root", "%*ENV<HOME>/folders");
 
-    # --no-perms leaves the permissions of anything rsync creates to the
-    # umask, and the installer inherits 027 from login.defs. The directories
-    # on the way to the files below are therefore created as 0750 -- among
-    # them /usr, because folders-before-pacstrap carries usr/lib/os-release.
-    #
-    # pacstrap then installs into a /usr that already exists, and pacman does
-    # not change the permissions of a directory it finds. It says so, twice,
-    # in the middle of installing 700 packages:
-    #
-    #     warning: directory permissions differ on /mnt/usr/
-    #     filesystem: 750  package: 755
-    #
-    # The installed system then has a /usr no ordinary user can traverse, so
-    # nothing on it can be executed by anyone but root. The first thing that
-    # tried was `su - <user> -c ...` in a chroot script, which failed with
-    # "failed to execute /usr/bin/bash: Permission denied" -- a message that
-    # points at bash, which is fine, rather than at the directory above it.
-    #
-    # 022 is what these directories are meant to have; --chmod does not help
-    # here, because rsync applies it only together with --perms, and --perms
-    # is what this deliberately does not want for the files.
-    run-and-echo("sh", "-c", before-pacstrap-rsync("%*ENV<HOME>/folders-before-pacstrap", "/mnt"));
+    run-and-echo(|before-pacstrap-rsync("%*ENV<HOME>/folders-before-pacstrap", "/mnt"));
 }
 
-#| The command copy-files-into-chroot-before-pacstrap runs, with the source
-#| and target left open.
+#| The copy that puts folders-before-pacstrap into the target file system,
+#| as the argument list to run.
 #|
-#| Separate so that tests/installer/before-pacstrap-modes.t can run exactly
-#| this into a directory of its own: what it is checking is the mode of the
-#| directories the copy creates, and a test that reproduced the command would
-#| stop checking this one the day somebody edited it.
-sub before-pacstrap-rsync(Str $source, Str $target --> Str) is export {
-    "umask 022; exec rsync --recursive --times --no-perms --executability --verbose "
-    ~ "'$source/' '$target/'";
+#| The permissions are stated rather than inherited, and that is the whole
+#| point of this being its own sub. What it used to do was `--no-perms
+#| --executability`, which gives anything rsync creates the source's mode
+#| masked by the umask -- so it can only ever take bits away, never add them.
+#|
+#| Both halves of that were wrong here. The umask is 027, because the
+#| installer starts from a login shell and login.defs says so. And the source
+#| is a git checkout, in which directory modes are not recorded at all: they
+#| are whatever the umask of the shell that cloned the repository happened to
+#| be. /usr therefore came out 0750 on one build host and 0755 on another,
+#| from the same commit.
+#|
+#| 0750 on /usr is not a small thing. pacstrap installs into a /usr that
+#| already exists, and pacman does not change the permissions of a directory
+#| it finds -- it warns, twice, in the middle of installing 700 packages:
+#|
+#|     warning: directory permissions differ on /mnt/usr/
+#|     filesystem: 750  package: 755
+#|
+#| The installed system then has a /usr no ordinary user can traverse, so
+#| nothing on it can be executed by anyone but root. What noticed was
+#| `su - <user> -c ...` in a chroot script, failing with "failed to execute
+#| /usr/bin/bash: Permission denied" -- a message that points at bash, which
+#| was fine, rather than at the directory above it.
+#|
+#| Da+rx makes every directory traversable, Fa+r makes every file readable,
+#| and the capital X in Fa+rX adds the executable bit only to files that
+#| already had one -- which is what --executability used to be for, and it has
+#| to be spelled here because --chmod is only applied together with --perms.
+sub before-pacstrap-rsync(Str $source, Str $target) is export {
+    'rsync', '--recursive', '--times', '--perms', '--chmod=Da+rx,Fa+rX',
+        '--verbose', "$source/", "$target/";
 }
 
 sub copy-files-into-chroot-after-pacstrap() is export {
