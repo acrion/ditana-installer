@@ -52,6 +52,32 @@ raku -MSparrow6::DSL -e "
 # Drop-in files in /etc/mkinitcpio.conf.d/ would be ignored because the kernel
 # preset files set ALL_config="/etc/mkinitcpio.conf" (passes -c to mkinitcpio,
 # disables drop-in processing - see mkinitcpio(8)).
+# Take the zfsbootmenu hook out of a ZBM mkinitcpio config's HOOKS.
+#
+# The config the package ships lists it, and its own comment explains why that
+# is a choice rather than a requirement: generate-zbm(8) adds the hook
+# implicitly, so an explicit entry means "the module will be marked for
+# inclusion twice, which is generally harmless".
+#
+# It is not harmless. The hook's second pass creates the symlinks its first
+# pass already made, `ln` is called without -f, and the whole image fails to
+# build:
+#
+#     -> Running build hook: [zfsbootmenu]
+#     ln: failed to create symbolic link '.../bin/zbm': File exists
+#     ==> ERROR: invalid symlink: '/bin/zbm'
+#     ==> ERROR: Failed to install ZFSBootMenu core
+#
+# Ditana builds the image with generate-zbm, so the explicit entry is the one
+# that goes. Found by the unattended test installation, after everything else
+# in the chroot had already succeeded.
+drop_implicit_zbm_hook() {
+    local conf="$1"
+    grep -Eq '^HOOKS=.*\bzfsbootmenu\b' "$conf" || return 0
+    echo -e "\033[32m--- Removing the explicit zfsbootmenu hook; generate-zbm adds it ---\033[0m"
+    sed -i '/^HOOKS=/ s/[[:space:]]*\<zfsbootmenu\>//' "$conf"
+}
+
 add_to_mkinitcpio_files() {
     local path="$1"
     local conf="${2:-/etc/mkinitcpio.conf}"
@@ -151,6 +177,8 @@ if [[ "$ZFS_FILESYSTEM" == "y" ]]; then
         echo -e "\033[32m--- Adding keymap hook to ZBM HOOKS ---\033[0m"
         sed -i '/^HOOKS=/ s/\<keyboard\>/keyboard keymap/' /etc/zfsbootmenu/mkinitcpio.conf
     fi
+
+    drop_implicit_zbm_hook /etc/zfsbootmenu/mkinitcpio.conf
 
     if [[ -f /etc/vconsole-ditana.map ]]; then
         echo -e "\033[32m--- Embedding /etc/vconsole-ditana.map into ZBM initramfs ---\033[0m"
