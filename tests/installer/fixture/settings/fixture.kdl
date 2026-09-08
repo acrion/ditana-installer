@@ -27,3 +27,45 @@
 - name="install-extra-unavailable" dialog-name="Extras" short-description="Never shown" available="`profile-server AND NOT profile-server`" default-value=#false {
     arch-packages ""
 }
+
+// Settings that declare a user namespace permission and sysctl values. Both keys
+// are collected across the settings that are switched on, which is what lets a
+// package ask for what it needs beside itself instead of every setting having to
+// repeat the safe default.
+- name="needs-userns-a" default-value=#true {
+    userns-allow "/usr/bin/bwrap"
+    sysctl {
+        - "kernel.test_alpha" "1"
+    }
+}
+
+// Names the same executable as the setting above. Flatpak and Bubblejail both ask
+// for bwrap, so the allowlist has to be a set: the loader treats a repeated path
+// as a second entry and would count it twice.
+- name="needs-userns-b" default-value=#true {
+    userns-allow "/usr/bin/bwrap" "/usr/bin/other"
+}
+
+- name="needs-userns-off" default-value=#false {
+    userns-allow "/usr/bin/never"
+    sysctl {
+        - "kernel.test_beta" "9"
+    }
+}
+
+// Asks for the same value as needs-userns-a. Two settings agreeing about a key is
+// not a conflict and must not stop an installation.
+- name="agrees-with-a" default-value=#true {
+    sysctl {
+        - "kernel.test_alpha" "1"
+    }
+}
+
+// Disagrees with needs-userns-a about the same key. Off by default so that the
+// fixture describes an installable machine; the test switches it on, which is how
+// a user reaches this state - by choosing two options that contradict each other.
+- name="conflicts-with-a" default-value=#false {
+    sysctl {
+        - "kernel.test_alpha" "0"
+    }
+}

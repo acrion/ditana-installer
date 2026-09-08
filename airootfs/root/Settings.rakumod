@@ -42,6 +42,8 @@ class Setting {
     has SettingValue $.default-value is rw;
     has SettingValue $.current-value is rw;
     has Array @.files = [];
+    has Array @.userns-allow = [];   # absolute paths of executables that may create a user namespace
+    has Array @.sysctl = [];         # list of [key, value] pairs
     has Array @.early-chroot-script =[];
     has Array @.chroot-script = [];
     has Array @.root-script = [];
@@ -245,6 +247,53 @@ method load() {
         }
 
         return @result;
+    }
+
+    #| The executables that enabled settings have asked to be allowed to create
+    #| unprivileged user namespaces. The permission is declared beside the package
+    #| that needs it, so that no setting has to repeat the safe default and none
+    #| can be forgotten when a package is added.
+    method get-userns-allow-for-enabled-settings() {
+        my Str @paths;
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.userns-allow && $setting.userns-allow[0];
+            for @($setting.userns-allow[0]) -> $path {
+                next unless $path;
+                @paths.push($path.Str) unless @paths.grep($path.Str);
+            }
+        }
+        return @paths;
+    }
+
+    #| The sysctl values the enabled settings ask for, as [key, value, setting-name].
+    #|
+    #| Two enabled settings writing the same key with different values is a defect
+    #| in the configuration and stops the installation. It used to be invisible:
+    #| every setting appended its own echo line to one file, so the last one won and
+    #| nobody could see that a decision had been overruled. kernel-option-duurn and
+    #| enable-unprivileged-namespaces write opposite values of the very same key and
+    #| were kept apart by their default expressions alone.
+    method get-sysctl-values() {
+        my @values;
+        my %seen;   # key => [value, setting-name]
+        for %!settings.values -> $setting {
+            next unless $setting.current-value;
+            next unless $setting.sysctl && $setting.sysctl[0];
+            for @($setting.sysctl[0]) -> $entry {
+                my $key = $entry[0].Str;
+                my $value = $entry[1].Str;
+                if %seen{$key}:exists && %seen{$key}[0] ne $value {
+                    die "Settings '%seen{$key}[1]' and '{$setting.name}' both set the sysctl "
+                      ~ "'$key', to '%seen{$key}[0]' and '$value'. One of them has to be "
+                      ~ "switched off.";
+                }
+                next if %seen{$key}:exists;
+                %seen{$key} = [$value, $setting.name];
+                @values.push([$key, $value, $setting.name]);
+            }
+        }
+        return @values;
     }
 
     method get-files-for-enabled-settings() {
@@ -649,6 +698,8 @@ method load() {
                 files => $setting.files.deepmap(*.clone),
                 early-chroot-script => $setting.early-chroot-script.deepmap(*.clone),
                 chroot-script => $setting.chroot-script.deepmap(*.clone),
+                userns-allow => $setting.userns-allow.deepmap(*.clone),
+                sysctl => $setting.sysctl.deepmap(*.clone),
                 root-script => $setting.root-script.deepmap(*.clone),
                 first-login-scripts => $setting.first-login-scripts.deepmap(*.clone),
                 login-scripts => $setting.login-scripts.deepmap(*.clone),
