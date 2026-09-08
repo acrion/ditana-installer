@@ -103,7 +103,7 @@ select_testing_repository() {
 }
 
 reverse_patch_if_needed() {
-    if [[ "$current_branch" != "main" ]]; then
+    if [[ "$apply_testing_patch" == "y" ]]; then
         git status
         echo "Reversing patch..."
         git apply --reverse "${TESTING_PATCH_ARGS[@]}" use-testing-repo.patch
@@ -112,7 +112,29 @@ reverse_patch_if_needed() {
     fi
 }
 
+# Which package repository the ISO installs from, and which branch the
+# installer comes from, are two different things -- use-testing-repo.patch
+# swaps the mirrorlist in three files and renames the ISO, and nothing else.
+# They used to be one decision, and that left a combination unbuildable: the
+# installer and configuration users actually have, installing the packages
+# that are about to become production. That is precisely what the nightly
+# release gate has to try, so it is what DITANA_BUILD_TESTING_ISO builds.
+#
+# The name stays "Ditana_Testing" for such an ISO, deliberately: it must never
+# be mistaken for one that installs from the production repository.
+#
+# The configuration tag still follows the branch and not the patch. A main
+# build takes 'latest' either way -- that is what users get, and testing
+# against anything else would defeat the purpose.
+apply_testing_patch=n
 if [[ "$current_branch" != "main" ]]; then
+    apply_testing_patch=y
+elif [[ "${DITANA_BUILD_TESTING_ISO:-n}" == y* ]]; then
+    apply_testing_patch=y
+    echo "Building from main, but installing from the ditana-testing repository."
+fi
+
+if [[ "$apply_testing_patch" == "y" ]]; then
     # The patched pacman.conf includes /etc/pacman.d/ditana-testing-mirrorlist,
     # and mkarchiso reads that file on the *host*. A host that installs from the
     # production repository has no reason to carry it, which is how the first
@@ -121,15 +143,24 @@ if [[ "$current_branch" != "main" ]]; then
     # Installing it changes no repository the host itself uses: it puts a
     # mirrorlist in place that the host's own pacman.conf does not include.
     ensure_package_installed ditana-testing-mirrorlist
-    select_testing_repository
+    # The choice between the testing and the official repository belongs to a
+    # branch build, which is the one that might want either. A main build that
+    # asked for the testing repository asked for exactly that.
+    if [[ "$current_branch" != "main" ]]; then
+        select_testing_repository
+    fi
     echo "Applying patch..."
     git apply "${TESTING_PATCH_ARGS[@]}" use-testing-repo.patch
     # Register an early cleanup so failures between here and the mode-specific
     # cleanup trap (set further below) still revert the patch.
     trap reverse_patch_if_needed EXIT
     git status
-    # The configuration tarball follows the branch, not the package repository:
-    # a branch build tests the installer configuration of that branch.
+fi
+
+# The configuration tarball follows the branch, not the package repository: a
+# branch build tests the installer configuration of that branch, a main build
+# the one users get.
+if [[ "$current_branch" != "main" ]]; then
     DITANA_CONFIG_TAG="develop-latest"
 else
     DITANA_CONFIG_TAG="latest"
@@ -380,7 +411,7 @@ trap cleanup EXIT ERR
 
 LABEL="Ditana"
 
-if [[ "$current_branch" != "main" ]]; then
+if [[ "$apply_testing_patch" == "y" ]]; then
     LABEL+="-Testing"
 fi
 
