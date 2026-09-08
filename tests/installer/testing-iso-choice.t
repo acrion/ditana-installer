@@ -26,7 +26,8 @@ ok $config.chars, 'the configuration-tag decision can be lifted out too';
 #| Run both decisions for one branch and one setting of the flag.
 sub decide(Str $branch, Str $flag = '') {
     my $script = "current_branch='$branch'\n"
-               ~ ($flag ?? "export DITANA_BUILD_TESTING_ISO='$flag'\n" !! '')
+               ~ ($flag ?? "export DITANA_BUILD_TESTING_ISO='$flag'\n"
+                        !! "unset DITANA_BUILD_TESTING_ISO\n")
                ~ $decision ~ $config
                ~ "\necho \"patch=\$apply_testing_patch tag=\$DITANA_CONFIG_TAG\"\n";
     my $proc = run('bash', '-c', $script, :out, :err);
@@ -37,6 +38,20 @@ sub decide(Str $branch, Str $flag = '') {
 
 is decide('main'), 'patch=n tag=latest',
     'a plain main build is the release ISO: production packages, released configuration';
+
+# build.sh runs this suite with DITANA_BUILD_TESTING_ISO already exported -- that
+# is how a nightly ISO is asked for -- and decide() used to let that reach the
+# cases which describe a build without it. The suite passed on its own and failed
+# inside the build, twice, and each time the ISO was simply not written while the
+# one failing line scrolled past. A case has to state its own environment rather
+# than inherit one.
+{
+    temp %*ENV<DITANA_BUILD_TESTING_ISO> = 'y';
+    is decide('main'), 'patch=n tag=latest',
+        'and it stays that, even while the flag stands in the environment';
+    is decide('main', 'y'), 'patch=y tag=latest',
+        'while asking for it explicitly still works from that same environment';
+}
 
 is decide('testing'), 'patch=y tag=develop-latest',
     'a branch build is the development ISO: testing packages, branch configuration';
