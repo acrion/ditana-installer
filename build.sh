@@ -206,12 +206,20 @@ zef --force-install --contained --/test --/test-depends \
 # on an answer it was given or stops -- an ISO that gets that wrong is one
 # nobody can safely leave alone, which is the only kind this ISO gets used for.
 
+# --- no answer file on the medium; lifted verbatim by medium-answer-file.t ----
+# The two marker lines are not decoration: medium-answer-file.t cuts the check
+# out between them and runs it, so that what is tested is what runs here. They
+# were dropped once, and the suite then exercised an empty string and reported
+# that a directory holding an answer file was fine.
+#
+# Why the check exists is in that test, at length.
 if [[ -e airootfs/root/autoinstall.kdl ]]; then
     echo "Refusing to build: airootfs/root/autoinstall.kdl exists." >&2
     echo "An ISO carrying it installs Ditana unattended on the first machine it" >&2
     echo "boots on, with no question asked. Move it aside for the build." >&2
     exit 1
 fi
+# --- end of answer-file check -------------------------------------------------
 
 tests/installer/run-tests
 

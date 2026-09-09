@@ -14,7 +14,9 @@ ok $build.e, 'build.sh is where it is expected';
 
 my $text = $build.slurp;
 $text ~~ / '# --- no answer file on the medium' .*? '# --- end of answer-file check' /;
-my $check = ~$/;
+my $check = $/ ?? ~$/ !! '';
+bail-out 'the answer-file check markers are gone from build.sh; nothing to test'
+    unless $check.chars;
 ok $check.chars, 'the answer-file check can be lifted out';
 
 #| Run the lifted check in a directory shaped like a checkout.

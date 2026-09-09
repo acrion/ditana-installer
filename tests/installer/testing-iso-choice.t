@@ -16,11 +16,15 @@ ok $build.e, 'build.sh is where it is expected';
 
 my $text = $build.slurp;
 $text ~~ / 'apply_testing_patch=n' .*? \n 'fi' \n /;
-my $decision = ~$/;
+my $decision = $/ ?? ~$/ !! '';
+bail-out 'the patch decision is no longer where build.sh kept it'
+    unless $decision.chars;
 ok $decision.chars, 'the patch decision can be lifted out';
 
 $text ~~ / '# The configuration tarball follows the branch' .*? \n 'fi' \n /;
-my $config = ~$/;
+my $config = $/ ?? ~$/ !! '';
+bail-out 'the configuration-tag decision is no longer where build.sh kept it'
+    unless $config.chars;
 ok $config.chars, 'the configuration-tag decision can be lifted out too';
 
 #| Run both decisions for one branch and one setting of the flag.
