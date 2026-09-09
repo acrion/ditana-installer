@@ -81,12 +81,21 @@ cd airootfs/root
 
 The installer may proceed without any user present at the keyboard: an answer file pre-supplies the inputs it would otherwise request. This is the method used by the nightly test installation, and how a hosting provider would set up Ditana. See [`docs/unattended-installation.md`](./docs/unattended-installation.md).
 
+## Where the packages come from
+
+The packages this installer pulls in are not Arch packages. Ditana keeps a repository of its own, roughly sixty packages rebuilt from their upstream recipes, signed and published only as a complete set. Anything that changes which packages exist, what they are called or what they depend on must happen there, and the pipeline that performs it is a repository of its own with its own review gate and its own tests.
+
+It is also what installs this ISO unattended into a virtual machine before a release, from the answer file in `examples/`. A change here that breaks an unattended installation is caught there and nowhere else, so the two belong together even though they are two repositories.
+
+See [`ditana-build`](https://github.com/acrion/ditana-build).
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details. The short version:
 
 - **Bug reports and feature requests** → [issues](https://github.com/acrion/ditana-installer/issues).
 - **Changes to settings, packages, or scripts** → almost always belong in [`ditana-config`](https://github.com/acrion/ditana-config), not here.
+- **Changes to the package repository or the build pipeline** → [`ditana-build`](https://github.com/acrion/ditana-build).
 - **Changes to the installer engine itself** → here, but please open an issue first to discuss the approach.
 
 ## Acknowledgements

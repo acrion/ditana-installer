@@ -205,6 +205,14 @@ zef --force-install --contained --/test --/test-depends \
 # and they guard the point at which an unattended installation either proceeds
 # on an answer it was given or stops -- an ISO that gets that wrong is one
 # nobody can safely leave alone, which is the only kind this ISO gets used for.
+
+if [[ -e airootfs/root/autoinstall.kdl ]]; then
+    echo "Refusing to build: airootfs/root/autoinstall.kdl exists." >&2
+    echo "An ISO carrying it installs Ditana unattended on the first machine it" >&2
+    echo "boots on, with no question asked. Move it aside for the build." >&2
+    exit 1
+fi
+
 tests/installer/run-tests
 
 if [[ "${1:-}" == "--quick" ]]; then
