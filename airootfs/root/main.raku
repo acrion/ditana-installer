@@ -410,5 +410,8 @@ END
 main();
 CATCH {
     Logging.log($_);
+    # Before debug-info(), which writes to the screen nobody is watching when
+    # the run is unattended.
+    announce-unattended-abort($_);
     debug-info();
 }

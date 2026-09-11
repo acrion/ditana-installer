@@ -28,6 +28,15 @@
     arch-packages ""
 }
 
+// A setting whose value follows another rather than standing on its own. An
+// answer file may name both, and then the expression wins over the answer --
+// silently, because nothing re-reads a value after setting it. That is the
+// second half of what verify-answers-hold catches; `install-extra-unavailable`
+// above is the first.
+- name="follows-profile" dialog-name="Extras" short-description="Follows the profile" default-value="`profile-server`" {
+    arch-packages ""
+}
+
 // Settings that declare a user namespace permission and sysctl values. Both keys
 // are collected across the settings that are switched on, which is what lets a
 // package ask for what it needs beside itself instead of every setting having to

@@ -517,6 +517,33 @@ method load() {
         self!evaluate-logical-dependency($name, $available);
     }
 
+    #| The `available` expression of a setting as the configuration writes it,
+    #| or the empty string when the setting has none.
+    #|
+    #| `is-available` returns the verdict; this returns the reason. A caller
+    #| that must explain to someone why a setting is unreachable needs the
+    #| condition itself, and the help text of a dialog prints the same string
+    #| for the same purpose (Dialogs.rakumod, "Condition of availability").
+    method availability-condition($name --> Str) {
+        my $available = %!settings{$name}.available;
+        # Without the backticks, the way the help text of a dialog prints the
+        # same condition (Dialogs.rakumod). Two spellings of one expression in
+        # one product is one too many.
+        $available.defined && self!is-code($available) ?? $available.substr(1, *-1) !! '';
+    }
+
+    #| The `default-value` of a setting when it is an expression, or the empty
+    #| string when it is a literal or absent.
+    #|
+    #| An expression here is not a starting value but a standing rule: it is
+    #| re-evaluated whenever anything it names changes, and it then applies its
+    #| result over whatever was there. So it is the thing that explains a value
+    #| that did not stay where it was put.
+    method default-expression($name --> Str) {
+        my $default = %!settings{$name}.default-value;
+        $default.defined && self!is-code($default.Str) ?? $default.Str.substr(1, *-1) !! '';
+    }
+
     method installation-step-is-available($name) is export {
         my $available = %!installation-steps{$name}<available>;
 

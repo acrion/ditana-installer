@@ -40,6 +40,16 @@ There is intentionally no forgiving mode that completes the gaps. A value from t
 
 Options such as the user profile are one choice spread over several boolean settings, and the dialog unchecks the others when one is checked. An answer file that touches a radiolist owns it: the members it does not name go false. Naming two of them as true, or unsetting the only true one without naming another, stops the run – there is no way to tell which one was meant.
 
+### An answer that cannot be honoured
+
+Two things can undo an answer after it has been given, and both stop the run.
+
+A setting might not be available on this system. Availability is a condition of its own, and a setting whose condition fails is not a row any interface displays, so it is nothing an interactive user could have selected. `zfs-filesystem` depends on the long-term support kernel, because ZFS is built by DKMS and cannot follow a kernel that has progressed beyond what OpenZFS supports. A file naming a distinct kernel alongside `zfs-filesystem #true` therefore requests a machine that cannot exist. It is refused by name, together with the condition that would make it possible.
+
+A setting might also follow another setting. A `default-value` that is an expression functions as a standing rule rather than an initial value: it is evaluated again each time anything it names is altered, and it then applies its result over whatever existed before, including over an answer within the same file. Such an answer is refused as well, naming the expression that caused its movement.
+
+Both are refused even when the setting appears benign. The file describes the machine that is to be built, and that the machine cannot be that is either an error in the file or something unexpected about the hardware. Both are worth finding out prior to an installation rather than after one.
+
 ## Passwords
 
 The password for the user account is requested by a dialog within the chroot, which the installer’s own gate cannot access. An unattended run would stall there indefinitely, with the whole system already in place. So the answer file carries it, in a block of its own:

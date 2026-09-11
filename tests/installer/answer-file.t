@@ -204,4 +204,85 @@ ok autoinstall().step-can-be-skipped(%steps<user-name>),
 nok autoinstall().step-can-be-skipped(%steps<select-disk>),
     'a procedure is entered rather than answered for';
 
+# --- an answer that cannot be honoured stops the run ------------------------
+
+# Two ways an answer can fail to stick, and neither used to be noticed.
+#
+# The first: the setting is not available on this machine. No interactive user
+# could have chosen it, because the dialog would not have shown the row -- and
+# settle-radiolists cannot see it either, since get-dialog filters by
+# availability. In ditana-config this is how a file naming a kernel other than
+# the long-term support one together with zfs-filesystem #true came through
+# with both ZFS and Btrfs selected at once.
+
+throws-like { apply(q:to/KDL/, 'unavailable') }, Exception, message => /'install-extra-unavailable' .* 'not available'/,
+    settings {
+        install-extra-unavailable #true
+    }
+    KDL
+    'answering a setting this machine cannot offer stops the run';
+
+# The message has to carry the condition as well as the name. Without it the
+# operator is told that something is impossible and not what would make it
+# possible.
+throws-like { apply(q:to/KDL/, 'unavailable-why') }, Exception, message => /'profile-server AND NOT profile-server'/,
+    settings {
+        install-extra-unavailable #true
+    }
+    KDL
+    'and names the condition that makes it unavailable';
+
+# ... in the spelling the help text of a dialog uses. The engine stores the
+# expression with its backticks; printing them here would put one condition
+# in front of the operator in two shapes.
+throws-like { apply(q:to/KDL/, 'no-backticks') }, Exception, message => { $_ !~~ /'`'/ },
+    settings {
+        install-extra-unavailable #true
+    }
+    KDL
+    'and without the backticks the configuration stores it with';
+
+# The second: a default-value expression is a standing rule, not a starting
+# value. It is re-evaluated whenever anything it names changes and applies its
+# result over whatever was there -- including over an answer given in the same
+# file. follows-profile names profile-server, so answering both puts the two in
+# conflict and the expression wins.
+
+throws-like { apply(q:to/KDL/, 'overridden') }, Exception, message => /'follows-profile' .* 'profile-server'/,
+    settings {
+        profile-default #true
+        profile-server #false
+        follows-profile #true
+    }
+    KDL
+    'an answer a default expression overrides stops the run rather than being lost';
+
+# The counter-control: the same file with the answer the expression agrees
+# with has to pass. A check that stopped every file naming a dependent setting
+# would be worse than no check, because it would be worked around.
+lives-ok {
+    apply(q:to/KDL/, 'agrees');
+        settings {
+            profile-default #false
+            profile-server #true
+            follows-profile #true
+        }
+        KDL
+}, 'an answer the expression agrees with is not a complaint';
+
+is Settings.instance.get('follows-profile'), True,
+    'and the value is the one the file asked for';
+
+# An answer that is simply what the setting already holds is not a conflict
+# either -- different-value is what decides, so a file may restate a value.
+lives-ok {
+    apply(q:to/KDL/, 'restated');
+        settings {
+            profile-default #false
+            profile-server #true
+            install-extra-editor #false
+        }
+        KDL
+}, 'restating a value the configuration already has is allowed';
+
 done-testing;

@@ -257,9 +257,67 @@ class Autoinstall {
         }
 
         self!settle-radiolists();
+        self!verify-answers-hold($path);
 
         self.active = True;
         True;
+    }
+
+    #| Every answer must still hold once nothing else will move.
+    #|
+    #| Applying an answer file is not a sequence of independent assignments,
+    #| and neither of the two things that can undo an answer is visible while
+    #| the answers are being applied:
+    #|
+    #| An C<available> condition decides whether a setting is a row any
+    #| dialog would show. A setting that an answer has put out of reach is one no
+    #| interactive user could have chosen -- and C<settle-radiolists> cannot
+    #| see it either, because C<get-dialog> filters by availability, so the
+    #| dialog it belongs to is not even acknowledged as answered. A file
+    #| naming a kernel other than the long-term support one together with
+    #| C<zfs-filesystem #true> came through that gap with both ZFS and Btrfs
+    #| selected at once.
+    #|
+    #| A C<default-value> expression is a standing rule rather than a starting
+    #| value: it is re-evaluated whenever anything it names changes and then
+    #| applies its result over whatever was there, including over an answer.
+    #| The two passes above make a file order-independent, but they cannot
+    #| make an answer survive a rule that contradicts it.
+    #|
+    #| Both stop the installation, and both achieve this even when the setting
+    #| appears benign. The operator recorded what the machine ought to be;
+    #| that it cannot be that is a fact concerning the machine or the file, and it
+    #| is preferable to discover it here rather than after an installation
+    #| that is not the one requested. Naming the condition holds equal weight
+    #| to naming the setting -- without it the message says that something is
+    #| impossible without saying what would make it possible.
+    method !verify-answers-hold(Str $path) {
+        my @complaints;
+
+        for %!answers.keys.sort -> $name {
+            unless Settings.instance.is-available($name) {
+                my $condition = Settings.instance.availability-condition($name);
+                @complaints.push(
+                    "$name = {%!answers{$name}} cannot be set, because the setting "
+                  ~ "is not available on this machine"
+                  ~ ($condition ?? ". It requires: $condition" !! '.'));
+                next;
+            }
+
+            next unless Settings.instance.different-value($name, %!answers{$name});
+
+            my $rule = Settings.instance.default-expression($name);
+            @complaints.push(
+                "$name was answered {%!answers{$name}} but ended up "
+              ~ "{Settings.instance.get($name) // '(unset)'}"
+              ~ ($rule ?? ", because its value follows: $rule" !! '')
+              ~ '.');
+        }
+
+        return unless @complaints;
+
+        die "Autoinstall: $path asks for settings this installation cannot honour:\n"
+          ~ @complaints.map({ "  - $_" }).join("\n");
     }
 
     #| Every radiolist step, however deeply the categories nest.
@@ -441,6 +499,47 @@ class Autoinstall {
           ~ "{@unanswered.sort.join(', ')}, which has no value and which the "
           ~ "answer file does not name.\nAdd it to the answer file.";
     }
+}
+
+#| The line an unattended run writes to the serial console when it stops.
+#|
+#| Repeated in ditana-build's `bin/test-install-in-qemu`, which greps for it.
+#| Changing it here without changing it there incurs no cost to the harness
+#| beyond its speed: it falls back to waiting out its timeout, which is where
+#| it started.
+constant AUTOINSTALL-ABORT-MARKER = 'DITANA-AUTOINSTALL-ABORT:';
+
+#| Say on the serial console that an unattended installation stopped, and why.
+#|
+#| Nobody is watching the screen of an unattended run, and the installer's own
+#| log lives inside the machine being installed -- which on this kind of
+#| failure is the machine that does not exist yet. The serial line is the one
+#| channel that leaves the box before anything is installed, and a harness
+#| driving the installer in a virtual machine can read it while the guest is
+#| still running. Without it such a run is indistinguishable from a hang, and
+#| ditana-build waited out its full 5400-second timeout to report that the
+#| guest "never reached the reboot that ends an installation" -- true, and
+#| saying nothing about what went wrong.
+#|
+#| Every line is prefixed, so that a grep for the marker returns the whole
+#| message rather than its first line.
+#|
+#| Silent when there is no serial line, and silent when writing to it fails. A
+#| machine need not have one, and failing to report a failure must not turn
+#| into a second failure that hides the first.
+sub announce-unattended-abort($message) is export {
+    return unless autoinstall-active();
+
+    my $serial = '/dev/ttyS0'.IO;
+    return unless $serial.e;
+
+    my $handle = $serial.open(:w);
+    for $message.Str.lines -> $line {
+        $handle.print("{AUTOINSTALL-ABORT-MARKER} $line\n");
+    }
+    $handle.close;
+
+    CATCH { default { Logging.log("could not announce on $serial: $_") } }
 }
 
 sub autoinstall-active(--> Bool) is export {
