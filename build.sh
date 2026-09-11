@@ -471,10 +471,69 @@ echo "selected_key:    '$selected_key'"
 echo "LABEL:           '$LABEL'"
 echo "TMP_ISO:         '$TMP_ISO'"
 
+# --- prime the root GPG agent; lifted by tests/installer/gpg-priming.t ------
+# mkarchiso signs the rootfs image itself, as root, with `gpg --batch`. Root
+# gets a gpg-agent of its own -- /run/user/0 does not exist, so its socket lands
+# in $GNUPGHOME beside the user's -- and that agent starts out with an empty
+# passphrase cache. It therefore has to run a pinentry, and on a workstation
+# with a GTK pinentry and an icon theme made of SVGs that pinentry dies before
+# it can ask anything: GTK loads the icon through glycin, glycin runs its loader
+# in bwrap, and the loader exits with status 1. gpg-agent then waits sixty
+# seconds for an answer that will never come and reports
+#
+#     gpg: signing failed: Timeout
+#
+# Those sixty seconds are inside gpg-agent and no option reaches them.
+# `pinentry-timeout` is its only timeout setting, it applies to the pinentry
+# rather than to this wait, and its value of 0 means "I request no timeout"
+# rather than "wait forever". Measured three times, each after eleven minutes
+# of building, and each time the ISO was thrown away by the cleanup.
+#
+# So the passphrase is obtained here instead, at the one moment somebody is
+# certainly at the keyboard -- the sudo password and the key selection are both
+# above this line -- and in a way that starts no pinentry at all:
+# --pinentry-mode loopback makes gpg ask on the terminal itself. What it obtains
+# lands in that same root agent's cache, which is where mkarchiso finds it.
+#
+# The second call is not a belt-and-braces repetition. It is mkarchiso's own
+# invocation, run here so that a passphrase which did not reach the cache stops
+# the build in five seconds rather than in eleven minutes. `default-cache-ttl`
+# in the user's gpg-agent.conf has to outlive a build; two hours is the default
+# and a build takes about twelve minutes.
+prime_root_gpg_agent() {
+    local probe sig
+    probe=$(mktemp) || return 1
+    sig="$probe.sig"
+    echo "ditana-build" > "$probe"
+
+    echo "The ISO is signed by mkarchiso running as root, which cannot ask you"
+    echo "for the passphrase later. Please enter it now, once."
+    if ! sudo -E gpg --pinentry-mode loopback --no-armor --output "$sig" \
+             --detach-sign --default-key "$1" "$probe"; then
+        sudo rm -f "$probe" "$sig"
+        echo "ERROR: no passphrase, so mkarchiso could not sign either." >&2
+        return 1
+    fi
+
+    sudo rm -f "$sig"
+    if ! sudo -E gpg --batch --no-armor --output "$sig" \
+             --detach-sign --default-key "$1" "$probe" 2>/dev/null; then
+        sudo rm -f "$probe" "$sig"
+        echo "ERROR: the passphrase did not reach the agent that mkarchiso will" >&2
+        echo "       use, so the build would stop at the signing step. Check" >&2
+        echo "       default-cache-ttl in ~/.gnupg/gpg-agent.conf." >&2
+        return 1
+    fi
+
+    sudo rm -f "$probe" "$sig"
+}
+# --- end of prime the root GPG agent ----------------------------------------
+
 # Execute mkarchiso with elevated privileges, while preserving the current user's environment (-E).
 # The GNUPGHOME environment variable points to the user's GPG home directory, ensuring that GPG operations within mkarchiso
 # continue to use the user's keyring and associated permissions.
 if [[ -n "$selected_key" ]]; then
+    prime_root_gpg_agent "$selected_key"
     sudo -E mkarchiso -v -C pacman.conf -L "$LABEL" -w "$TMP_ISO" -P "$selected_signer" -G "$selected_signer" -g "$selected_key" .
     sudo chown -R "$USER:$USER" out/
     pushd out
