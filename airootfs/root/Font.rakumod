@@ -21,6 +21,7 @@ use v6.d;
 use Logging;
 use Settings;
 use RunAndLog;
+use Restart;
 
 sub find-closest-font-size(Real $desired-font-pt, Real $terminal-dpi) returns Int {
     my @sizes = (12, 14, 16, 18, 20, 22, 24, 28, 32); # available Terminus font sizes
@@ -93,7 +94,14 @@ sub update-terminal-font($silent-exit-code) returns Int is export {
     if !$hook-already-applied {
         if Settings.instance.get('tmux') {
             $hook-path.IO.spurt("setfont $terminal-font\nexport DISPLAY_SIZE=$display-size");
-            die "Interrupting installer to change font size of virtual terminal."
+            # Ends this process so that the wrapper can set the font on a
+            # terminal nobody is drawing on, and start the installer again.
+            # A type rather than a string, because the top of main.raku has to
+            # tell this apart from an installation that has stopped -- see
+            # Restart.rakumod.
+            X::Ditana::Restart.new(
+                reason => "Interrupting installer to change font size of virtual terminal."
+            ).throw;
         } else {
             qqx{setfont $terminal-font};
         }

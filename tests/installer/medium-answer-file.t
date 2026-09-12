@@ -7,13 +7,13 @@ use Test;
 # /root/autoinstall.kdl, which in a checkout is airootfs/root/ -- the directory
 # the ISO is built from, and the same path the mechanism is exercised at by
 # hand. .gitignore keeps such a file out of the repository and therefore out of
-# every review; nothing kept it out of the medium.
+# every review; nothing keeps it out of the medium.
 
 my $build = $?FILE.IO.absolute.IO.parent.parent.parent.child('build.sh');
 ok $build.e, 'build.sh is where it is expected';
 
 my $text = $build.slurp;
-$text ~~ / '# --- no answer file on the medium' .*? '# --- end of answer-file check' /;
+$text ~~ / '# --- BEGIN no-answer-file-on-the-medium' .*? '# --- END no-answer-file-on-the-medium' /;
 my $check = $/ ?? ~$/ !! '';
 bail-out 'the answer-file check markers are gone from build.sh; nothing to test'
     unless $check.chars;
@@ -49,7 +49,7 @@ is verdict(:with-answer-file),
 
 # The file this test is about must not be here while the suite runs either --
 # the suite runs from build.sh, so this is the same check one step earlier, and
-# it is the one that would have caught the real thing.
+# it is the one that catches a file somebody left behind by hand.
 nok $?FILE.IO.absolute.IO.parent.parent.parent
         .child('airootfs/root/autoinstall.kdl').e,
     'and this checkout carries none';

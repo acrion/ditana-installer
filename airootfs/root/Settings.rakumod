@@ -269,11 +269,11 @@ method load() {
     #| The sysctl values the enabled settings ask for, as [key, value, setting-name].
     #|
     #| Two enabled settings writing the same key with different values is a defect
-    #| in the configuration and stops the installation. It used to be invisible:
-    #| every setting appended its own echo line to one file, so the last one won and
-    #| nobody could see that a decision had been overruled. kernel-option-duurn and
-    #| enable-unprivileged-namespaces write opposite values of the very same key and
-    #| were kept apart by their default expressions alone.
+    #| in the configuration and stops the installation. Nothing else would show it:
+    #| as one echo line per setting appended to one file, the last one wins and the
+    #| decision that was overruled leaves no trace. kernel-option-duurn and
+    #| enable-unprivileged-namespaces write opposite values of the very same key,
+    #| and only their default expressions keep them apart.
     method get-sysctl-values() {
         my @values;
         my %seen;   # key => [value, setting-name]

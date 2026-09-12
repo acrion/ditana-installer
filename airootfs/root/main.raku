@@ -24,6 +24,7 @@ use lib ".";
 use AskForSetting;
 use AskForYesNo;
 use Chroot;
+use ConfigState;
 use Desktop;
 use Dialogs;
 use Flatpak;
@@ -40,6 +41,7 @@ use Nvidia;
 use NvmeFormat;
 use PackageManagement;
 use Partition;
+use Restart;
 use RunAndLog;
 use SelectDisk;
 use SelectSwapSize;
@@ -253,6 +255,8 @@ sub main() {
         Logging.log("Autoinstall: answer file found, running unattended");
     }
 
+    my $config-dir = $*PROGRAM.parent;
+
     if !'/tmp/ditana-set-font.sh'.IO.e {
         welcome();
 
@@ -261,7 +265,6 @@ sub main() {
 
         show-dialog-raw('--infobox', "Downloading Installer Configuration...", 4, 65);
 
-        my $config-dir = $*PROGRAM.parent;
         my $config-archive = $config-dir.child('ditana-config.tar.gz');
 
         my $branch = 'main';
@@ -287,25 +290,14 @@ sub main() {
 
         run('tar', 'xzf', $config-archive, '--exclude=json-kdl-converter', '-C', $config-dir);
 
-        my $config-hash = "unknown";
-        my $hash-file = $config-dir.child('config_hash.txt');
-        if $hash-file.e {
-            $config-hash = $hash-file.slurp(:close).trim;
-        }
-
-        my $config-date = "unknown";
-        my $date-file = $config-dir.child('config_date.txt');
-        if $date-file.e {
-            $config-date = $date-file.slurp(:close).trim;
-        }
+        my %config-state = config-state($config-dir);
+        my $config-hash = %config-state<hash>;
+        my $config-date = %config-state<date>;
 
         my $lsb-release = $config-dir.child('folders/etc/lsb-release');
         if $lsb-release.e {
             $lsb-release.spurt("DISTRIB_CODENAME=$config-hash\n", :append);
         }
-
-        %*ENV<DITANA_CONFIG_HASH> = $config-hash;
-        Logging.log("Loaded configuration state: $config-hash ($config-date)");
 
         my $msg = qq:to/END/.chomp;
 
@@ -322,6 +314,12 @@ END
         show-dialog-raw('--title', 'Installer Configuration', '--msgbox', $msg, 19, 75);
         show-dialog-raw('--title', 'Ditana GNU/Linux Installer', '--infobox', "\nDetecting Hardware...", 10, 50);
     }
+
+    # Deliberately outside the block above: that block is skipped when the
+    # installer has restarted itself to change the console font, and the
+    # process that then carries out the installation is this one. Anything
+    # published only on the first pass is unset for everything downstream.
+    publish-config-state($config-dir);
 
     if Settings.instance.get('tmux') {
         qx{tmux set -g status-position top};
@@ -409,9 +407,23 @@ END
 
 main();
 CATCH {
-    Logging.log($_);
-    # Before debug-info(), which writes to the screen nobody is watching when
-    # the run is unattended.
-    announce-unattended-abort($_);
-    debug-info();
+    # The font step ends this process on purpose, so that the wrapper can
+    # change the console font and start the installer again. Nothing has
+    # failed, so nothing is announced and no debug information is printed:
+    # the run continues in the next process, and an unattended operator who was
+    # told otherwise would be reading about a run that is still going.
+    when X::Ditana::Restart {
+        Logging.log($_.message);
+        exit 0;
+    }
+
+    default {
+        Logging.log($_);
+        # Before debug-info(), which writes to the screen nobody is watching
+        # when the run is unattended.
+        announce-unattended-abort($_);
+        debug-info();
+        # Rethrown, so that a failure keeps its exit status and its backtrace.
+        .rethrow;
+    }
 }

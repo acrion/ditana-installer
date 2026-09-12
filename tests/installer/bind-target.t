@@ -28,10 +28,10 @@ sub fresh() {
     $real.symlink($link);
 }
 
-# The one that cost 4.6 GB of installation: /mnt/etc/resolv.conf is a symlink
-# to /run/systemd/resolve/stub-resolv.conf, and creating the placeholder wrote
-# through it -- emptying the resolv.conf the live environment was using, and
-# leaving the chroot with a dangling symlink and no nameserver.
+# The one that strands an installation 4.6 GB in: /mnt/etc/resolv.conf is a
+# symlink to /run/systemd/resolve/stub-resolv.conf, so creating the placeholder
+# writes through it -- emptying the resolv.conf the live environment is using,
+# and leaving the chroot with a dangling symlink and no nameserver.
 fresh();
 my $displaced = prepare-bind-target($link.absolute);
 

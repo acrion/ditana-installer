@@ -45,11 +45,11 @@ sub create-kernel-configuration() is export {
         }
     }
 
-    # Everything the settings themselves declare. These used to be echo lines
-    # inside chroot-script entries, one per value, appending to this very file.
-    # As data they can be checked: get-sysctl-values stops the installation when
-    # two enabled settings write the same key differently, which as shell text
-    # nobody could see. The name of the setting is written beside each value so
+    # Everything the settings themselves declare, as data rather than as echo
+    # lines inside chroot-script entries appending to this very file. As data
+    # they can be checked: get-sysctl-values stops the installation when two
+    # enabled settings write the same key differently, which as shell text
+    # nobody can see. The name of the setting is written beside each value so
     # that a line in the installed file can be traced back to the choice that
     # produced it.
     for $s.get-sysctl-values -> $entry {

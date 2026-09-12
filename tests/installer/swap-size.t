@@ -22,11 +22,11 @@ is swap-recommendation-gib(4, 100), 20,
 is swap-recommendation-gib(4, 60), 12,
     'and no more than what is left once the installation has its 45 GiB';
 
-# 24 GiB of disk was the first unattended installation in QEMU. 24/5 = 4, but
-# 24 - 45 = -21, and the unclamped -21 reached sgdisk as
-# `--new=2:0:+-21G`. Partitioning failed with "Could not create partition 2
-# from 1050624 to 0" -- three lines that named the partition and not one word
-# about why. Any disk under 45 GiB did this, not only a test one.
+# 24 GiB of disk is what an unattended installation in QEMU gets. 24/5 = 4, but
+# 24 - 45 = -21, and an unclamped -21 reaches sgdisk as `--new=2:0:+-21G`.
+# Partitioning then fails with "Could not create partition 2 from 1050624 to 0"
+# -- three lines that name the partition and not one word about why. Any disk
+# under 45 GiB does this, not only a test one.
 is swap-recommendation-gib(4, 24), 0,
     'a disk smaller than the installation needs gets no swap, not negative swap';
 is swap-recommendation-gib(4, 45), 0,

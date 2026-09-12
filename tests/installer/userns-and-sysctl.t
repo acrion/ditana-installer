@@ -5,9 +5,11 @@ use Settings;
 
 # A setting declares what it needs - an executable that may create a user
 # namespace, a sysctl value - and the installer collects those declarations from
-# the settings that are switched on. Before this existed, a sysctl value was an
-# echo line inside a chroot-script, and a user namespace permission did not exist
-# at all: Ditana shipped a setuid bubblewrap instead, which Arch has removed.
+# the settings that are switched on. A declaration is what makes the two
+# collectable at all: a sysctl value written as an echo line inside a
+# chroot-script cannot be reconciled with another one, and the user namespace
+# permission has to exist because Arch no longer ships the setuid bubblewrap
+# that would otherwise stand in for it.
 #
 # The fixture beside this file is the configuration; see its own comments.
 my $fixture = $?FILE.IO.absolute.IO.parent.child('fixture').absolute;
@@ -49,11 +51,11 @@ nok %by-key<kernel.test_beta>:exists, 'a switched-off setting contributes no val
 is @values.grep({ $_[0] eq 'kernel.test_alpha' }).elems, 1,
     'two settings asking for the same value produce one line, not two';
 
-# --- the conflict that used to be invisible ---------------------------------
+# --- the conflict that nothing else would show ------------------------------
 
 # kernel-option-duurn and enable-unprivileged-namespaces write opposite values of
-# kernel.unprivileged_userns_clone. As echo lines appended to one file, both would
-# have been written and the last would have won, silently. The two are kept apart
+# kernel.unprivileged_userns_clone. As echo lines appended to one file, both are
+# written and the last one wins, silently. The two are kept apart
 # by their default expressions, and this is what happens if a later edit ever
 # breaks that.
 $s.set('conflicts-with-a', True);

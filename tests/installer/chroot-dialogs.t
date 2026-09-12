@@ -8,10 +8,10 @@ use Test;
 # from the outside indistinguishable from one still working -- until whatever
 # waits on the other end gives up.
 #
-# It happened twice in one evening: once at the password prompt, once at the
-# box that says the installation is finished. Both times after the whole
-# system had been installed. show_dialog is the one way through, and this is
-# what keeps it that way.
+# Two boxes in there can do it: the password prompt, and the one that says the
+# installation is finished -- both of them after the whole system is already on
+# the disk. show_dialog is the one way through, and this is what keeps it that
+# way.
 
 my $script = $?FILE.IO.absolute.IO.parent.parent.parent
                  .child('airootfs/root/bind-mount/root/chroot-install.sh');

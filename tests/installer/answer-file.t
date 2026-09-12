@@ -206,14 +206,15 @@ nok autoinstall().step-can-be-skipped(%steps<select-disk>),
 
 # --- an answer that cannot be honoured stops the run ------------------------
 
-# Two ways an answer can fail to stick, and neither used to be noticed.
+# Two ways an answer can fail to stick, and neither shows up anywhere else:
+# the file is well-formed and every setting in it exists.
 #
 # The first: the setting is not available on this machine. No interactive user
 # could have chosen it, because the dialog would not have shown the row -- and
 # settle-radiolists cannot see it either, since get-dialog filters by
-# availability. In ditana-config this is how a file naming a kernel other than
-# the long-term support one together with zfs-filesystem #true came through
-# with both ZFS and Btrfs selected at once.
+# availability. In ditana-config this is what a file naming a kernel other than
+# the long-term support one together with zfs-filesystem #true amounts to: a
+# machine with both ZFS and Btrfs selected at once.
 
 throws-like { apply(q:to/KDL/, 'unavailable') }, Exception, message => /'install-extra-unavailable' .* 'not available'/,
     settings {

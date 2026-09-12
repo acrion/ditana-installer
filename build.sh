@@ -21,12 +21,104 @@
 set -e
 set -u
 
+# --- BEGIN maintenance-lock --------------------------------------------------
+# Lifted by tests/installer/maintenance-lock.t, which cuts between BEGIN and END.
+#
+# On a Ditana build server the system update and the package builds must not
+# overlap, and maintenance-lock is what arranges that. An ISO build belongs in
+# the same queue: half an hour of building is exactly the window in which an
+# update would reboot the machine underneath it.
+#
+# Conditional, because the mechanism is not on every machine that builds an ISO.
+# It needs /run/ditana-maintenance, which only root creates, so a workstation
+# without it simply builds -- and `command -v` alone would not have noticed,
+# since the tool is there and fails at the lock file.
+#
+# `maintenance-lock run` leaves a job that loses the race alone: it says so and
+# exits 0, which is right for a timer that will tick again and wrong for a build
+# somebody is waiting on. The marker is how this run tells the difference
+# between "built" and "was not started", so that nothing reports success for an
+# ISO that does not exist.
+#| DITANA_MAINTENANCE_LOCK_DIR names the directory; the tests point it at one
+#| they can create.
+maintenance_lock_usable() {
+    command -v maintenance-lock >/dev/null 2>&1 || return 1
+    [[ -w "${DITANA_MAINTENANCE_LOCK_DIR:-/run/ditana-maintenance}" ]]
+}
+
+if [[ -z "${DITANA_ISO_BUILD_HOLDS_LOCK:-}" ]] && maintenance_lock_usable; then
+    export DITANA_ISO_BUILD_HOLDS_LOCK=1
+    DITANA_ISO_BUILD_MARKER=$(mktemp)
+    export DITANA_ISO_BUILD_MARKER
+
+    # `|| build_status=$?` and not a bare call: under `set -e` a non-zero exit
+    # would end this script before the status could be looked at.
+    build_status=0
+    maintenance-lock run ditana-iso-build --wait 1800 -- "$0" "$@" || build_status=$?
+
+    if [[ ! -s "$DITANA_ISO_BUILD_MARKER" ]]; then
+        rm -f "$DITANA_ISO_BUILD_MARKER"
+        echo "ERROR: the maintenance lock was held for the whole wait, so this" >&2
+        echo "       build never started. Nothing was built." >&2
+        exit 1
+    fi
+    rm -f "$DITANA_ISO_BUILD_MARKER"
+    exit $build_status
+fi
+
+# The run that holds the lock says so, for the wrapper above to read. An `if`
+# and not `[[ ... ]] && ...`, because the second form is a statement that fails
+# when the condition is false, and `set -e` ends the build on it -- on every
+# machine that has no maintenance lock, which is most of them.
+if [[ -n "${DITANA_ISO_BUILD_MARKER:-}" ]]; then
+    echo started > "$DITANA_ISO_BUILD_MARKER"
+fi
+# --- END maintenance-lock ----------------------------------------------------
+
 sudo -k
+
+# --- BEGIN pacman-database-lock ----------------------------------------------
+# Lifted by tests/installer/pacman-lock.t, which cuts between BEGIN and END.
+#
+# One pacman at a time: the database is held by whoever is using it, and a
+# second one does not queue, it fails.
+#
+#     error: failed to synchronize all databases (unable to lock database)
+#
+# On a machine that keeps an AUR repository, `update-aurto` runs on a timer and
+# holds the database for minutes while it builds in a chroot. A build that
+# starts beside it dies at its first pacman, which is a quarter of an hour of
+# ISO thrown away for a collision that clears itself.
+#
+# Only the lock is waited out. Any other failure is returned at once, because a
+# pacman that failed for its own reasons has already removed its lock file, and
+# retrying it would only repeat the error.
+#| DITANA_PACMAN_POLL_SECONDS says how often to look; the tests set it to zero.
+pacman_waiting() {
+    local waited=0 poll=${DITANA_PACMAN_POLL_SECONDS:-10} lock
+    # Beside the database, wherever that is: pacman.conf can move it, and a
+    # hard-coded path would watch a file nobody writes.
+    lock="$(pacman-conf DBPath 2>/dev/null || echo /var/lib/pacman)/db.lck"
+    lock=${lock//\/\//\/}
+    while true; do
+        sudo pacman "$@" && return 0
+        [[ -e $lock ]] || return 1
+        (( waited )) || echo "The pacman database is held by another process; waiting for it."
+        sleep "$poll"
+        waited=$((waited + poll))
+        if (( waited >= 900 )); then
+            echo "ERROR: the pacman database stayed locked for fifteen minutes." >&2
+            echo "       Whoever holds /var/lib/pacman/db.lck is not letting go." >&2
+            return 1
+        fi
+    done
+}
+# --- END pacman-database-lock ------------------------------------------------
 
 ensure_package_installed() {
     if ! pacman -Qi "$1" &>/dev/null; then
         echo "The '$1' package is not installed. Installing it now..."
-        sudo pacman -S "$1"
+        pacman_waiting -S "$1"
     fi
 }
 
@@ -34,6 +126,206 @@ ensure_package_installed python-gnupg
 ensure_package_installed gnupg
 ensure_package_installed pkgfile
 ensure_package_installed zfs-dkms
+
+# --- BEGIN credentials-up-front ----------------------------------------------
+# Lifted by tests/installer/gpg-priming.t, which cuts between BEGIN and END.
+#
+# Everything the build needs a person for is asked here, before the first long
+# step. The passphrase is not kept anywhere: gpg asks for it on the terminal and
+# root's gpg-agent holds it from then on, which is where mkarchiso looks for it.
+# prime_root_gpg_agent asks the same question again immediately before
+# mkarchiso, in case the agent has let it go by then.
+
+list_gpg_keys() {
+    # Terminate any running keyboxd process to prevent conflicts with the following user-level GPG operations.
+    # The keyboxd daemon is part of the GnuPG package and is started automatically by GPG whenever the keybox database is accessed.
+    # If a root-owned keyboxd process is running, it holds locks or permissions that interfere with user-level operations
+    # in mkarchiso, leading to conflicts.
+    sudo pkill keyboxd || true
+
+    python3 -c "
+import gnupg
+
+gpg = gnupg.GPG()
+keys = gpg.list_keys(True)
+for key in keys:
+    key_id = key['keyid']
+    full_uid = key['uids'][0]
+    print(f'{key_id},{full_uid}')
+"
+}
+
+#| Can root sign with this key right now, without anybody being asked anything?
+#|
+#| `--pinentry-mode error` makes gpg fail rather than start a pinentry, so this
+#| answers in a moment and in every case that matters: yes when the key has no
+#| passphrase, yes when the agent already holds it, no when somebody would have
+#| to type it. Plain `--batch` cannot be used to ask the question -- it starts
+#| the pinentry that cannot come up as root, and gpg-agent then waits sixty
+#| seconds for it.
+#|
+#| As root, and not as the user, because root is who signs: this also catches an
+#| ownership or keyring problem in the first seconds rather than at the signing
+#| step.
+root_can_sign_now() {
+    local key=$1 probe sig failed=0
+    probe=$(mktemp) || return 1
+    sig="$probe.sig"
+    echo "ditana-build" > "$probe"
+    sudo -E gpg --batch --pinentry-mode error --no-armor --output "$sig" \
+         --detach-sign --default-key "$key" "$probe" >/dev/null 2>&1 || failed=1
+    sudo rm -f "$probe" "$sig"
+    return $failed
+}
+
+#| Have the sudo password now, if it is going to be needed at all.
+#|
+#| `sudo -n true` decides that, and not `sudo -v`: on a host where sudo needs
+#| no password at all -- the build VM has NOPASSWD for everything -- `sudo -v`
+#| insists on one anyway.
+#|
+#| With neither a free pass nor a terminal this only says so, and the build
+#| stops at its first step that needs root. That is better than refusing a host
+#| whose sudoers covers each of those steps one by one.
+ensure_sudo() {
+    if sudo -n true 2>/dev/null; then
+        return 0
+    fi
+
+    if [[ -t 0 ]]; then
+        sudo -v
+        return
+    fi
+
+    echo "WARNING: sudo needs a password and there is no terminal to ask on;" >&2
+    echo "         this build will stop at its first step that needs root." >&2
+}
+
+select_signing_key() {
+    local key_list choice key_id full_uid i
+    mapfile -t key_list < <(list_gpg_keys)
+
+    echo "Available GPG keys for signing (ID - Name <Email>):"
+    for i in "${!key_list[@]}"; do
+        IFS=',' read -r key_id full_uid <<< "${key_list[i]}"
+        echo "$((i+1))) $key_id - $full_uid"
+    done
+    echo "$(( ${#key_list[@]} + 1 ))) No signing"
+
+    # With no terminal attached, read fails and `set -e` would end the build
+    # here. Falling through to "No signing" is the honest answer: a machine with
+    # no terminal has nobody to pick a key. DITANA_SIGNING_CHOICE answers the
+    # prompt in advance, the same way DITANA_USE_OFFICIAL_REPO answers the
+    # repository one.
+    choice="${DITANA_SIGNING_CHOICE:-}"
+    if [[ -z "$choice" && -t 0 ]]; then
+        read -rp "Choose a key by number for signing or press enter for 'No signing': " choice
+    fi
+    if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice > 0 && choice <= ${#key_list[@]} )); then
+        IFS=',' read -r selected_key selected_signer <<< "${key_list[$((choice - 1))]}"
+        echo "Selected GPG Key ID: $selected_key"
+    else
+        echo "No signing selected."
+        selected_signer="(none)"
+        selected_key=""
+    fi
+}
+
+#| Make sure root can sign, asking for the passphrase if it has to.
+#|
+#| Called twice: once at the top of the build, and once immediately before
+#| mkarchiso. The second call costs nothing while the agent still holds the
+#| passphrase, and asks again if `default-cache-ttl` in ~/.gnupg/gpg-agent.conf
+#| is shorter than this build.
+#|
+#| gpg does the asking itself, on the terminal: `--pinentry-mode loopback`
+#| starts no pinentry, and what is typed lands in the cache of the very agent
+#| mkarchiso will use. Nothing keeps the passphrase anywhere else.
+ensure_signing_possible() {
+    local key=$1 probe sig
+
+    # Before any gpg that runs as root, and this is not optional. keyboxd holds
+    # an exclusive lock on ~/.gnupg/public-keys.d/pubring.db, root cannot share
+    # the one belonging to the user -- the socket paths differ, so it starts its
+    # own -- and the one that loses waits twenty seconds and then reports
+    #
+    #     gpg: Note: database_open ... waiting for lock (held by <pid>)
+    #     gpg: key "..." not found: Connection timed out
+    #     gpg: signing failed: Connection timed out
+    #
+    # which says nothing about keys or passphrases and is not what it looks
+    # like. Reading the list of secret keys just above here is what starts the
+    # user's keyboxd, so the lock is always held by the time this runs.
+    #
+    # gpg-agent is a different daemon and survives this, which is why the
+    # passphrase obtained below is still in its cache afterwards.
+    sudo pkill keyboxd || true
+
+    root_can_sign_now "$key" && return 0
+
+    if [[ ! -t 0 ]]; then
+        echo "ERROR: $key needs a passphrase and there is no terminal to ask" >&2
+        echo "       on. Choose 'No signing', or start the build where you can" >&2
+        echo "       type." >&2
+        return 1
+    fi
+
+    echo "The ISO is signed by mkarchiso running as root, which cannot ask for"
+    echo "the passphrase later. Please enter it now, once."
+
+    probe=$(mktemp) || return 1
+    sig="$probe.sig"
+    echo "ditana-build" > "$probe"
+    if ! sudo -E gpg --pinentry-mode loopback --no-armor --output "$sig" \
+             --detach-sign --default-key "$key" "$probe"; then
+        sudo rm -f "$probe" "$sig"
+        echo "ERROR: no passphrase, so mkarchiso could not sign either." >&2
+        return 1
+    fi
+    sudo rm -f "$probe" "$sig"
+
+    # The proof: the same question as at the start, which now has to answer yes.
+    # A passphrase that did not reach the cache stops the build here rather than
+    # eleven minutes later, at the signing step.
+    if ! root_can_sign_now "$key"; then
+        echo "ERROR: the passphrase did not reach the agent that mkarchiso will" >&2
+        echo "       use, so the build would stop at the signing step. Check" >&2
+        echo "       default-cache-ttl in ~/.gnupg/gpg-agent.conf." >&2
+        return 1
+    fi
+    echo "Passphrase accepted; the build runs unattended from here."
+}
+
+selected_key=""
+selected_signer="(none)"
+
+# A quick rebuild replaces /root inside an existing image and signs nothing, so
+# it is asked nothing.
+if [[ "${1:-}" != "--quick" ]]; then
+    ensure_sudo
+
+    # The sudo timestamp expires long before mkarchiso needs it, so it is kept
+    # warm here. The loop watches this shell rather than hanging off a trap,
+    # because the build installs EXIT traps of its own further down and the
+    # last one would win.
+    ( while kill -0 "$$" 2>/dev/null; do sudo -n true 2>/dev/null || true; sleep 50; done ) &
+
+    select_signing_key
+    [[ -z "$selected_key" ]] || ensure_signing_possible "$selected_key"
+
+    # Clean up after the question. Trying the key as root starts a keyboxd that
+    # belongs to root and holds the lock on ~/.gnupg/public-keys.d/pubring.db,
+    # and `gpg --export --armor` further down runs as the user: it would sit
+    # there waiting for that lock and report
+    #
+    #     gpg: Note: database_open ... waiting for lock (held by <pid>)
+    #     gpg: key export failed: Connection timed out
+    #
+    # which is a build that dies for a reason having nothing to do with the key
+    # it just checked.
+    sudo pkill keyboxd || true
+fi
+# --- END credentials-up-front ------------------------------------------------
 
 # Delete temporary files from simulated installations
 rm -f  airootfs/root/bind-mount/root/installation-steps.sh
@@ -115,10 +407,10 @@ reverse_patch_if_needed() {
 # Which package repository the ISO installs from, and which branch the
 # installer comes from, are two different things -- use-testing-repo.patch
 # swaps the mirrorlist in three files and renames the ISO, and nothing else.
-# They used to be one decision, and that left a combination unbuildable: the
-# installer and configuration users actually have, installing the packages
-# that are about to become production. That is precisely what the nightly
-# release gate has to try, so it is what DITANA_BUILD_TESTING_ISO builds.
+# Made into one decision, they leave a combination unbuildable: the installer
+# and configuration users actually have, installing the packages that are about
+# to become production. That is precisely what the nightly release gate has to
+# try, so it is what DITANA_BUILD_TESTING_ISO builds.
 #
 # The name stays "Ditana_Testing" for such an ISO, deliberately: it must never
 # be mistaken for one that installs from the production repository.
@@ -133,6 +425,98 @@ elif [[ "${DITANA_BUILD_TESTING_ISO:-n}" == y* ]]; then
     apply_testing_patch=y
     echo "Building from main, but installing from the ditana-testing repository."
 fi
+
+# --- BEGIN versioned-tree ----------------------------------------------------
+# Lifted by tests/installer/versioned-tree.t, which cuts between BEGIN and END.
+#
+# A signed release medium has to be the versioned state, and mkarchiso makes
+# that easy to lose: it copies the profile's airootfs into the system image
+# whole, so whatever lies there travels with it. A stale .orig beside a script
+# rode along that way for months, in every medium built, and nothing said so.
+#
+# What made it invisible is a personal ignore rule -- core.excludesFile in the
+# user's own configuration, `*.orig` in this case. Every `git status` on that
+# machine honours it and no other machine has it, so the file is missing from
+# the one report anybody would have looked at. The check therefore asks git the
+# same question with that file switched off: whatever is still untracked then
+# is declared nowhere in the repository, and has no business in a release.
+#
+# What the build itself produces is not a stray. Every one of those is named in
+# the repository's own .gitignore -- the configuration archive, the extracted
+# settings, ditana-version.sh, the compiled converter -- and a rule that travels
+# with the repository is a declaration. That is the whole distinction: declared
+# in the repository, or not declared at all.
+#
+# Modified tracked files are deliberately not refused, and neither are staged
+# ones. A release is built and tested before it is committed, so the tree is
+# expected to differ from HEAD -- and a modification stands in `git status` for
+# anyone to see, which is exactly what the files this check is about do not.
+# Staging is where somebody said what this file is; the line runs there.
+UNVERSIONED=()
+collect_unversioned() {
+    local -a entries=()
+    # -z, so that a path with a space or a quote in it arrives as it is: the
+    # default format quotes such a name, and a quoted name would then be deleted
+    # under a name that does not exist.
+    mapfile -d '' -t entries < <(
+        git -c core.excludesFile=/dev/null status --porcelain -z --untracked-files=all
+    )
+    UNVERSIONED=()
+    local e
+    for e in ${entries[@]+"${entries[@]}"}; do
+        if [[ $e == '?? '* ]]; then UNVERSIONED+=("${e#?? }"); fi
+    done
+}
+
+if [[ -n "$selected_key" && "$apply_testing_patch" == "n" ]]; then
+    # .git/info/exclude does the same as the personal ignore file and travels
+    # with no clone either. Empty in this repository, and the check says so
+    # rather than silently trusting it.
+    exclude_rules=$(grep -cvE '^[[:space:]]*(#|$)' .git/info/exclude 2>/dev/null || true)
+    if (( ${exclude_rules:-0} > 0 )); then
+        echo "Refusing to build: .git/info/exclude carries ${exclude_rules} rule(s)." >&2
+        echo "       They hide files from this check and exist only on this machine," >&2
+        echo "       so what they hide cannot be accounted for. Move them to .gitignore." >&2
+        exit 1
+    fi
+
+    collect_unversioned
+    if (( ${#UNVERSIONED[@]} > 0 )); then
+        echo
+        echo "These files are in the working tree, are not staged either, and no rule"
+        echo "in the repository declares them. A release medium is the versioned state,"
+        echo "and mkarchiso copies airootfs/ into it whole:"
+        printf '  %s\n' "${UNVERSIONED[@]}"
+        echo
+
+        # Answered in advance the same way the signing key and the repository
+        # are. With no terminal and no answer the build stops: deleting files
+        # nobody was asked about is the one thing this must not do.
+        remove_answer="${DITANA_REMOVE_UNVERSIONED:-}"
+        if [[ -z "$remove_answer" && -t 0 ]]; then
+            read -r -p "Delete them and build? [y/N] " remove_answer
+        fi
+        if [[ "${remove_answer,,}" != y* ]]; then
+            echo "Refusing to build: a signed release must carry nothing but what is versioned." >&2
+            echo "       What belongs in it wants 'git add' -- staging is the declaration," >&2
+            echo "       a commit is not needed. What does not belongs deleted." >&2
+            exit 1
+        fi
+
+        rm -f -- "${UNVERSIONED[@]}"
+        # Asked again rather than assumed: a file that survived deletion --
+        # unwritable directory, a race -- would otherwise be signed into the ISO
+        # by a build that has just reported removing it.
+        collect_unversioned
+        if (( ${#UNVERSIONED[@]} > 0 )); then
+            echo "Refusing to build: these are still in the tree after being deleted:" >&2
+            printf '  %s\n' "${UNVERSIONED[@]}" >&2
+            exit 1
+        fi
+        echo "Deleted. The working tree carries nothing the repository does not declare."
+    fi
+fi
+# --- END versioned-tree ------------------------------------------------------
 
 if [[ "$apply_testing_patch" == "y" ]]; then
     # The patched pacman.conf includes /etc/pacman.d/ditana-testing-mirrorlist,
@@ -206,11 +590,14 @@ zef --force-install --contained --/test --/test-depends \
 # on an answer it was given or stops -- an ISO that gets that wrong is one
 # nobody can safely leave alone, which is the only kind this ISO gets used for.
 
-# --- no answer file on the medium; lifted verbatim by medium-answer-file.t ----
+# --- BEGIN no-answer-file-on-the-medium --------------------------------------
+# Lifted by tests/installer/medium-answer-file.t, which cuts between BEGIN and
+# END.
+#
 # The two marker lines are not decoration: medium-answer-file.t cuts the check
-# out between them and runs it, so that what is tested is what runs here. They
-# were dropped once, and the suite then exercised an empty string and reported
-# that a directory holding an answer file was fine.
+# out between them and runs it, so that what is tested is what runs here.
+# Without them the suite exercises an empty string and reports that a directory
+# holding an answer file is fine.
 #
 # Why the check exists is in that test, at length.
 if [[ -e airootfs/root/autoinstall.kdl ]]; then
@@ -219,9 +606,14 @@ if [[ -e airootfs/root/autoinstall.kdl ]]; then
     echo "boots on, with no question asked. Move it aside for the build." >&2
     exit 1
 fi
-# --- end of answer-file check -------------------------------------------------
+# --- END no-answer-file-on-the-medium ----------------------------------------
 
-tests/installer/run-tests
+# Not left to `set -e`: a suite that fails would end the build with no message
+# at all, several hundred lines below the failure it is about.
+if ! tests/installer/run-tests; then
+    echo "Refusing to build: the installer tests above did not pass." >&2
+    exit 1
+fi
 
 if [[ "${1:-}" == "--quick" ]]; then
     # --- Quick rebuild mode: only replace airootfs/root in existing ISO ---
@@ -299,31 +691,12 @@ if [[ "${1:-}" == "--quick" ]]; then
     exit 0
 fi
 
-function list_gpg_keys() {
-    # Terminate any running keyboxd process to prevent conflicts with the following user-level GPG operations.
-    # The keyboxd daemon is part of the GnuPG package and is started automatically by GPG whenever the keybox database is accessed.
-    # If a root-owned keyboxd process is running, it holds locks or permissions that interfere with user-level operations
-    # in mkarchiso, leading to conflicts.
-    sudo pkill keyboxd || true
-
-    python3 -c "
-import gnupg
-
-gpg = gnupg.GPG()
-keys = gpg.list_keys(True)
-for key in keys:
-    key_id = key['keyid']
-    full_uid = key['uids'][0]
-    print(f'{key_id},{full_uid}')
-"
-}
-
 list_special_packages() {
     echo "Identifying special packages..."
     local firmware_pkgs=()
     local module_pkgs=()
 
-    sudo pacman -Fy >/dev/null
+    pacman_waiting -Fy >/dev/null
     sudo pkgfile --update >/dev/null
 
     while read -r package; do
@@ -362,50 +735,23 @@ mv /tmp/nvidia_open_gpu_page.txt airootfs/root/cached_open_gpu_page.txt
 
 gpg --export --armor 3F8054C3FF755E5544E68516BC333E9AE877D45A >airootfs/root/bind-mount/root/ditana-key.asc
 
-sudo pacman -Sy
+pacman_waiting -Sy
 TMP_ISO=$BUILD_TMP/ditana-iso
 if [[ -n "$TMP_ISO" ]]; then
     sudo rm -rf "$TMP_ISO"
 fi
 sudo rm -rf out
 
-# --- GPG key selection (moved before list_special_packages) ---
-
-mapfile -t key_list < <(list_gpg_keys)
-
-echo "Available GPG keys for signing (ID - Name <Email>):"
-for i in "${!key_list[@]}"; do
-    IFS=',' read -r key_id full_uid <<< "${key_list[i]}"
-    echo "$((i+1))) $key_id - $full_uid"
-done
-echo "$(( ${#key_list[@]} + 1 ))) No signing"
-
-
-# With no terminal attached, read fails and `set -e` would end the build here
-# -- which is where an unattended build of a Testing ISO stopped. Falling
-# through to "No signing" is the honest answer: a machine with no terminal has
-# nobody to pick a key, and the build host that runs this deliberately holds
-# none. DITANA_SIGNING_CHOICE answers the prompt in advance, the same way
-# DITANA_USE_OFFICIAL_REPO answers the one above.
-choice="${DITANA_SIGNING_CHOICE:-}"
-if [[ -z "$choice" && -t 0 ]]; then
-    read -rp "Choose a key by number for signing or press enter for 'No signing': " choice
-fi
-if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice > 0 && choice <= ${#key_list[@]} )); then
-    IFS=',' read -r selected_key selected_signer <<< "${key_list[$((choice - 1))]}"
-    echo "Selected GPG Key ID: $selected_key"
-
-
+# The key was chosen at the top of the build, together with the sudo password
+# and the passphrase. What that choice causes belongs here: these two take
+# minutes, and nobody has to be present for them.
+if [[ -n "$selected_key" ]]; then
     zef upgrade Sparrow6
     zef upgrade Tomty
     pushd tests/configuration
     tomty --color --all
     popd
     list_special_packages
-else
-    echo "No signing selected."
-    selected_signer="(none)"
-    selected_key=""
 fi
 
 cleanup() {
@@ -471,63 +817,33 @@ echo "selected_key:    '$selected_key'"
 echo "LABEL:           '$LABEL'"
 echo "TMP_ISO:         '$TMP_ISO'"
 
-# --- prime the root GPG agent; lifted by tests/installer/gpg-priming.t ------
+# --- BEGIN prime-root-gpg-agent ----------------------------------------------
+# Lifted by tests/installer/gpg-priming.t, which cuts between BEGIN and END.
+#
 # mkarchiso signs the rootfs image itself, as root, with `gpg --batch`. Root
 # gets a gpg-agent of its own -- /run/user/0 does not exist, so its socket lands
-# in $GNUPGHOME beside the user's -- and that agent starts out with an empty
-# passphrase cache. It therefore has to run a pinentry, and on a workstation
-# with a GTK pinentry and an icon theme made of SVGs that pinentry dies before
-# it can ask anything: GTK loads the icon through glycin, glycin runs its loader
-# in bwrap, and the loader exits with status 1. gpg-agent then waits sixty
-# seconds for an answer that will never come and reports
+# in $GNUPGHOME beside the user's -- and that agent needs the passphrase in its
+# cache. With an empty cache it runs a pinentry, and on a workstation with a GTK
+# pinentry and an icon theme made of SVGs that pinentry dies before it can ask
+# anything: GTK loads the icon through glycin, glycin runs its loader in bwrap,
+# and the loader exits with status 1. gpg-agent then waits sixty seconds for an
+# answer that will never come and reports
 #
 #     gpg: signing failed: Timeout
 #
 # Those sixty seconds are inside gpg-agent and no option reaches them.
 # `pinentry-timeout` is its only timeout setting, it applies to the pinentry
 # rather than to this wait, and its value of 0 means "I request no timeout"
-# rather than "wait forever". Measured three times, each after eleven minutes
-# of building, and each time the ISO was thrown away by the cleanup.
+# rather than "wait forever".
 #
-# So the passphrase is obtained here instead, at the one moment somebody is
-# certainly at the keyboard -- the sudo password and the key selection are both
-# above this line -- and in a way that starts no pinentry at all:
-# --pinentry-mode loopback makes gpg ask on the terminal itself. What it obtains
-# lands in that same root agent's cache, which is where mkarchiso finds it.
-#
-# The second call is not a belt-and-braces repetition. It is mkarchiso's own
-# invocation, run here so that a passphrase which did not reach the cache stops
-# the build in five seconds rather than in eleven minutes. `default-cache-ttl`
-# in the user's gpg-agent.conf has to outlive a build; two hours is the default
-# and a build takes about twelve minutes.
+# The cache is filled at the top of the build, where everything that needs a
+# person is asked. This call is what makes sure it is still filled: it costs
+# nothing when it is, and asks again when `default-cache-ttl` is shorter than
+# the build. Either way mkarchiso never meets an empty cache.
 prime_root_gpg_agent() {
-    local probe sig
-    probe=$(mktemp) || return 1
-    sig="$probe.sig"
-    echo "ditana-build" > "$probe"
-
-    echo "The ISO is signed by mkarchiso running as root, which cannot ask you"
-    echo "for the passphrase later. Please enter it now, once."
-    if ! sudo -E gpg --pinentry-mode loopback --no-armor --output "$sig" \
-             --detach-sign --default-key "$1" "$probe"; then
-        sudo rm -f "$probe" "$sig"
-        echo "ERROR: no passphrase, so mkarchiso could not sign either." >&2
-        return 1
-    fi
-
-    sudo rm -f "$sig"
-    if ! sudo -E gpg --batch --no-armor --output "$sig" \
-             --detach-sign --default-key "$1" "$probe" 2>/dev/null; then
-        sudo rm -f "$probe" "$sig"
-        echo "ERROR: the passphrase did not reach the agent that mkarchiso will" >&2
-        echo "       use, so the build would stop at the signing step. Check" >&2
-        echo "       default-cache-ttl in ~/.gnupg/gpg-agent.conf." >&2
-        return 1
-    fi
-
-    sudo rm -f "$probe" "$sig"
+    ensure_signing_possible "$1"
 }
-# --- end of prime the root GPG agent ----------------------------------------
+# --- END prime-root-gpg-agent ------------------------------------------------
 
 # Execute mkarchiso with elevated privileges, while preserving the current user's environment (-E).
 # The GNUPGHOME environment variable points to the user's GPG home directory, ensuring that GPG operations within mkarchiso

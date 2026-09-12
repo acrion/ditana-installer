@@ -10,8 +10,8 @@ use Chroot;
 # directory it finds; it only warns.
 #
 # A 0750 /usr cannot be traversed by anyone but root, so nothing on the
-# installed system can be executed by an ordinary user. The first non-root
-# command in a chroot script died with "failed to execute /usr/bin/bash:
+# installed system can be executed by an ordinary user: the first non-root
+# command in a chroot script fails with "failed to execute /usr/bin/bash:
 # Permission denied".
 #
 # The source of this copy is a git checkout, and git records no directory

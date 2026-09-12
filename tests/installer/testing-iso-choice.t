@@ -3,10 +3,10 @@ use lib $?FILE.IO.absolute.IO.parent.parent.parent.child('airootfs/root').absolu
 use Test;
 
 # Which package repository an ISO installs from, and which branch the
-# installer comes from, are two different things. build.sh used to make them
-# one decision, and that left the combination the nightly release gate needs
-# unbuildable: the installer and configuration users actually have, installing
-# the packages that are about to become production.
+# installer comes from, are two different things. Made into one decision, they
+# leave the combination the nightly release gate needs unbuildable: the
+# installer and configuration users actually have, installing the packages that
+# are about to become production.
 #
 # The decision is lifted out of the real build.sh rather than reproduced, so
 # what is tested is what runs.
@@ -44,11 +44,10 @@ is decide('main'), 'patch=n tag=latest',
     'a plain main build is the release ISO: production packages, released configuration';
 
 # build.sh runs this suite with DITANA_BUILD_TESTING_ISO already exported -- that
-# is how a nightly ISO is asked for -- and decide() used to let that reach the
-# cases which describe a build without it. The suite passed on its own and failed
-# inside the build, twice, and each time the ISO was simply not written while the
-# one failing line scrolled past. A case has to state its own environment rather
-# than inherit one.
+# is how a nightly ISO is asked for. A case that lets that reach it while
+# describing a build without the flag passes on its own and fails inside the
+# build, where the ISO is simply not written and the one failing line scrolls
+# past. A case has to state its own environment rather than inherit one.
 {
     temp %*ENV<DITANA_BUILD_TESTING_ISO> = 'y';
     is decide('main'), 'patch=n tag=latest',
@@ -60,7 +59,7 @@ is decide('main'), 'patch=n tag=latest',
 is decide('testing'), 'patch=y tag=develop-latest',
     'a branch build is the development ISO: testing packages, branch configuration';
 
-# The combination that did not exist. This is what the nightly gate installs:
+# The combination the gate is for. This is what it installs:
 # the installer and configuration users have, and the packages that are about
 # to replace production.
 is decide('main', 'y'), 'patch=y tag=latest',

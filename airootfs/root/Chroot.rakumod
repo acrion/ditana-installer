@@ -53,16 +53,16 @@ sub copy-files-into-chroot-before-pacstrap() is export {
 #| as the argument list to run.
 #|
 #| The permissions are stated rather than inherited, and that is the whole
-#| point of this being its own sub. What it used to do was `--no-perms
-#| --executability`, which gives anything rsync creates the source's mode
-#| masked by the umask -- so it can only ever take bits away, never add them.
+#| point of this being its own sub. `--no-perms --executability` would give
+#| anything rsync creates the source's mode masked by the umask -- so it can
+#| only ever take bits away, never add them.
 #|
-#| Both halves of that were wrong here. The umask is 027, because the
-#| installer starts from a login shell and login.defs says so. And the source
-#| is a git checkout, in which directory modes are not recorded at all: they
-#| are whatever the umask of the shell that cloned the repository happened to
-#| be. /usr therefore came out 0750 on one build host and 0755 on another,
-#| from the same commit.
+#| Neither half of that holds here. The umask is 027, because the installer
+#| starts from a login shell and login.defs says so. And the source is a git
+#| checkout, in which directory modes are not recorded at all: they are
+#| whatever the umask of the shell that cloned the repository happened to be,
+#| so /usr comes out 0750 on one build host and 0755 on another, from the same
+#| commit.
 #|
 #| 0750 on /usr is not a small thing. pacstrap installs into a /usr that
 #| already exists, and pacman does not change the permissions of a directory
@@ -72,15 +72,15 @@ sub copy-files-into-chroot-before-pacstrap() is export {
 #|     filesystem: 750  package: 755
 #|
 #| The installed system then has a /usr no ordinary user can traverse, so
-#| nothing on it can be executed by anyone but root. What noticed was
+#| nothing on it can be executed by anyone but root. What shows it is
 #| `su - <user> -c ...` in a chroot script, failing with "failed to execute
-#| /usr/bin/bash: Permission denied" -- a message that points at bash, which
-#| was fine, rather than at the directory above it.
+#| /usr/bin/bash: Permission denied" -- a message that points at bash, which is
+#| fine, rather than at the directory above it.
 #|
 #| Da+rx makes every directory traversable, Fa+r makes every file readable,
 #| and the capital X in Fa+rX adds the executable bit only to files that
-#| already had one -- which is what --executability used to be for, and it has
-#| to be spelled here because --chmod is only applied together with --perms.
+#| already have one -- which is what --executability is for, and it has to be
+#| spelled here because --chmod is only applied together with --perms.
 sub before-pacstrap-rsync(Str $source, Str $target) is export {
     'rsync', '--recursive', '--times', '--perms', '--chmod=Da+rx,Fa+rX',
         '--verbose', "$source/", "$target/";
@@ -105,18 +105,35 @@ sub copy-files-into-chroot-after-pacstrap() is export {
     }
 }
 
-sub add-version() is export {
-    my $os-release-path = '/mnt/usr/lib/os-release'.IO;
-    die unless $os-release-path.e;
-    my $build-id = %*ENV<DITANA_BUILD_ID>;
-    if $build-id {
-        $os-release-path.spurt("BUILD_ID={$build-id}\n", :append); # see `man os-release`
-    }
+#| Put one `key=value` into an os-release file, replacing what is there.
+#|
+#| An existing entry keeps its place in the file. A commented-out one is left
+#| alone: `#BUILD_ID=` is not an assignment, and a build must not resurrect
+#| something that was deliberately turned off.
+sub set-os-release-key(IO::Path:D $path, Str:D $key, Str:D $value) is export {
+    my $replaced = False;
+    my @lines = $path.lines.map: {
+        if .starts-with("$key=") { $replaced = True; "$key=$value" } else { $_ }
+    };
+    @lines.push("$key=$value") unless $replaced;
+    $path.spurt(@lines.join("\n") ~ "\n");
+}
 
+#| Record in the installed system which medium and which configuration built it.
+#|
+#| The path is a parameter so that this can be driven against a file that is
+#| not the one belonging to a half-installed machine.
+sub add-version(IO::Path:D $os-release-path = '/mnt/usr/lib/os-release'.IO) is export {
+    die "add-version: $os-release-path does not exist" unless $os-release-path.e;
+
+    my $build-id = %*ENV<DITANA_BUILD_ID>;
+    set-os-release-key($os-release-path, 'BUILD_ID', $build-id) if $build-id;
+
+    # "unknown" is what an installer that never reached a configuration reports.
+    # Writing it into os-release would claim a codename that names nothing.
     my $config-hash = %*ENV<DITANA_CONFIG_HASH>;
-    if $config-hash && $config-hash ne "unknown" {
-        $os-release-path.spurt("VERSION_CODENAME=$config-hash\n", :append);
-    }
+    set-os-release-key($os-release-path, 'VERSION_CODENAME', $config-hash)
+        if $config-hash && $config-hash ne 'unknown';
 }
 
 sub curate-chroot-files() is export {

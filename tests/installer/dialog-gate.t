@@ -21,10 +21,10 @@ nok dialog-is-a-question(<--msgbox Hello 10 50>), 'a message box tells';
 nok dialog-is-a-question(<--gauge Working 7 60 0>), 'a gauge tells';
 nok dialog-is-a-question(<--programbox Output 20 70>), 'a program box tells';
 
-# The welcome screen is a --msgbox preceded by --no-collapse. Taking the
-# first option that is not --title for the box type made it look like a
-# question, so an answer file that had nothing left to answer still stopped
-# on the very first screen.
+# The welcome screen is a --msgbox preceded by --no-collapse. Taking the first
+# option that is not --title for the box type makes it look like a question,
+# and an answer file with nothing left to answer then stops on the very first
+# screen.
 nok dialog-is-a-question(('--no-collapse', '--msgbox', 'Welcome to Ditana', 40, 98)),
     'a common option before the box does not turn a message into a question';
 

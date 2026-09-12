@@ -50,6 +50,22 @@ A setting might also follow another setting. A `default-value` that is an expres
 
 Both are refused even when the setting appears benign. The file describes the machine that is to be built, and that the machine cannot be that is either an error in the file or something unexpected about the hardware. Both are worth finding out prior to an installation rather than after one.
 
+## How a stopped run reports itself
+
+Nobody watches the screen during an unattended installation, and the installer’s own log resides within the machine that does not yet exist. A run that stops therefore records its cause line by line on the first serial port, each line prefixed by the marker `DITANA-AUTOINSTALL-ABORT:`. A provisioning system reading the console gets the reason while the machine is still active, rather than a silence it can only wait out.
+
+Only a failure is announced. The installer also ends its own process once, intentionally, in order to change the font of the virtual terminal, and that restart is not reported.
+
+A machine whose console is elsewhere names the device on the kernel command line, beside the answer file it already names there – a virtio console, for example:
+
+```
+ditana.console=/dev/hvc0
+```
+
+In simulation mode, where there is no command line of its own, `DITANA_SERIAL_CONSOLE` says the same thing.
+
+The device is opened solely to write that message, and the attempt is given up after five seconds. A port that exists on paper but accepts nothing must not turn an installation that stopped into one that says nothing at all.
+
 ## Passwords
 
 The password for the user account is requested by a dialog within the chroot, which the installer’s own gate cannot access. An unattended run would stall there indefinitely, with the whole system already in place. So the answer file carries it, in a block of its own:

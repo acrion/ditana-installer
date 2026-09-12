@@ -47,12 +47,25 @@ if [[ -d "$RAKU_REPO" ]]; then
     export RAKULIB="inst#$RAKU_REPO"
 fi
 
-failed=0
+# The names are collected rather than only counted, because this suite is run by
+# build.sh: a test that fails scrolls away behind the ones after it, and `set -e`
+# then ends the build without a word. What is left on the screen is the last
+# test file, passing.
+failed=()
 for test in ./*.t; do
     echo "== $test"
     if ! raku "$test"; then
-        failed=1
+        failed+=("$test")
     fi
 done
 
-exit $failed
+if (( ${#failed[@]} )); then
+    echo
+    echo "FAILED: ${#failed[@]} of the installer tests did not pass:" >&2
+    printf '    %s\n' "${failed[@]}" >&2
+    exit 1
+fi
+
+echo
+echo "All installer tests passed."
+exit 0

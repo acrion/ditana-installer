@@ -70,6 +70,25 @@ use Logging;
 use Settings;
 use Tristate;
 
+#| One `key=value` from the kernel command line, or Nil.
+#|
+#| The command line is how a machine that nobody is sitting at is told
+#| anything: it survives PXE, and both the answer file and the console are
+#| named on it. The text is therefore read once and parsed in one place.
+#|
+#| The text is a parameter so that this can be tested with a line that is not
+#| the one this build host happens to have booted with.
+sub cmdline-value(Str $key, Str $cmdline = cmdline-text() --> Str) is export {
+    my $entry = $cmdline.words.first(*.starts-with("$key="));
+    return Nil unless $entry;
+    my $value = $entry.substr("$key=".chars);
+    $value.chars ?? $value !! Nil;
+}
+
+sub cmdline-text(--> Str) {
+    '/proc/cmdline'.IO.e ?? '/proc/cmdline'.IO.slurp !! ''
+}
+
 class Autoinstall {
     my Autoinstall $instance;
     method new {!!!}
@@ -118,12 +137,8 @@ class Autoinstall {
     }
 
     method !from-cmdline(--> Str) {
-        return Nil unless '/proc/cmdline'.IO.e;
-        my $value = '/proc/cmdline'.IO.slurp.words
-                        .first(*.starts-with(CMDLINE-KEY ~ '='));
+        my $value = cmdline-value(CMDLINE-KEY);
         return Nil unless $value;
-        $value = $value.substr((CMDLINE-KEY ~ '=').chars);
-        return Nil unless $value.chars;
 
         if $value.starts-with('http://') || $value.starts-with('https://') {
             my $target = '/run/ditana-autoinstall.kdl';
@@ -504,10 +519,36 @@ class Autoinstall {
 #| The line an unattended run writes to the serial console when it stops.
 #|
 #| Repeated in ditana-build's `bin/test-install-in-qemu`, which greps for it.
-#| Changing it here without changing it there incurs no cost to the harness
-#| beyond its speed: it falls back to waiting out its timeout, which is where
-#| it started.
+#| Changing it here without changing it there costs the harness only its speed:
+#| it then waits out its own timeout instead.
 constant AUTOINSTALL-ABORT-MARKER = 'DITANA-AUTOINSTALL-ABORT:';
+
+#| How long the installer may spend telling the serial console that it stopped.
+#|
+#| The device node is not the test it looks like: the driver creates
+#| /dev/ttyS0 on machines with no serial line attached at all, so `.e` is true
+#| there. Opening such a port can block for ever, and a report of a failure
+#| that never returns is worse than no report -- it turns a stopped
+#| installation into one that does not answer at all, which is the very thing
+#| this announcement exists to prevent.
+constant SERIAL-ANNOUNCE-SECONDS = 5;
+
+#| What names the console on the kernel command line, beside ditana.autoinstall.
+constant CONSOLE-CMDLINE-KEY = 'ditana.console';
+
+#| The device an unattended run reports on.
+#|
+#| The first serial port is what a virtual machine and most server boards
+#| offer. A machine whose console is somewhere else -- /dev/hvc0 on a virtio
+#| console -- names it on the kernel command line, beside the answer file it
+#| is already naming there. The environment variable is the same setting for a
+#| run that has no kernel command line of its own: the installer in simulation
+#| mode, and the tests.
+sub serial-console(--> IO::Path) is export {
+    (cmdline-value(CONSOLE-CMDLINE-KEY)
+        // %*ENV<DITANA_SERIAL_CONSOLE>
+        // '/dev/ttyS0').IO
+}
 
 #| Say on the serial console that an unattended installation stopped, and why.
 #|
@@ -516,28 +557,45 @@ constant AUTOINSTALL-ABORT-MARKER = 'DITANA-AUTOINSTALL-ABORT:';
 #| failure is the machine that does not exist yet. The serial line is the one
 #| channel that leaves the box before anything is installed, and a harness
 #| driving the installer in a virtual machine can read it while the guest is
-#| still running. Without it such a run is indistinguishable from a hang, and
-#| ditana-build waited out its full 5400-second timeout to report that the
-#| guest "never reached the reboot that ends an installation" -- true, and
-#| saying nothing about what went wrong.
+#| still running. Without it, a run that has stopped is indistinguishable from
+#| one that hangs, and the harness can only wait out its own timeout.
 #|
 #| Every line is prefixed, so that a grep for the marker returns the whole
 #| message rather than its first line.
 #|
-#| Silent when there is no serial line, and silent when writing to it fails. A
-#| machine need not have one, and failing to report a failure must not turn
+#| For failures only. The installer also ends its own process on purpose, to be
+#| started again with a different console font, and announcing that would say a
+#| run had stopped while it is still going -- see Restart.rakumod and the
+#| top-level CATCH in main.raku.
+#|
+#| Silent when there is no device, silent when writing to it fails, and silent
+#| after SERIAL-ANNOUNCE-SECONDS when the write does not come back. A machine
+#| need not have a serial line, and failing to report a failure must not turn
 #| into a second failure that hides the first.
 sub announce-unattended-abort($message) is export {
     return unless autoinstall-active();
 
-    my $serial = '/dev/ttyS0'.IO;
+    my $serial = serial-console();
     return unless $serial.e;
 
-    my $handle = $serial.open(:w);
-    for $message.Str.lines -> $line {
-        $handle.print("{AUTOINSTALL-ABORT-MARKER} $line\n");
-    }
-    $handle.close;
+    my $text = $message.Str.lines.map({ "{AUTOINSTALL-ABORT-MARKER} $_\n" }).join;
+
+    # Handed to a subprocess that a timeout can kill, rather than opened here.
+    # Opening the device is the part that blocks, and a blocking open cannot be
+    # given up on from inside this program: MoarVM holds every other thread
+    # while one sits in it, timers included, so a Promise racing the write does
+    # not come back either. A FIFO with no reader blocks on open in the same
+    # way, which is what serial-announce.t drives it against.
+    my $writer = Proc::Async.new(:w, 'timeout', "{SERIAL-ANNOUNCE-SECONDS}",
+                                 'dd', "of={$serial.absolute}", 'status=none',
+                                 'oflag=append', 'conv=notrunc');
+    my $ran = $writer.start;
+    await Promise.anyof($writer.write($text.encode), $ran);
+    try $writer.close-stdin;
+    my $result = await $ran;
+
+    Logging.log("could not announce on $serial (exit {$result.exitcode})")
+        unless $result.exitcode == 0;
 
     CATCH { default { Logging.log("could not announce on $serial: $_") } }
 }

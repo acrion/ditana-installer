@@ -14,8 +14,8 @@ use Test;
 #     ln: failed to create symbolic link '.../bin/zbm': File exists
 #     ==> ERROR: Failed to install ZFSBootMenu core
 #
-# The installation is otherwise complete when this happens, which is why it
-# took an unattended test to find it: everything before it had worked.
+# The installation is otherwise complete when this happens: everything before it
+# has worked, so nothing earlier gives any sign of it.
 #
 # The function is lifted out of the real script rather than reproduced, so
 # what is tested is what runs.
