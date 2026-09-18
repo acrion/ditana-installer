@@ -614,6 +614,14 @@ if ! tests/installer/run-tests; then
     echo "Refusing to build: the installer tests above did not pass." >&2
     exit 1
 fi
+if ! tests/airootfs/root/diagnose-boot-test; then
+    echo "Refusing to build: the tests of diagnose-boot.sh above did not pass." >&2
+    exit 1
+fi
+if ! tests/airootfs/root/rescue-test; then
+    echo "Refusing to build: the tests of the rescue system's boot repair above did not pass." >&2
+    exit 1
+fi
 
 if [[ "${1:-}" == "--quick" ]]; then
     # --- Quick rebuild mode: only replace airootfs/root in existing ISO ---

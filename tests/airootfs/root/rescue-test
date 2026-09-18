@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+# Copyright (c) 2026 acrion innovations GmbH
+# Authors: Stefan Zipproth, s.zipproth@acrion.ch
+#
+# This file is part of Ditana Installer, see
+# https://github.com/acrion/ditana-installer and https://ditana.org/installer.
+#
+# Ditana Installer is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ditana Installer is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
+
+# Tests for the boot repair the rescue system offers before its shell. The block
+# is cut out of airootfs/root/rescue.sh between its BEGIN and END markers and
+# run against stand-ins: diagnose-boot.sh is a script that answers as told,
+# dialog, reboot and mkdir are functions that record what they were asked.
+# Nothing is imported, mounted or rebooted.
+
+set -uo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+RESCUE="$HERE/../../../airootfs/root/rescue.sh"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+pass=0; fail=0
+ok() { printf '  ok   %s\n' "$1"; pass=$((pass+1)); }
+no() { printf '  FAIL %s\n' "$1"; fail=$((fail+1)); }
+has()    { if [[ $2 == *"$3"* ]]; then ok "$1"; else no "$1 -- missing: $3"; fi }
+hasnot() { if [[ $2 != *"$3"* ]]; then ok "$1"; else no "$1 -- unexpected: $3"; fi }
+
+BLOCK="$(sed -n '/^# --- BEGIN boot-repair/,/^# --- END boot-repair/p' "$RESCUE")"
+[[ -n $BLOCK ]] || { echo "FAIL: the boot-repair markers are gone from rescue.sh"; exit 1; }
+
+# The stand-in for diagnose-boot.sh. Its dry run prints what the real one
+# prints on the machine this was written for, including the long line of hooks
+# that has no place in a dialog.
+cat > "$WORK/diagnose-boot.sh" <<'EOF'
+printf '%s\n' "$*" >> "$CALLS"
+if [[ " $* " == *" --dry-run "* ]]; then
+    cat <<'OUT'
+kernel: vmlinuz-linux-lts is 6.18.52-1-lts
+  zfs.ko for 6.18.52-1-lts: present
+
+Findings (also in /root/ditana-diagnosis/00-findings.txt):
+  kernel: vmlinuz-linux-lts is 6.18.52-1-lts
+    zfs.ko for 6.18.52-1-lts: present
+    MISSING: initramfs-linux-lts.img carries no zfs.ko for 6.18.52-1-lts -- the zfs hook then waits 15 s for /dev/zfs and init exits
+  pacman: hooks of the last transaction: 11-glibc-ldconfig.hook 70-dkms-install.hook 90-mkinitcpio-install.hook
+
+Full report: /root/ditana-diagnosis.tar.gz
+
+Repair plan, run inside the installed system:
+  mkinitcpio -P
+OUT
+    exit "$DRY_STATUS"
+fi
+exit "$REPAIR_STATUS"
+EOF
+
+# $1: the filesystem, $2: the dry run's exit status, $3: the repair's, $4: the
+# answers the dialogs get in turn, as y and n.
+drive() {
+    local fstype="$1" dry="$2" repair="$3" answers="$4"
+    : > "$WORK/calls"; : > "$WORK/dialogs"; : > "$WORK/reboots"
+    OUT="$(
+        export CALLS="$WORK/calls" DRY_STATUS="$dry" REPAIR_STATUS="$repair"
+        # shellcheck disable=SC2034 # both are read by the block eval'd below
+        FSTYPE="$fstype"
+        # shellcheck disable=SC2034
+        DIAGNOSE_BOOT="$WORK/diagnose-boot.sh"
+        answer_index=0
+        dialog() {
+            printf '%s\n---\n' "$*" >> "$WORK/dialogs"
+            local a="${answers:$answer_index:1}"
+            answer_index=$((answer_index + 1))
+            [[ $a == y ]]
+        }
+        reboot() { echo reboot >> "$WORK/reboots"; }
+        mkdir() { :; }
+        eval "$BLOCK"
+        offer_boot_repair
+        echo "[returned $?]"
+    )"
+    CALLED="$(cat "$WORK/calls")"
+    DIALOGS="$(cat "$WORK/dialogs")"
+    REBOOTS="$(cat "$WORK/reboots")"
+}
+
+echo "== a system that is not on ZFS =="
+drive btrfs 3 0 y
+has "the shell follows" "$OUT" "[returned 1]"
+[[ -z $CALLED ]] && ok "diagnose-boot.sh is not asked" || no "diagnose-boot.sh is not asked: $CALLED"
+
+echo
+echo "== nothing to repair =="
+drive zfs_member 0 0 y
+has "the shell follows" "$OUT" "[returned 1]"
+has "and the user is told where the report is" "$OUT" "nothing it could repair"
+[[ -z $DIALOGS ]] && ok "no dialog is shown" || no "no dialog is shown"
+has "the report is kept in the installed system" "$CALLED" "--to /mnt/var/log"
+
+echo
+echo "== a repair is due, and declined =="
+drive zfs_member 3 0 n
+has "the shell follows" "$OUT" "[returned 1]"
+has "the dialog names the problem" "$DIALOGS" "MISSING: initramfs-linux-lts.img carries no zfs.ko"
+has "and the plan" "$DIALOGS" "mkinitcpio -P"
+hasnot "but not the hooks of the last transaction" "$DIALOGS" "11-glibc-ldconfig"
+[[ $(wc -l <<<"$CALLED") -eq 1 ]] && ok "nothing is repaired" || no "nothing is repaired: $CALLED"
+
+echo
+echo "== a repair is due, accepted, and succeeds =="
+drive zfs_member 3 0 yy
+has "there is no shell to enter" "$OUT" "[returned 0]"
+has "the repair ran" "$CALLED" $'\n--repair'
+has "a reboot is offered and taken" "$REBOOTS" "reboot"
+
+echo
+echo "== the repair is accepted and fails =="
+drive zfs_member 3 1 y
+has "the shell follows, for work by hand" "$OUT" "[returned 1]"
+has "and says why" "$OUT" "did not succeed"
+[[ -z $REBOOTS ]] && ok "no reboot is offered" || no "no reboot is offered"
+
+echo
+echo "--- $pass passed, $fail failed"
+[[ $fail -eq 0 ]]

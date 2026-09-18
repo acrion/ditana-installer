@@ -125,6 +125,61 @@ if [[ -n "$EFI_PARTITION" ]]; then
     mount "$EFI_PARTITION" /mnt/boot/efi
 fi
 
+# --- BEGIN boot-repair --------------------------------------------------------
+# Lifted by tests/airootfs/root/rescue-test, which cuts between BEGIN and END.
+#
+# Before the shell, diagnose-boot.sh is asked whether this system fails to boot
+# for a reason it can repair. That is the common reason to be here at all: an
+# update interrupted while it rebuilt the ZFS module or the initramfs. Until
+# then it took leaving the shell again and knowing the script existed.
+#
+# offer_boot_repair returns 0 when the system was repaired and its pool
+# exported, so there is nothing left to enter; 1 when the shell should follow,
+# because nothing was found, the repair was declined, or it failed and left the
+# pool imported for work by hand.
+DIAGNOSE_BOOT="${DIAGNOSE_BOOT:-${BASH_SOURCE[0]%/*}/diagnose-boot.sh}"
+
+offer_boot_repair() {
+    local output status problems plan
+    [[ $FSTYPE == zfs_member && -f $DIAGNOSE_BOOT ]] || return 1
+
+    echo -e "\033[32m--- Checking why this system might not boot... ---\033[0m"
+    mkdir -p /mnt/var/log
+    output="$(bash "$DIAGNOSE_BOOT" --repair --dry-run --to /mnt/var/log 2>&1)"
+    status=$?
+    if (( status != 3 )); then
+        echo -e "\033[32m--- Boot diagnosis: nothing it could repair. The report is in /var/log of the installed system. ---\033[0m"
+        return 1
+    fi
+
+    problems="$(sed -n '/^Findings/,/^Full report/p' <<<"$output" \
+                | grep -E 'MISSING|UNREADABLE|interrupted|db\.lck|matches no tree' | sed 's/^ *//')"
+    plan="$(sed -n '/^Repair plan/,$p' <<<"$output")"
+    if ! dialog --title "This system does not boot, and it can be repaired" \
+                --yes-label "Repair" --no-label "Shell" --cr-wrap --no-collapse \
+                --yesno "$problems
+
+$plan
+
+Repair, or open a shell in the installed system instead?" 0 0; then
+        return 1
+    fi
+
+    if bash "$DIAGNOSE_BOOT" --repair; then
+        if dialog --yesno "Repaired. Remove the medium and reboot now?" 6 50; then
+            reboot
+        fi
+        return 0
+    fi
+    echo -e "\033[33m--- The repair did not succeed. The shell that follows is inside the installed system. ---\033[0m"
+    return 1
+}
+# --- END boot-repair ----------------------------------------------------------
+
+if [[ $FSTYPE == zfs_member ]] && offer_boot_repair; then
+    return 0 2>/dev/null || exit 0
+fi
+
 echo -e "\033[32m--- Mounting succeeded, entering chroot ---\033[0m"
 touch /mnt/root/rescue-chroot.sh
 mount --bind /root/rescue-chroot.sh /mnt/root/rescue-chroot.sh
