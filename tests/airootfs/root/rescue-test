@@ -19,11 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
-# Tests for the boot repair the rescue system offers before its shell. The block
-# is cut out of airootfs/root/rescue.sh between its BEGIN and END markers and
-# run against stand-ins: diagnose-boot.sh is a script that answers as told,
-# dialog, reboot and mkdir are functions that record what they were asked.
-# Nothing is imported, mounted or rebooted.
+# Tests for the boot repair the rescue system provides before its shell. The
+# block is extracted from airootfs/root/rescue.sh between its BEGIN and END
+# markers and run against mock implementations: diagnose-boot.sh is a script
+# that responds according to instructions, dialog, reboot, and every command
+# that interacts with a disk are functions that log their invocation and return
+# values based on the scenario. No imports, partitions, mounts, or reboots
+# occur.
 
 set -uo pipefail
 
@@ -41,13 +43,17 @@ hasnot() { if [[ $2 != *"$3"* ]]; then ok "$1"; else no "$1 -- unexpected: $3"; 
 BLOCK="$(sed -n '/^# --- BEGIN boot-repair/,/^# --- END boot-repair/p' "$RESCUE")"
 [[ -n $BLOCK ]] || { echo "FAIL: the boot-repair markers are gone from rescue.sh"; exit 1; }
 
-# The stand-in for diagnose-boot.sh. Its dry run prints what the real one
-# prints on the machine this was written for, including the long line of hooks
-# that has no place in a dialog.
+# The stand-in for diagnose-boot.sh. During a dry run, it outputs the same
+# content as the actual script does on the machine this was written for,
+# including the extended sequence of hooks that does not belong in a dialog.
+# DRY_TEXT substitutes for that in alternative scenarios.
 cat > "$WORK/diagnose-boot.sh" <<'EOF'
 printf '%s\n' "$*" >> "$CALLS"
 if [[ " $* " == *" --dry-run "* ]]; then
-    cat <<'OUT'
+    if [[ -n ${DRY_TEXT:-} ]]; then
+        printf '%s\n' "$DRY_TEXT"
+    else
+        cat <<'OUT'
 kernel: vmlinuz-linux-lts is 6.18.52-1-lts
   zfs.ko for 6.18.52-1-lts: present
 
@@ -56,22 +62,56 @@ Findings (also in /root/ditana-diagnosis/00-findings.txt):
     zfs.ko for 6.18.52-1-lts: present
     MISSING: initramfs-linux-lts.img carries no zfs.ko for 6.18.52-1-lts -- the zfs hook then waits 15 s for /dev/zfs and init exits
   pacman: hooks of the last transaction: 11-glibc-ldconfig.hook 70-dkms-install.hook 90-mkinitcpio-install.hook
+  dkms: 2026-09-17T19:00:09 zfs/2.4.4 for 6.18.52-1-lts was built, but the update was stopped before depmod indexed it
 
-Full report: /root/ditana-diagnosis.tar.gz
+Problems:
+  MISSING: initramfs-linux-lts.img carries no zfs.ko for 6.18.52-1-lts -- the zfs hook then waits 15 s for /dev/zfs and init exits
+
+Cause:
+  dkms: 2026-09-17T19:00:09 zfs/2.4.4 for 6.18.52-1-lts was built, but the update was stopped before depmod indexed it
 
 Repair plan, run inside the installed system:
   mkinitcpio -P
+
+Full report: /root/ditana-diagnosis.tar.gz
 OUT
+    fi
     exit "$DRY_STATUS"
 fi
 exit "$REPAIR_STATUS"
 EOF
 
+# What `sfdisk -d` prints for a drive to which the released ISO was written
+# using dd: the ISO 9660 partition and the EFI partition, with nothing
+# following them.
+ISO_DUMP='label: dos
+label-id: 0xfc079ae5
+device: /dev/sdb
+unit: sectors
+sector-size: 512
+
+/dev/sdb1 : start=          64, size=     3844056, type=0, bootable
+/dev/sdb2 : start=     3844120, size=      532480, type=ef'
+ISO_END=$(( 3844120 + 532480 ))
+
+# The medium of each case, established before drive():
+#   LABEL_DEV     the device blkid finds labelled DITANA_DIAG, or empty
+#   BOOT_SOURCE   what archiso mounted the medium from
+#   BOOT_TRAN     the transport lsblk reports for its disk
+#   DUMP          what sfdisk -d prints for that disk
+#   DISK_SECTORS  its size in 512-byte sectors
+#   UUID_DEV      what blkid finds by the UUID on the kernel command line
+medium_dd_stick() {
+    LABEL_DEV=""; BOOT_SOURCE=/dev/sdb1; BOOT_TRAN=usb; DUMP="$ISO_DUMP"; DISK_SECTORS=30031872; UUID_DEV=""
+}
+echo "BOOT_IMAGE=/arch/boot/x86_64/vmlinuz-linux archisobasedir=arch archisosearchuuid=2026-09-12-21-21-18-00" > "$WORK/cmdline"
+medium_dd_stick
+
 # $1: the filesystem, $2: the dry run's exit status, $3: the repair's, $4: the
 # answers the dialogs get in turn, as y and n.
 drive() {
     local fstype="$1" dry="$2" repair="$3" answers="$4"
-    : > "$WORK/calls"; : > "$WORK/dialogs"; : > "$WORK/reboots"
+    : > "$WORK/calls"; : > "$WORK/dialogs"; : > "$WORK/reboots"; : > "$WORK/system"
     OUT="$(
         export CALLS="$WORK/calls" DRY_STATUS="$dry" REPAIR_STATUS="$repair"
         # shellcheck disable=SC2034 # both are read by the block eval'd below
@@ -86,20 +126,65 @@ drive() {
             [[ $a == y ]]
         }
         reboot() { echo reboot >> "$WORK/reboots"; }
-        mkdir() { :; }
+        # Only within the scratch directory are directories created.
+        mkdir() { [[ ${*: -1} == "$WORK"/* ]] && command mkdir "$@"; return 0; }
+        sys() { printf '%s\n' "$*" >> "$WORK/system"; }
+        blkid() {
+            sys blkid "$@"
+            case "$*" in
+                "-L DITANA_DIAG")             [[ -n $LABEL_DEV ]] && echo "$LABEL_DEV" ;;
+                "-U 2026-09-12-21-21-18-00")  [[ -n $UUID_DEV ]] && echo "$UUID_DEV" ;;
+                *) false ;;
+            esac
+        }
+        findmnt()    { sys findmnt "$@"; echo "$BOOT_SOURCE"; }
+        lsblk() {
+            local column="${*: -2:1}" device="${*: -1}"
+            case "$column:$device" in
+                TYPE:/dev/sdb1)  echo part ;;
+                PKNAME:/dev/sdb1) echo sdb ;;
+                TYPE:/dev/sdb)   echo disk ;;
+                TRAN:/dev/sdb)   echo "$BOOT_TRAN" ;;
+                RO:/dev/sdb)     echo 0 ;;
+                TYPE:/dev/sr0)   echo rom ;;
+            esac
+        }
+        sfdisk() {
+            if [[ $1 == -d ]]; then printf '%s\n' "$DUMP"; return 0; fi
+            sys sfdisk "$@" "<<< $(cat)"
+        }
+        blockdev()   { echo "$DISK_SECTORS"; }
+        partx()      { sys partx "$@"; }
+        udevadm()    { :; }
+        wipefs()     { sys wipefs "$@"; }
+        mkfs.vfat()  { sys mkfs.vfat "$@"; }
+        mountpoint() { return 1; }
+        mount()      { sys mount "$@"; }
+        umount()     { sys umount "$@"; }
+        zpool()      { sys zpool "$@"; }
+        sync()       { :; }
         eval "$BLOCK"
+        DIAG_MOUNT="$WORK/diagnosis"
+        BOOT_CMDLINE="$WORK/cmdline"
         offer_boot_repair
         echo "[returned $?]"
     )"
     CALLED="$(cat "$WORK/calls")"
     DIALOGS="$(cat "$WORK/dialogs")"
     REBOOTS="$(cat "$WORK/reboots")"
+    SYSTEM="$(cat "$WORK/system")"
 }
 
 echo "== a system that is not on ZFS =="
-drive btrfs 3 0 y
-has "the shell follows" "$OUT" "[returned 1]"
-[[ -z $CALLED ]] && ok "diagnose-boot.sh is not asked" || no "diagnose-boot.sh is not asked: $CALLED"
+# An update that halted mid-process leaves btrfs, ext4, and xfs systems
+# unable to boot, just as ZFS ones are, and the diagnosis knows which of
+# its checks are relevant.
+drive btrfs 3 0 yy
+has "the diagnosis runs on it too" "$CALLED" "--root /mnt --repair --dry-run"
+has "the repair is offered and runs" "$CALLED" $'\n--root /mnt --repair --to'
+has "there is no shell to enter" "$OUT" "[returned 0]"
+has "the system is unmounted" "$SYSTEM" "umount -R /mnt"
+hasnot "and there is no pool to export" "$SYSTEM" "zpool export"
 
 echo
 echo "== nothing to repair =="
@@ -110,19 +195,39 @@ has "and the user is told where the report is" "$OUT" "nothing it could repair"
 has "the report is kept in the installed system" "$CALLED" "--to /mnt/var/log"
 
 echo
+echo "== problems that no step can repair =="
+# A line in modprobe.d entered by a user, a disk that is full: the user must
+# examine them before the shell, not merely in the report.
+DRY_TEXT='Problems:
+  modprobe: BLOCKED: /etc/modprobe.d/local.conf:blacklist zfs -- the module named there is not loaded at boot
+
+Nothing to repair automatically: the problems above need a decision this script does not take.'
+export DRY_TEXT
+drive zfs_member 0 0 y
+unset DRY_TEXT
+has "they are printed" "$OUT" "modprobe: BLOCKED: /etc/modprobe.d/local.conf:blacklist zfs"
+has "the shell follows" "$OUT" "[returned 1]"
+
+echo
 echo "== a repair is due, and declined =="
 drive zfs_member 3 0 n
 has "the shell follows" "$OUT" "[returned 1]"
 has "the dialog names the problem" "$DIALOGS" "MISSING: initramfs-linux-lts.img carries no zfs.ko"
+has "and the cause" "$DIALOGS" $'Cause:\ndkms: 2026-09-17T19:00:09 zfs/2.4.4'
 has "and the plan" "$DIALOGS" "mkinitcpio -P"
 hasnot "but not the hooks of the last transaction" "$DIALOGS" "11-glibc-ldconfig"
+hasnot "nor where the report went" "$DIALOGS" "Full report"
+has "the question stands apart from the plan" "$DIALOGS" $'mkinitcpio -P\n\nRepair, or open a shell'
 [[ $(wc -l <<<"$CALLED") -eq 1 ]] && ok "nothing is repaired" || no "nothing is repaired: $CALLED"
 
 echo
 echo "== a repair is due, accepted, and succeeds =="
 drive zfs_member 3 0 yy
 has "there is no shell to enter" "$OUT" "[returned 0]"
-has "the repair ran" "$CALLED" $'\n--repair'
+has "the repair ran on the mounted system" "$CALLED" $'\n--root /mnt --repair --to /mnt/var/log'
+has "the system is unmounted" "$SYSTEM" "umount -R /mnt"
+has "and its pool exported" "$SYSTEM" "zpool export ditana-root"
+has "the medium's partition is unmounted before the reboot" "$SYSTEM" "umount $WORK/diagnosis"
 has "a reboot is offered and taken" "$REBOOTS" "reboot"
 
 echo
@@ -130,7 +235,96 @@ echo "== the repair is accepted and fails =="
 drive zfs_member 3 1 y
 has "the shell follows, for work by hand" "$OUT" "[returned 1]"
 has "and says why" "$OUT" "did not succeed"
+has "and where the report is" "$OUT" "and on this medium"
 [[ -z $REBOOTS ]] && ok "no reboot is offered" || no "no reboot is offered"
+hasnot "the system stays mounted" "$SYSTEM" "umount -R /mnt"
+hasnot "and the pool imported" "$SYSTEM" "zpool export"
+
+echo
+echo "== the medium is a stick written with dd =="
+# Behind the image the stick remains vacant, and a FAT partition of its
+# own is placed there. It starts at the first MiB boundary after the EFI
+# partition.
+medium_dd_stick
+drive zfs_member 0 0 y
+start=$(( (ISO_END + 2048 + 2047) / 2048 * 2048 ))
+(( start >= ISO_END + 2048 )) && ok "it keeps a MiB away from the image, whose GPT backup lies behind its last partition" \
+                              || no "it keeps a MiB away from the image, whose GPT backup lies behind its last partition"
+has "a partition is appended after the image" "$SYSTEM" \
+    "sfdisk --append --no-reread --no-tell-kernel --wipe never /dev/sdb <<< start=$start, size=1048576, type=c"
+has "the kernel learns of it without rereading the disk in use" "$SYSTEM" "partx --add --nr 3 /dev/sdb"
+has "it is formatted with the label it is found by" "$SYSTEM" "mkfs.vfat -n DITANA_DIAG /dev/sdb3"
+has "and mounted" "$SYSTEM" "mount /dev/sdb3 $WORK/diagnosis"
+has "the report goes there as well" "$CALLED" "--to /mnt/var/log --to $WORK/diagnosis/"
+has "the user is told" "$OUT" "also written to this medium"
+
+echo
+echo "== the system was copied to RAM, and the stick unmounted =="
+# Wherever sufficient RAM is available, which is the case on most machines,
+# archiso performs no mounting from the stick anymore. The stick is found by
+# the UUID that archiso looked for, which blkid may report for the whole disk.
+medium_dd_stick; BOOT_SOURCE=""; UUID_DEV=/dev/sdb
+drive zfs_member 0 0 y
+has "it is found and partitioned all the same" "$SYSTEM" "partx --add --nr 3 /dev/sdb"
+has "and the report goes there" "$CALLED" "--to $WORK/diagnosis/"
+medium_dd_stick; BOOT_SOURCE=""; UUID_DEV=/dev/sdb1
+drive zfs_member 0 0 y
+has "also when blkid names the partition" "$SYSTEM" "mkfs.vfat -n DITANA_DIAG /dev/sdb3"
+medium_dd_stick; BOOT_SOURCE=""
+drive zfs_member 0 0 y
+hasnot "nothing found, nothing partitioned" "$SYSTEM" "sfdisk"
+
+echo
+echo "== a stick that already has the partition =="
+# From a prior rescue on this or a different machine, or a second stick
+# prepared in that way: it is employed as-is, and no partitioning
+# occurs.
+medium_dd_stick; LABEL_DEV=/dev/sdc1
+drive zfs_member 0 0 y
+has "it is mounted" "$SYSTEM" "mount /dev/sdc1 $WORK/diagnosis"
+hasnot "nothing is partitioned" "$SYSTEM" "sfdisk"
+has "the report goes there" "$CALLED" "--to $WORK/diagnosis/"
+
+echo
+echo "== a stick barely larger than the image =="
+medium_dd_stick; DISK_SECTORS=$(( ISO_END + 4096 ))
+drive zfs_member 0 0 y
+hasnot "nothing is partitioned" "$SYSTEM" "sfdisk"
+hasnot "the report goes to the installed system only" "$CALLED" "--to $WORK/diagnosis"
+has "which still gets it" "$CALLED" "--to /mnt/var/log"
+
+echo
+echo "== a medium that is not a USB disk =="
+medium_dd_stick; BOOT_TRAN=sata
+drive zfs_member 0 0 y
+hasnot "an internal disk is not partitioned" "$SYSTEM" "sfdisk"
+medium_dd_stick; BOOT_SOURCE=/dev/sr0
+drive zfs_member 0 0 y
+hasnot "nor a DVD" "$SYSTEM" "sfdisk"
+
+echo
+echo "== a stick that holds anything but the image =="
+medium_dd_stick; DUMP="$ISO_DUMP"$'\n/dev/sdb3 : start=     4378624, size=     1048576, type=83'
+drive zfs_member 0 0 y
+hasnot "a third partition of the owner's is left alone" "$SYSTEM" "sfdisk --append"
+medium_dd_stick; DUMP="${ISO_DUMP/label: dos/label: gpt}"
+drive zfs_member 0 0 y
+hasnot "and so is any other layout" "$SYSTEM" "sfdisk --append"
+
+echo
+echo "== the medium holds reports of this machine already =="
+# Returned here for a second time: the initial repair failed to enable the
+# system to boot, or some other issue arose afterwards. The dialog states
+# as much.
+medium_dd_stick; LABEL_DEV=/dev/sdc1
+id="$(cat /mnt/etc/hostname 2>/dev/null)"; id="${id:-ditana}-$(head -c 8 /mnt/etc/machine-id 2>/dev/null)"
+[[ $id == *- ]] && id="${id}unknown"
+command mkdir -p "$WORK/diagnosis/$id"
+: > "$WORK/diagnosis/$id/ditana-diagnosis-20261020-101010.tar.gz"
+: > "$WORK/diagnosis/$id/ditana-diagnosis-20261024-111111.tar.gz"
+drive zfs_member 3 0 n
+has "the dialog says how many and when the last was made" "$DIALOGS" \
+    "This medium holds 2 earlier report(s) of this machine, the latest from 20261024-111111."
 
 echo
 echo "--- $pass passed, $fail failed"

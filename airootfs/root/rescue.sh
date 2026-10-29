@@ -130,53 +130,167 @@ fi
 #
 # Before the shell, diagnose-boot.sh is asked whether this system fails to boot
 # for a reason it can repair. That is the common reason to be here at all: an
-# update interrupted while it rebuilt the ZFS module or the initramfs. Until
-# then it took leaving the shell again and knowing the script existed.
+# update interrupted while it rebuilt the kernel's modules or its initramfs.
+# Until then it took leaving the shell again and knowing the script existed.
+# It runs on every filesystem, and checks ZFS where the system is on ZFS.
 #
-# offer_boot_repair returns 0 when the system was repaired and its pool
-# exported, so there is nothing left to enter; 1 when the shell should follow,
-# because nothing was found, the repair was declined, or it failed and left the
-# pool imported for work by hand.
+# Its report is kept in /var/log of the installed system and, where the medium
+# allows it, on the medium as well (see diagnosis_dir). A repair that does not
+# make the system boot can then be traced afterwards, on another computer,
+# from the reports of every attempt.
+#
+# offer_boot_repair returns 0 when the system was repaired and unmounted, so
+# there is nothing left to enter; 1 when the shell should follow, because
+# nothing was found, the repair was declined, or it failed and left the system
+# mounted for work by hand.
 DIAGNOSE_BOOT="${DIAGNOSE_BOOT:-${BASH_SOURCE[0]%/*}/diagnose-boot.sh}"
+DIAG_LABEL=DITANA_DIAG
+DIAG_MOUNT=/run/ditana-diagnosis
+DIAG_PARTITION_MB=512
+BOOT_CMDLINE=/proc/cmdline
+
+# The disk from which this medium was booted, provided it is a USB disk capable
+# of being written to. A DVD, an image file contained within another medium
+# (Ventoy, for example), and any entity that is not a whole disk do not meet
+# the criteria.
+#
+# archiso unmounts the medium after transferring the system into RAM, an
+# action performed whenever sufficient RAM is available. The medium is
+# subsequently located using the UUID that archiso was told to look for.
+boot_medium_disk() {
+    local source disk uuid
+    source="$(findmnt -no SOURCE /run/archiso/bootmnt 2>/dev/null)"
+    if [[ -z $source ]]; then
+        uuid="$(tr ' ' '\n' < "$BOOT_CMDLINE" | sed -n 's/^archisosearchuuid=//p')"
+        [[ -n $uuid ]] && source="$(blkid -U "$uuid" 2>/dev/null)"
+    fi
+    [[ -n $source ]] || return 1
+    if [[ "$(lsblk -dnro TYPE "$source")" == part ]]; then
+        disk="/dev/$(lsblk -dnro PKNAME "$source")"
+    else
+        disk="$source"
+    fi
+    [[ "$(lsblk -dnro TYPE "$disk")" == disk && "$(lsblk -dnro TRAN "$disk")" == usb \
+       && "$(lsblk -dnro RO "$disk")" == 0 ]] || return 1
+    echo "$disk"
+}
+
+# A stick created using dd holds the image's two partitions and nothing beyond
+# them, regardless of the stick's total size. A third partition within that
+# free space takes the reports. It is formatted as FAT, enabling any computer
+# to read it, while the image's native partitions and its boot code remain
+# untouched. A stick with any alternative layout is preserved exactly as it
+# is.
+add_diagnosis_partition() {
+    local disk dump end total start size part
+    disk="$(boot_medium_disk)" || return 1
+    dump="$(sfdisk -d "$disk" 2>/dev/null)" || return 1
+    [[ $dump == *"label: dos"* && $dump == *"sector-size: 512"* ]] || return 1
+    (( $(grep -c ' : start=' <<<"$dump") == 2 )) || return 1
+    end="$(sed -n 's/.*start= *\([0-9]*\), size= *\([0-9]*\).*/\1 \2/p' <<<"$dump" \
+           | awk '{ e = $1 + $2; if (e > m) m = e } END { print m + 0 }')"
+    total="$(blockdev --getsz "$disk")" || return 1
+    # The image concludes slightly after its last partition: xorriso fills the
+    # gap with padding and places the image's GPT backup in that space. A
+    # distance of one MiB ensures separation from both.
+    start=$(( (end + 2048 + 2047) / 2048 * 2048 ))
+    size=$(( DIAG_PARTITION_MB * 2048 ))
+    (( start + size <= total )) || size=$(( total - start ))
+    (( size >= 64 * 2048 )) || return 1
+    # The disk is currently in use, so the kernel is unable to read its
+    # partition table once more. partx adds just the new partition instead.
+    printf 'start=%s, size=%s, type=c\n' "$start" "$size" \
+        | sfdisk --append --no-reread --no-tell-kernel --wipe never "$disk" >/dev/null 2>&1 || return 1
+    partx --add --nr 3 "$disk" 2>/dev/null || return 1
+    udevadm settle 2>/dev/null
+    part="${disk}3"
+    wipefs -aq "$part" >/dev/null 2>&1 && mkfs.vfat -n "$DIAG_LABEL" "$part" >/dev/null 2>&1 || return 1
+    echo "$part"
+}
+
+# The directory designated for this machine's reports on the medium, or
+# failure if there is no place for it. A partition labelled DITANA_DIAG is
+# used wherever it is present, so a second stick prepared in this manner
+# serves equally well.
+diagnosis_dir() {
+    local dev host id
+    dev="$(blkid -L "$DIAG_LABEL" 2>/dev/null)" || dev=""
+    [[ -n $dev ]] || dev="$(add_diagnosis_partition)" || return 1
+    mkdir -p "$DIAG_MOUNT"
+    mountpoint -q "$DIAG_MOUNT" || mount "$dev" "$DIAG_MOUNT" 2>/dev/null || return 1
+    host="$(cat /mnt/etc/hostname 2>/dev/null)"
+    id="$(head -c 8 /mnt/etc/machine-id 2>/dev/null)"
+    mkdir -p "$DIAG_MOUNT/${host:-ditana}-${id:-unknown}" || return 1
+    echo "$DIAG_MOUNT/${host:-ditana}-${id:-unknown}"
+}
+
+# The lines belonging to one section of the diagnosis ("Problems",
+# "Cause"), excluding its heading and indentation.
+section() {
+    sed -n "/^$1:\$/,/^\$/p" | sed '1d;/^$/d;s/^ *//'
+}
 
 offer_boot_repair() {
-    local output status problems plan
-    [[ $FSTYPE == zfs_member && -f $DIAGNOSE_BOOT ]] || return 1
+    local output status problems cause plan diag="" notice=""
+    local -a to=(--to /mnt/var/log) earlier=()
+    [[ -f $DIAGNOSE_BOOT ]] || return 1
+
+    if diag="$(diagnosis_dir)"; then
+        to+=(--to "$diag")
+        earlier=("$diag"/ditana-diagnosis-*.tar.gz)
+        [[ -e ${earlier[0]} ]] || earlier=()
+        echo -e "\033[32m--- Diagnostic data is also written to this medium, partition $DIAG_LABEL, folder ${diag##*/} ---\033[0m"
+    else
+        diag=""
+    fi
 
     echo -e "\033[32m--- Checking why this system might not boot... ---\033[0m"
     mkdir -p /mnt/var/log
-    output="$(bash "$DIAGNOSE_BOOT" --repair --dry-run --to /mnt/var/log 2>&1)"
+    output="$(bash "$DIAGNOSE_BOOT" --root /mnt --repair --dry-run "${to[@]}" 2>&1)"
     status=$?
+    problems="$(section Problems <<<"$output")"
+    cause="$(section Cause <<<"$output")"
     if (( status != 3 )); then
-        echo -e "\033[32m--- Boot diagnosis: nothing it could repair. The report is in /var/log of the installed system. ---\033[0m"
+        [[ -n $problems ]] && printf '%s\n' "$problems"
+        echo -e "\033[32m--- Boot diagnosis: nothing it could repair. The report is in /var/log of the installed system${diag:+ and on this medium}. ---\033[0m"
         return 1
     fi
 
-    problems="$(sed -n '/^Findings/,/^Full report/p' <<<"$output" \
-                | grep -E 'MISSING|UNREADABLE|interrupted|db\.lck|matches no tree' | sed 's/^ *//')"
-    plan="$(sed -n '/^Repair plan/,$p' <<<"$output")"
+    plan="$(sed -n '/^Repair plan/,/^$/p' <<<"$output")"
+    if (( ${#earlier[@]} )); then
+        notice="This medium holds ${#earlier[@]} earlier report(s) of this machine, the latest from $(basename "${earlier[-1]}" .tar.gz | sed 's/^ditana-diagnosis-//')."
+    fi
     if ! dialog --title "This system does not boot, and it can be repaired" \
                 --yes-label "Repair" --no-label "Shell" --cr-wrap --no-collapse \
                 --yesno "$problems
-
+${cause:+
+Cause:
+$cause
+}
 $plan
 
-Repair, or open a shell in the installed system instead?" 0 0; then
+${notice:+$notice
+
+}Repair, or open a shell in the installed system instead?" 0 0; then
         return 1
     fi
 
-    if bash "$DIAGNOSE_BOOT" --repair; then
+    if bash "$DIAGNOSE_BOOT" --root /mnt --repair "${to[@]}"; then
+        umount -R /mnt 2>/dev/null
+        [[ $FSTYPE == zfs_member ]] && zpool export ditana-root 2>/dev/null
+        [[ -n $diag ]] && umount "$DIAG_MOUNT" 2>/dev/null
         if dialog --yesno "Repaired. Remove the medium and reboot now?" 6 50; then
             reboot
         fi
         return 0
     fi
-    echo -e "\033[33m--- The repair did not succeed. The shell that follows is inside the installed system. ---\033[0m"
+    sync
+    echo -e "\033[33m--- The repair did not succeed. The report is in /var/log of the installed system${diag:+ and on this medium}. The shell that follows is inside the installed system. ---\033[0m"
     return 1
 }
 # --- END boot-repair ----------------------------------------------------------
 
-if [[ $FSTYPE == zfs_member ]] && offer_boot_repair; then
+if offer_boot_repair; then
     return 0 2>/dev/null || exit 0
 fi
 

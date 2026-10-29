@@ -19,11 +19,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
-# Tests for airootfs/root/diagnose-boot.sh. They need no root, no pool and no
-# network: each case builds the root tree of an installed system in a scratch
-# directory and runs the script with --root on it, the repair with --dry-run.
-# The initramfs of each tree is a real zstd-compressed cpio archive, so that
-# lsinitcpio reads it exactly as it reads the one mkinitcpio writes.
+# Tests for airootfs/root/diagnose-boot.sh. They require neither root nor
+# pool nor network: each scenario constructs the root tree of an installed
+# system within a scratch directory and runs the script using --root,
+# performing the repair with --dry-run. The initramfs of each tree is an
+# authentic zstd-compressed cpio archive, ensuring that lsinitcpio reads it
+# exactly as it does the one produced by mkinitcpio.
+#
+# The repair process executes using a stand-in in place of arch-chroot, which
+# logs every step and performs on the tree the same action that the step
+# would perform on the system.
 
 set -uo pipefail
 
@@ -38,9 +43,12 @@ no()  { printf '  FAIL %s\n' "$1"; fail=$((fail+1)); }
 skp() { printf '  skip %s (%s)\n' "$1" "$2"; skip=$((skip+1)); }
 has()    { if [[ $OUT == *"$2"* ]]; then ok "$1"; else no "$1 -- missing: $2"; fi }
 hasnot() { if [[ $OUT != *"$2"* ]]; then ok "$1"; else no "$1 -- unexpected: $2"; fi }
+status_is() { if [[ $STATUS -eq $2 ]]; then ok "$1"; else no "$1: got $STATUS"; fi }
 
 KVER=6.18.52-1-lts
+PKGVER=6.18.52-1
 OLD=6.12.40-1-lts
+ARCHIVE=https://archive.archlinux.org/packages/l
 
 if command -v lsinitcpio >/dev/null && command -v bsdtar >/dev/null && command -v zstd >/dev/null; then
     CAN_LIST=1
@@ -54,12 +62,16 @@ fi
 make_root() {
     local R="$1"
     mkdir -p "$R/boot" "$R/usr/lib/modules/$KVER/build" "$R/usr/lib/modules/$KVER/updates/dkms" \
-             "$R/usr/src/zfs-2.4.4" "$R/var/lib/pacman" "$R/var/log" "$R/etc"
+             "$R/usr/src/zfs-2.4.4" "$R/var/lib/pacman/local/linux-lts-$PKGVER" "$R/var/cache/pacman/pkg" \
+             "$R/var/log" "$R/etc/modprobe.d"
     head -c 4096 /dev/urandom > "$R/usr/lib/modules/$KVER/vmlinuz"
     cp "$R/usr/lib/modules/$KVER/vmlinuz" "$R/boot/vmlinuz-linux-lts"
     echo linux-lts > "$R/usr/lib/modules/$KVER/pkgbase"
+    printf '%%NAME%%\nlinux-lts\n\n%%VERSION%%\n%s\n' "$PKGVER" > "$R/var/lib/pacman/local/linux-lts-$PKGVER/desc"
     : > "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst"
+    : > "$R/usr/lib/modules/$KVER/updates/dkms/spl.ko.zst"
     echo "updates/dkms/zfs.ko.zst: updates/dkms/spl.ko.zst" > "$R/usr/lib/modules/$KVER/modules.dep"
+    echo 'HOOKS=(base udev autodetect microcode modconf keyboard keymap block zfs filesystems)' > "$R/etc/mkinitcpio.conf"
     make_initramfs "$R" "$KVER"
     cat > "$R/var/log/pacman.log" <<'EOF'
 [2026-09-17T19:00:00+0200] [PACMAN] Running 'pacman -Syu ditana-userns-guard'
@@ -67,21 +79,45 @@ make_root() {
 [2026-09-17T19:00:09+0200] [ALPM] upgraded linux-lts (6.12.40-1 -> 6.18.52-1)
 [2026-09-17T19:00:09+0200] [ALPM] transaction completed
 [2026-09-17T19:00:09+0200] [ALPM] running '70-dkms-install.hook'...
-[2026-09-17T19:04:40+0200] [ALPM] running '90-mkinitcpio-install.hook'...
+[2026-09-17T19:00:09+0200] [ALPM-SCRIPTLET] ==> dkms install --no-depmod zfs/2.4.4 -k 6.18.52-1-lts
+[2026-09-17T19:01:40+0200] [ALPM-SCRIPTLET] ==> depmod 6.18.52-1-lts
+[2026-09-17T19:01:42+0200] [ALPM] running '90-mkinitcpio-install.hook'...
 EOF
 }
 
-# $2 is the kernel version whose modules directory carries zfs.ko, or empty for
-# an initramfs without it.
+# A system using btrfs, ext4, or xfs: the initramfs is built without the zfs
+# hook, and no component anywhere references ZFS.
+make_plain_root() {
+    local R="$1"
+    make_root "$R"
+    rm -r "$R/usr/src/zfs-2.4.4" "$R/usr/lib/modules/$KVER/updates"
+    : > "$R/usr/lib/modules/$KVER/modules.dep"
+    echo 'HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)' > "$R/etc/mkinitcpio.conf"
+    make_initramfs "$R" "" ""
+}
+
+# $2 is the kernel version whose modules directory carries zfs.ko, or empty
+# when the initramfs lacks it. $3, if given, is the list of ZFS modules it
+# carries, "zfs spl" by default.
 make_initramfs() {
-    local R="$1" with="$2" tree="$WORK/cpio-$RANDOM"
+    local R="$1" with="$2" modules="${3-zfs spl}" tree="$WORK/cpio-$RANDOM" module
     mkdir -p "$tree/usr/lib/modules/$KVER/kernel"
     : > "$tree/usr/lib/modules/$KVER/kernel/nvme.ko.zst"
     if [[ -n $with ]]; then
         mkdir -p "$tree/usr/lib/modules/$with/updates/dkms"
-        : > "$tree/usr/lib/modules/$with/updates/dkms/zfs.ko.zst"
+        for module in $modules; do
+            : > "$tree/usr/lib/modules/$with/updates/dkms/$module.ko.zst"
+        done
     fi
     (cd "$tree" && bsdtar --format newc -cf - .) | zstd -q -c > "$R/boot/initramfs-linux-lts.img"
+}
+
+# Replaces the hook part of the tree's pacman.log, beginning with the DKMS
+# hook, with the input provided via stdin.
+dkms_log() {
+    local R="$1"
+    sed -i '/70-dkms-install/,$d' "$R/var/log/pacman.log"
+    cat >> "$R/var/log/pacman.log"
 }
 
 run() {
@@ -94,16 +130,35 @@ echo "== a system the update left intact =="
 R="$WORK/intact"; make_root "$R"
 run "$R" --repair --dry-run
 has "the kernel in /boot is recognised by its content" "vmlinuz-linux-lts is $KVER"
+has "the zfs hook makes ZFS a requirement" "built with the zfs hook"
 has "its zfs.ko is found" "zfs.ko for $KVER: present"
 if (( CAN_LIST )); then
-    has "the initramfs is read and found to carry it" "carries zfs.ko for $KVER"
+    has "the initramfs is read and found to carry it" "carries zfs.ko and spl.ko for $KVER"
 else
     skp "the initramfs is read and found to carry it" "lsinitcpio, bsdtar or zstd missing"
 fi
 hasnot "nothing is reported missing" "MISSING"
+hasnot "there are no problems to show" "Problems:"
+has "the build of the last update is named as done" "zfs/2.4.4 for $KVER: built"
+hasnot "and no cause is looked for" "Cause:"
 has "the repair declines" "Nothing to repair"
-[[ $STATUS -eq 0 ]] && ok "the dry run exits 0, so the rescue system offers nothing" \
-                    || no "the dry run exits 0, so the rescue system offers nothing: got $STATUS"
+status_is "the dry run exits 0, so the rescue system offers nothing" 0
+
+echo
+echo "== a system not on ZFS, intact =="
+# The rescue system runs the diagnosis regardless of the filesystem in use; in
+# this context, it must not request a zfs.ko that the system has never needed.
+R="$WORK/plain"; make_plain_root "$R"
+run "$R" --repair --dry-run
+has "the missing zfs hook is noticed" "built without the zfs hook"
+hasnot "no zfs.ko is asked for" "zfs.ko"
+if (( CAN_LIST )); then
+    has "the initramfs is still read" "initramfs-linux-lts.img: readable"
+else
+    skp "the initramfs is still read" "lsinitcpio, bsdtar or zstd missing"
+fi
+has "the repair declines" "Nothing to repair"
+status_is "the dry run exits 0" 0
 
 echo
 echo "== the DKMS build was interrupted and mkinitcpio ran without it =="
@@ -111,8 +166,13 @@ echo "== the DKMS build was interrupted and mkinitcpio ran without it =="
 # new kernel is installed and its initramfs has been produced, but neither
 # includes a ZFS module.
 R="$WORK/interrupted-build"; make_root "$R"
-rm "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst"
+rm "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst" "$R/usr/lib/modules/$KVER/updates/dkms/spl.ko.zst"
 make_initramfs "$R" ""
+dkms_log "$R" <<'EOF'
+[2026-09-17T19:00:09+0200] [ALPM] running '70-dkms-install.hook'...
+[2026-09-17T19:00:09+0200] [ALPM-SCRIPTLET] ==> dkms install --no-depmod zfs/2.4.4 -k 6.18.52-1-lts
+[2026-09-17T19:00:31+0200] [ALPM] running '90-mkinitcpio-install.hook'...
+EOF
 run "$R" --repair --dry-run
 has "the missing module is named" "MISSING: no zfs.ko under /usr/lib/modules/$KVER"
 if (( CAN_LIST )); then
@@ -120,9 +180,13 @@ if (( CAN_LIST )); then
 else
     skp "the initramfs without it is named" "lsinitcpio, bsdtar or zstd missing"
 fi
+has "the problems are listed for the dialog" $'Problems:\n  MISSING: no zfs.ko'
+has "the cause is read from pacman.log" "the build of zfs/2.4.4 for $KVER was cut off"
+has "and listed for the dialog" $'Cause:\n  dkms: 2026-09-17T19:00:09'
 has "the plan builds the module for that kernel" "dkms install --force zfs/2.4.4 -k $KVER"
 has "the plan regenerates the initramfs" "mkinitcpio -P"
 hasnot "the plan needs no network" "pacman -S"
+status_is "the dry run exits 3, so the rescue system offers the repair" 3
 
 echo
 echo "== the module was built, the initramfs without it =="
@@ -136,12 +200,26 @@ if (( CAN_LIST )); then
     has "the module counts as present" "zfs.ko for $KVER: present"
     has "the initramfs counts as missing it" "carries no zfs.ko for $KVER"
     has "the plan regenerates the initramfs" "  mkinitcpio -P"
-    hasnot "it builds nothing" "dkms install"
-    hasnot "it needs no depmod" "depmod"
-    [[ $STATUS -eq 3 ]] && ok "the dry run exits 3, so the rescue system offers the repair" \
-                        || no "the dry run exits 3, so the rescue system offers the repair: got $STATUS"
+    hasnot "it builds nothing" "dkms install --force"
+    hasnot "it needs no depmod" "  depmod"
+    status_is "the dry run exits 3, so the rescue system offers the repair" 3
 else
     skp "a stale initramfs is rebuilt" "lsinitcpio, bsdtar or zstd missing"
+fi
+
+echo
+echo "== an initramfs with zfs.ko but without spl.ko =="
+# zfs.ko fails to load in the absence of spl.ko. The boot process
+# terminates just as it does when zfs.ko is missing, displaying "Unknown
+# symbol" lines in the kernel log that nobody ever sees.
+if (( CAN_LIST )); then
+    R="$WORK/no-spl"; make_root "$R"
+    make_initramfs "$R" "$KVER" "zfs"
+    run "$R" --repair --dry-run
+    has "the missing spl.ko is named" "carries no spl.ko for $KVER"
+    has "the plan regenerates the initramfs" "  mkinitcpio -P"
+else
+    skp "a missing spl.ko is found" "lsinitcpio, bsdtar or zstd missing"
 fi
 
 echo
@@ -151,11 +229,22 @@ echo "== the module is on disk but depmod never indexed it =="
 # that index, so it would build the same image again without depmod first.
 R="$WORK/unindexed"; make_root "$R"
 : > "$R/usr/lib/modules/$KVER/modules.dep"
+dkms_log "$R" <<'EOF'
+[2026-09-17T19:00:09+0200] [ALPM] running '70-dkms-install.hook'...
+[2026-09-17T19:00:09+0200] [ALPM-SCRIPTLET] ==> dkms install --no-depmod zfs/2.4.4 -k 6.18.52-1-lts
+[2026-09-17T19:01:40+0200] [ALPM-SCRIPTLET] ==> dkms install --no-depmod vboxhost/7.2.20_OSE -k 6.18.52-1-lts
+[2026-09-17T19:01:45+0200] [ALPM] running '90-mkinitcpio-install.hook'...
+EOF
 run "$R" --repair --dry-run
 has "the missing index entry is named" "zfs.ko is not in modules.dep for $KVER"
 has "the plan runs depmod for that kernel" "  depmod $KVER"
 has "and then regenerates the initramfs" "  mkinitcpio -P"
 [[ $OUT == *"depmod $KVER"*"mkinitcpio -P"* ]] && ok "depmod comes first" || no "depmod comes first"
+# The build of the next module was interrupted, and depmod executes solely
+# after all have been completed: that is how zfs.ko comes to be on disk
+# despite depmod never having encountered it.
+has "the build of zfs is named as done" "zfs/2.4.4 for $KVER was built, but the update was stopped before depmod"
+has "the one after it as cut off" "the build of vboxhost/7.2.20_OSE for $KVER was cut off"
 
 echo
 echo "== an initramfs that carries the module of the previous kernel =="
@@ -167,10 +256,44 @@ if (( CAN_LIST )); then
     run "$R" --repair --dry-run
     has "it counts as missing" "carries no zfs.ko for $KVER"
     has "the plan regenerates the initramfs" "mkinitcpio -P"
-    hasnot "the module itself is not rebuilt" "dkms install"
+    hasnot "the module itself is not rebuilt" "dkms install --force"
 else
     skp "an old kernel's zfs.ko does not count" "lsinitcpio, bsdtar or zstd missing"
 fi
+
+echo
+echo "== the DKMS build failed =="
+# A build that fails communicates its status in pacman.log, and the make.log
+# within the report explains the reason. Attempting the build again within the
+# rescue system might fail in the same way, but it is the only repair
+# available, and the report retains the log from that attempt as well.
+R="$WORK/build-failed"; make_root "$R"
+rm "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst"
+dkms_log "$R" <<'EOF'
+[2026-09-17T19:00:09+0200] [ALPM] running '70-dkms-install.hook'...
+[2026-09-17T19:00:09+0200] [ALPM-SCRIPTLET] ==> dkms install --no-depmod zfs/2.4.4 -k 6.18.52-1-lts
+[2026-09-17T19:00:52+0200] [ALPM-SCRIPTLET] ==> WARNING: `dkms install --no-depmod zfs/2.4.4 -k 6.18.52-1-lts' exited 10
+[2026-09-17T19:00:53+0200] [ALPM] running '90-mkinitcpio-install.hook'...
+EOF
+mkdir -p "$R/var/lib/dkms/zfs/2.4.4/build"
+echo "error: implicit declaration of function" > "$R/var/lib/dkms/zfs/2.4.4/build/make.log"
+report="$WORK/report-build-failed"
+OUT="$(DITANA_DIAGNOSE_REPORT="$report" bash "$SCRIPT" --root "$R" --repair --dry-run 2>&1)"
+has "the failure and its exit code are named" "the build of zfs/2.4.4 for $KVER failed with exit code 10"
+has "the plan builds it again" "dkms install --force zfs/2.4.4 -k $KVER"
+[[ -s "$report/dkms-zfs_2.4.4_build_make.log" ]] && ok "the build's make.log is in the report" \
+                                                   || no "the build's make.log is in the report"
+
+echo
+echo "== the headers were missing during the update =="
+R="$WORK/headers-during-update"; make_root "$R"
+dkms_log "$R" <<'EOF'
+[2026-09-17T19:00:09+0200] [ALPM] running '70-dkms-install.hook'...
+[2026-09-17T19:00:09+0200] [ALPM-SCRIPTLET] ==> ERROR: Missing 6.18.52-1-lts kernel headers for module zfs/2.4.4.
+[2026-09-17T19:00:10+0200] [ALPM] running '90-mkinitcpio-install.hook'...
+EOF
+run "$R" --repair --dry-run
+has "the missing headers are named as the cause" "zfs/2.4.4 was not built for $KVER, because its headers were missing"
 
 echo
 echo "== pacman was stopped while it installed packages =="
@@ -182,15 +305,71 @@ run "$R" --repair --dry-run
 has "the stale lock is named" "db.lck is present"
 has "the interrupted transaction is named" "interrupted while it installed packages"
 has "the plan removes the lock first" "  rm -f /var/lib/pacman/db.lck"
-has "the plan finishes the update" "  pacman -Syu"
+has "the plan finishes the update" "  pacman -Syu --noconfirm"
+
+echo
+echo "== pacman was stopped while it installed packages, and /boot is empty =="
+# Finishing the update may in itself restore the kernel to /boot. Installing
+# the previous version before that would constitute a downgrade, which is
+# therefore decided upon afterwards.
+R="$WORK/interrupted-empty-boot"; make_root "$R"
+: > "$R/var/lib/pacman/db.lck"
+head -n 3 "$R/var/log/pacman.log" > "$R/var/log/pacman.log.new"
+mv "$R/var/log/pacman.log.new" "$R/var/log/pacman.log"
+rm "$R/boot/vmlinuz-linux-lts" "$R/boot/initramfs-linux-lts.img"
+run "$R" --repair --dry-run
+has "the plan finishes the update" "  pacman -Syu --noconfirm"
+hasnot "and installs no kernel yet" "pacman -U"
+has "it says the rest comes afterwards" "decided again once they are done"
 
 echo
 echo "== the kernel in /boot belongs to no installed module tree =="
+# How a system with a separate /boot gets into this state: it was not mounted
+# during an update, so the new kernel ended up in the root filesystem's /boot.
+# Installing the kernel package again places it where the bootloader expects
+# it.
 R="$WORK/stray"; make_root "$R"
 head -c 4096 /dev/urandom > "$R/boot/vmlinuz-linux-lts"
 run "$R" --repair --dry-run
 has "the mismatch is named" "matches no tree in /usr/lib/modules"
-has "the plan installs the kernel package again" "  pacman -S linux-lts"
+has "the plan installs the installed version again, from the archive" \
+    "  pacman -U --noconfirm $ARCHIVE/linux-lts/linux-lts-$PKGVER-x86_64.pkg.tar.zst"
+hasnot "and not what the package database lists" "pacman -S"
+
+echo
+echo "== the same on a system not on ZFS =="
+R="$WORK/plain-stray"; make_plain_root "$R"
+head -c 4096 /dev/urandom > "$R/boot/vmlinuz-linux-lts"
+run "$R" --repair --dry-run
+has "the mismatch is named" "matches no tree in /usr/lib/modules"
+has "the plan installs the kernel again" "  pacman -U --noconfirm"
+status_is "the dry run exits 3" 3
+
+echo
+echo "== the kernel is installed and missing from /boot =="
+# The machine was powered down during a kernel upgrade, following the removal
+# of the previous image and before the writing of the new one.
+R="$WORK/no-kernel"; make_root "$R"
+rm "$R/boot/vmlinuz-linux-lts" "$R/boot/initramfs-linux-lts.img"
+: > "$R/var/cache/pacman/pkg/linux-lts-$PKGVER-x86_64.pkg.tar.zst"
+: > "$R/var/cache/pacman/pkg/linux-lts-$PKGVER-x86_64.pkg.tar.zst.sig"
+run "$R" --repair --dry-run
+has "the missing image is named" "MISSING: /boot/vmlinuz-linux-lts"
+has "the plan installs it again from the package cache" \
+    "  pacman -U --noconfirm /var/cache/pacman/pkg/linux-lts-$PKGVER-x86_64.pkg.tar.zst"
+hasnot "and not the signature beside it" ".zst.sig"
+status_is "the dry run exits 3" 3
+
+echo
+echo "== a removed kernel's leftover tree =="
+# DKMS leaves its modules behind after a kernel package is removed. The tree
+# then contains neither vmlinuz nor pkgbase, and requests nothing.
+R="$WORK/leftover"; make_root "$R"
+mkdir -p "$R/usr/lib/modules/7.2.11-arch1-1/updates/dkms"
+: > "$R/usr/lib/modules/7.2.11-arch1-1/updates/dkms/zfs.ko.zst"
+run "$R" --repair --dry-run
+hasnot "it is not taken for a missing kernel" "7.2.11"
+has "the repair declines" "Nothing to repair"
 
 echo
 echo "== the headers are missing, so DKMS cannot build =="
@@ -198,17 +377,117 @@ R="$WORK/no-headers"; make_root "$R"
 rm -r "$R/usr/lib/modules/$KVER/build" "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst"
 run "$R" --repair --dry-run
 has "the missing headers are named" "no headers for $KVER"
-has "the plan installs them" "  pacman -S linux-lts-headers"
-has "the build is decided again afterwards" "decided again once the package steps are done"
+has "the plan installs the headers of the installed kernel" \
+    "  pacman -U --noconfirm $ARCHIVE/linux-lts-headers/linux-lts-headers-$PKGVER-x86_64.pkg.tar.zst"
+has "the build is decided again afterwards" "decided again once they are done"
+
+echo
+echo "== a modprobe.d line keeps zfs from loading =="
+# Nothing the repair could achieve: the line was written by somebody. It is
+# shown, and the rescue system then opens its shell.
+R="$WORK/blacklisted"; make_root "$R"
+echo "blacklist zfs" > "$R/etc/modprobe.d/local.conf"
+echo "# blacklist spl" >> "$R/etc/modprobe.d/local.conf"
+run "$R" --repair --dry-run
+has "the line is named, with its file" "BLOCKED: /etc/modprobe.d/local.conf:blacklist zfs"
+hasnot "a comment is not" "# blacklist spl"
+has "and listed for the dialog" $'Problems:\n  modprobe: BLOCKED'
+has "nothing is repaired" "Nothing to repair automatically"
+status_is "the dry run exits 0" 0
+
+echo
+echo "== the installed system has no space left =="
+R="$WORK/full"; make_root "$R"
+OUT="$(DITANA_DIAGNOSE_REPORT="$WORK/report-full" DITANA_DIAGNOSE_MIN_FREE_MB=999999999 \
+       bash "$SCRIPT" --root "$R" --repair --dry-run 2>&1)"
+has "the shortage is a problem" "space: LOW:"
 
 echo
 echo "== the diagnosis alone writes the report and plans nothing =="
 R="$WORK/report"; make_root "$R"
 report="$WORK/report-dir"
-OUT="$(DITANA_DIAGNOSE_REPORT="$report" bash "$SCRIPT" --root "$R" 2>&1)"
+mkdir -p "$WORK/stick" "$WORK/installed"
+OUT="$(DITANA_DIAGNOSE_REPORT="$report" bash "$SCRIPT" --root "$R" --to "$WORK/stick" --to "$WORK/installed" 2>&1)"
 [[ -s "$report/00-findings.txt" ]] && ok "the findings are written" || no "the findings are written"
 [[ -f "$report.tar.gz" ]] && ok "the report is packed" || no "the report is packed"
+[[ -f "$WORK/stick/report-dir.tar.gz" && -f "$WORK/installed/report-dir.tar.gz" ]] \
+    && ok "and copied to every --to directory" || no "and copied to every --to directory"
+cmp -s "$R/var/log/pacman.log" "$report/pacman.log" && ok "pacman.log is in it, all of it" \
+                                                   || no "pacman.log is in it, all of it"
 hasnot "without --repair there is no plan" "Repair plan"
+
+echo
+echo "== a repair, run =="
+# The stand-in for arch-chroot. It logs every invocation, triggers a failure
+# at the step it is told to fail, and otherwise performs on the tree the same
+# action the step performs on the system: the DKMS build installs the modules
+# and mkinitcpio writes an image that carries them.
+GOOD_IMAGE="$WORK/good-initramfs.img"
+mkdir -p "$WORK/image-source/boot"
+make_initramfs "$WORK/image-source" "$KVER"
+cp "$WORK/image-source/boot/initramfs-linux-lts.img" "$GOOD_IMAGE"
+cat > "$WORK/chroot" <<'EOF'
+#!/usr/bin/env bash
+R="$1"; shift
+printf '%s\n' "$*" >> "$CALLS"
+step="${*: -1}"
+[[ -n ${FAIL_STEP:-} && $step == "$FAIL_STEP"* ]] && { echo "make: *** [all] Error 2"; exit 10; }
+case "$step" in
+    "dkms install"*)
+        : > "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst"
+        : > "$R/usr/lib/modules/$KVER/updates/dkms/spl.ko.zst" ;;
+    "depmod "*)
+        echo "updates/dkms/zfs.ko.zst: updates/dkms/spl.ko.zst" > "$R/usr/lib/modules/$KVER/modules.dep" ;;
+    "mkinitcpio -P")
+        cp "$GOOD_IMAGE" "$R/boot/initramfs-linux-lts.img" ;;
+esac
+EOF
+chmod +x "$WORK/chroot"
+
+repair() {
+    local R="$1"; shift
+    : > "$WORK/calls"
+    OUT="$(CALLS="$WORK/calls" KVER="$KVER" GOOD_IMAGE="$GOOD_IMAGE" DITANA_DIAGNOSE_CHROOT="$WORK/chroot" \
+           DITANA_DIAGNOSE_REPORT="$REPORT_DIR" bash "$SCRIPT" --root "$R" --repair --to "$WORK/repair-stick" "$@" 2>&1)"
+    STATUS=$?
+    CALLED="$(cat "$WORK/calls")"
+}
+
+if (( CAN_LIST )); then
+    R="$WORK/repair-ok"; make_root "$R"
+    rm "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst" "$R/usr/lib/modules/$KVER/updates/dkms/spl.ko.zst"
+    make_initramfs "$R" ""
+    REPORT_DIR="$WORK/report-repair-ok"
+    repair "$R"
+    status_is "a repair that works exits 0" 0
+    has "and says so" "Repaired."
+    [[ $CALLED == *"dkms install --force zfs/2.4.4 -k $KVER"*"mkinitcpio -P"* ]] \
+        && ok "the steps ran in the order of the plan" || no "the steps ran in the order of the plan: $CALLED"
+    [[ -n $CALLED ]] && ! grep -qv '^env SKIP_AUTOSNAP=1 sh -c ' <<<"$CALLED" \
+        && ok "every step runs with SKIP_AUTOSNAP, so no snapshot is taken or deleted" \
+        || no "every step runs with SKIP_AUTOSNAP, so no snapshot is taken or deleted: $CALLED"
+    grep -q '>>> mkinitcpio -P' "$REPORT_DIR/repair.txt" 2>/dev/null \
+        && ok "what the repair printed is in the report" || no "what the repair printed is in the report"
+    tar -tzf "$WORK/repair-stick/report-repair-ok.tar.gz" 2>/dev/null | grep -q 'repair\.txt' \
+        && ok "and in the copy taken after the repair" || no "and in the copy taken after the repair"
+    grep -q 'carries zfs.ko and spl.ko' <(sed -n '/after the package steps\|Checking again/,$p' "$REPORT_DIR/repair.txt") \
+        && ok "the system is checked again after the repair" || no "the system is checked again after the repair"
+
+    R="$WORK/repair-fails"; make_root "$R"
+    rm "$R/usr/lib/modules/$KVER/updates/dkms/zfs.ko.zst"
+    make_initramfs "$R" ""
+    REPORT_DIR="$WORK/report-repair-fails"
+    FAIL_STEP="dkms install" repair "$R"
+    status_is "a step that fails ends the repair with exit 1" 1
+    has "and names the step" "The step failed: dkms install --force zfs/2.4.4"
+    [[ $CALLED != *mkinitcpio* ]] && ok "the steps after it do not run" || no "the steps after it do not run: $CALLED"
+    grep -q 'Error 2' "$REPORT_DIR/repair.txt" 2>/dev/null \
+        && ok "the output of the failed step is in the report" || no "the output of the failed step is in the report"
+    grep -q '^repair: exit 1' "$REPORT_DIR/00-findings.txt" \
+        && ok "and the outcome among the findings" || no "and the outcome among the findings"
+else
+    skp "a repair, run" "lsinitcpio, bsdtar or zstd missing"
+fi
 
 echo
 echo "--- $pass passed, $fail failed, $skip skipped"
