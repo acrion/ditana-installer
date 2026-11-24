@@ -22,7 +22,18 @@ use RunAndLog;
 use Logging;
 use Settings;
 
+#| Generate a name for the new machine, unless one already exists.
+#|
+#| An answer file is applied before the first installation step, and an
+#| unattended run proceeds through this procedure in the same manner as any
+#| other run. A name provided by the file is therefore already set when this
+#| runs, and overwriting it would result in installing the machine under a
+#| random name, regardless of what the file says. In an interactive run, no
+#| component sets host-name before this step, so the subsequent dialog
+#| requesting it still offers the name generated here.
 sub generate-host-name() is export {
+  return if Settings.instance.get("host-name");
+
   my $proc = run <pwgen -A -0 5 1>, :out;
   my $host-name = $proc.out.slurp(:close).trim;
   Settings.instance.set("host-name", "ditana-" ~ $host-name);

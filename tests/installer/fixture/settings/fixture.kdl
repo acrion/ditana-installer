@@ -7,6 +7,11 @@
 - name="install-disk" default-value=""
 - name="install-disk-description" default-value=""
 
+// Empty, as in ditana-config: generate-host-name makes up a name solely when
+// none has been established, and an answer file defines it before that
+// procedure runs.
+- name="host-name" default-value=""
+
 // A radiolist dialog: several settings sharing one dialog-name.
 - name="profile-default" dialog-name="User Profile" short-description="Standard" default-value=#true {
     arch-packages ""
