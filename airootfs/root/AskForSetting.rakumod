@@ -18,6 +18,7 @@
 # along with Ditana Installer. If not, see <https://www.gnu.org/licenses/>.
 
 use v6.d;
+use Autoinstall;
 use Dialogs;
 use Settings;
 use Logging;
@@ -37,8 +38,11 @@ sub validate-number($value) {
     return so $value ~~ /^ \d+ ['.' \d+]? $/;
 }
 
+# Zero, or a whole number lacking leading zeros. Zero constitutes a value in its
+# own right: a sudo-timeout set to 0 causes sudo to request the password each
+# time.
 sub validate-integer($value) {
-    return so $value ~~ /^ <[1..9]> \d* $/;
+    return so $value ~~ /^ [ 0 | <[1..9]> \d* ] $/;
 }
 
 #| Put an answered value through the checks the input box would have applied,
@@ -62,7 +66,11 @@ sub validate-answered-setting($dialog) is export {
                  ~ "underscores and hyphens";
         }
         when 'number'  { validate-number($value.Str)  ?? '' !! "must be a positive number" }
-        when 'integer' { validate-integer($value.Str) ?? '' !! "must be a positive integer" }
+        when 'integer' {
+            validate-integer($value.Str)
+                ?? ''
+                !! "must be a whole number of 0 or more, without leading zeros";
+        }
         default { '' }
     }
 
@@ -72,9 +80,13 @@ sub validate-answered-setting($dialog) is export {
     # nothing stops an answer file from quoting it, and the difference would
     # surface much later as a string where arithmetic was expected.
     given $dialog<validation> {
-        when 'number'  { Settings.instance.set($name, $value.Rat); $value = $value.Rat }
-        when 'integer' { Settings.instance.set($name, $value.Int); $value = $value.Int }
+        when 'number'  { $value = $value.Rat }
+        when 'integer' { $value = $value.Int }
     }
+    # Compared here, exactly, and stored with reset(): set() compares as a
+    # string, so it would take 1000 for the "1000" already stored and keep the
+    # string.
+    Settings.instance.reset($name, $value) unless $value === Settings.instance.get($name);
 
     if $dialog<extra-validation> {
         # The expression is written against $_, the same way the input box
@@ -83,6 +95,29 @@ sub validate-answered-setting($dialog) is export {
         unless $passes {
             die "Autoinstall: $name = '$value' does not satisfy "
               ~ "{$dialog<extra-validation>}.";
+        }
+    }
+}
+
+#| Put every answered setting a step asks for through the validation checks
+#| of its input box, regardless of how deeply the categories are nested.
+#|
+#| An unattended run skips a category menu as a whole, so every input box
+#| within it is skipped alongside it, and its answer would otherwise reach
+#| the installation without verification: user-id and user-group are asked
+#| nowhere else.
+#|
+#| Whether the step appears on this machine is irrelevant as well. Its
+#| availability decides whether the box is displayed, not whether the value
+#| is utilized: host-name is asked at the top of the wizard for a single
+#| profile only, and it ends up in /etc/hostname for every profile.
+sub validate-answered-settings($step) is export {
+    given $step<type> {
+        when 'ask-for-setting' {
+            validate-answered-setting($step) if autoinstall-answers($step<name>);
+        }
+        when 'categories' {
+            validate-answered-settings($_) for ($step<categories> // []).list;
         }
     }
 }
@@ -142,8 +177,8 @@ sub ask-for-setting($dialog) is export {
                     show-dialog-raw(
                         '--title', 'Invalid Input',
                         '--msgbox',
-                        '\nPlease enter a valid positive integer number.',
-                        6, 50
+                        '\nPlease enter a whole number of 0 or more, without leading zeros.',
+                        7, 50
                     );
                     next;
                 }

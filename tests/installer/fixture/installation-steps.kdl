@@ -31,6 +31,36 @@ Pick what to install.
     }
 }
 
+// Asked here solely for the server profile, and in Advanced Settings beneath
+// for every profile, just as ditana-config does with host-name and the
+// developer profile. The value ends up in /etc/hostname regardless.
+- name="host-name" type="ask-for-setting" validation="name" available="`profile-server`" instruction="""
+Name of the new machine.
+"""
+
+// A category menu nested within a category menu. In ditana-config, user-id
+// and user-group are asked here and in no other location, and an unattended
+// run skips the outer menu as a whole.
+- name="Advanced Settings" type="categories" {
+    categories {
+        - name="host-name" type="ask-for-setting" validation="name" instruction="Name of the new machine."
+        - name="User Configuration" type="categories" {
+            categories {
+                - name="user-id" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 1000..60000" instruction="ID of the user."
+                - name="user-group" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 1000..60000" instruction="Group of the user."
+            }
+        }
+        // A whole-number box permitting 0, with the range ditana-config gives it.
+        - name="sudo-timeout" type="ask-for-setting" validation="integer" extra-validation="$_ ∈ 0..480" instruction="Minutes sudo remembers the password."
+    }
+}
+
+// A box for a numerical value including a fraction: the screen diagonal in
+// inches, as ditana-config asks for it.
+- name="display-size" type="ask-for-setting" validation="number" instruction="""
+Screen diagonal in inches.
+"""
+
 - name="choose-region-or-timezone" type="procedure"
 - name="choose-specific-timezone" type="procedure"
 - name="select-disk" type="procedure"

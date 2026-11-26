@@ -50,6 +50,12 @@ A setting might also follow another setting. A `default-value` that is an expres
 
 Both are refused even when the setting appears benign. The file describes the machine that is to be built, and that the machine cannot be that is either an error in the file or something unexpected about the hardware. Both are worth finding out prior to an installation rather than after one.
 
+### An answer is held to the rules of its input box
+
+An input box holds what is typed into it to rules: `user-id` must be a whole number ranging from 1000 to 60000, `host-name` a name composed of up to 32 lowercase letters, digits, hyphens, and underscores. An answer fills the box without any typing by anybody, thus it is held to the same rules, and one that breaks them stops the run with the name of the setting and the rule it breaks. This applies regardless of where the step is located – whether at the top level or several category menus deep – and irrespective of whether this machine would ever display it at all. The step requesting `host-name` at the top level appears solely for the developer profile, yet the name ultimately ends up in `/etc/hostname` on every machine.
+
+These rules are verified at the moment the run arrives at the step, not when the file is read. A value from «Configuration Categories» is therefore checked only after the preceding steps – choosing the disk and ranking the mirrors among them – yet still prior to any partitioning taking place.
+
 ## How a stopped run reports itself
 
 Nobody watches the screen during an unattended installation, and the installer’s own log resides within the machine that does not yet exist. A run that stops therefore records its cause line by line on the first serial port, each line prefixed by the marker `DITANA-AUTOINSTALL-ABORT:`. A provisioning system reading the console gets the reason while the machine is still active, rather than a silence it can only wait out.

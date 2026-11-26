@@ -362,6 +362,14 @@ END
             next;
         }
 
+        # Not showing an input box must not mean that its rules are not
+        # applied. This applies to every box that the answer file has
+        # populated: those within a category menu, which is skipped as a
+        # whole, and those in a step this machine does not present. Therefore,
+        # this occurs before any determination about whether the step is
+        # shown, skipped, or left out.
+        validate-answered-settings($installation-step);
+
         # A step whose questions the answer file has already answered has
         # nothing left to ask. Skipping it is not a shortcut: the settings it
         # would have written are already set, so what follows sees exactly the
@@ -372,11 +380,6 @@ END
         # is not one the operator left open.
         if Settings.instance.installation-step-is-available($name)
         && autoinstall().step-can-be-skipped($installation-step) {
-            # Not showing the input box must not mean not applying its rules.
-            validate-answered-setting($installation-step)
-                if $installation-step<type> eq 'ask-for-setting'
-                && autoinstall-answers($name);
-
             Logging.log("Autoinstall: '$name' is answered, skipping");
             $current-index++;
             $silent-exit-code = 0;

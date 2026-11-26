@@ -12,6 +12,18 @@
 // procedure runs.
 - name="host-name" default-value=""
 
+// 1000, as specified in ditana-config. Only the User Configuration menu within
+// Advanced Settings requests these values (installation-steps.kdl).
+- name="user-id" default-value=1000
+- name="user-group" default-value=1000
+
+// The default of ditana-config.
+- name="sudo-timeout" default-value=5
+
+// What ditana-config reverts to when no size is determined. Fixed here, as
+// the fixture detects nothing.
+- name="display-size" default-value=11
+
 // A radiolist dialog: several settings sharing one dialog-name.
 - name="profile-default" dialog-name="User Profile" short-description="Standard" default-value=#true {
     arch-packages ""
