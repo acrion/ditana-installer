@@ -7,6 +7,19 @@
 - name="install-disk" default-value=""
 - name="install-disk-description" default-value=""
 
+// What determines the behaviour of mount-bootloader-partition
+// (efi-mount-options.t). ditana-config identifies uefi via /sys/firmware/efi;
+// in this case, it is a plain value, since the fixture detects nothing, and
+// the test sets it to represent a UEFI machine. bootloader-partition is empty
+// by default, as in ditana-config, but no longer before partitioning: on a
+// UEFI machine, it already holds `new` or the selected existing EFI partition,
+// and the answer files in examples/ choose `new`. partition-drive subsequently
+// replaces `new` with the partition it creates, and the test directly sets
+// such a device.
+- name="uefi" default-value=#false
+- name="zfs-filesystem" default-value=#false
+- name="bootloader-partition" default-value=""
+
 // Empty, as in ditana-config: generate-host-name makes up a name solely when
 // none has been established, and an answer file defines it before that
 // procedure runs.

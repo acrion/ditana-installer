@@ -89,8 +89,9 @@ sub create-bind-mount(Str $source, Str $target) is export {
     Logging.echo("Created bind mount from '$source' to '$target'");
 }
 
-sub create-mount(Str $source, Str $target) is export {
-    run-and-echo("mount", "--mkdir", $source, $target);
+sub create-mount(Str $source, Str $target, Str :$options) is export {
+    my @options = $options ?? ('-o', $options) !! ();
+    run-and-echo("mount", "--mkdir", |@options, $source, $target);
     @active-mounts.push: $target;
     Logging.echo("Mounted '$source' at '$target'");
 }
@@ -121,14 +122,22 @@ sub mount-bootloader-partition() is export {
 
     if Settings.instance.get("uefi") {
         Logging.echo("Mounting the EFI partition $bootloader-partition");
-        create-mount("$bootloader-partition", "/mnt/boot/efi");
-
-        # Sets permissions to 700 (owner access only) for the EFI directory.
-        # This addresses the security warning from bootctl (systemd-boot tool)
-        # which appears when /boot/efi is world-readable. bootctl uses this
-        # directory for the random-seed file containing cryptographic material
-        # that must be protected from unauthorized access.
-         '/mnt/boot/efi'.IO.chmod(0o700);
+        # Only the root user is permitted to access the EFI partition or
+        # inspect its contents, and the mount options are the sole means of
+        # enforcing this restriction. Since vfat does not store permissions,
+        # every file and directory on it adopts the mode defined by its masks,
+        # rendering a chmod ineffective in that context. genfstab transfers
+        # these options into the fstab of the installed system as the kernel
+        # reports them, ensuring they remain in effect. Without these options,
+        # /boot/efi mounted with fmask=0022,dmask=0022 at each boot, causing
+        # bootctl to identify both the mount point and loader/random-seed --
+        # the random seed it keeps there -- as world accessible, "which is a
+        # security hole!".
+        #
+        # The masks are the ones systemd selects when it mounts an EFI
+        # partition on its own. They set file permissions to 0600 and directory
+        # permissions to 0700.
+        create-mount("$bootloader-partition", "/mnt/boot/efi", options => 'fmask=0177,dmask=0077');
     } elsif Settings.instance.get("zfs-filesystem") {
         Logging.echo("Mounting the Syslinux bootloader partition $bootloader-partition");
         create-mount("$bootloader-partition", "/mnt/boot/syslinux")
